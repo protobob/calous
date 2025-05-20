@@ -3,11 +3,11 @@ import ollama
 from rich.prompt import Prompt
 from rich import print
 
-from hiollama.config import ConfigManager
-from hiollama.commands import CommandHandler
-from hiollama.ui import UIManager
-from hiollama.chat_history import ChatHistory
-from hiollama.model_interaction import ModelInteraction
+from .config import ConfigManager
+from .commands import CommandHandler
+from .ui import UIManager
+from .chat_history import ChatHistory
+from .model_interaction import ModelInteraction
 
 class HiOllamaChat:
     def __init__(self):

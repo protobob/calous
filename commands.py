@@ -2,7 +2,7 @@
 from pathlib import Path
 from rich.prompt import Prompt
 from rich import print
-from hiollama.utils import Utils
+from .utils import Utils
 
 class CommandHandler:
     def __init__(self, app):
