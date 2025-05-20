@@ -1,0 +1,81 @@
+"""Model interaction for Hi, Ollama!"""
+import ollama
+import requests
+from rich import print
+
+class ModelInteraction:
+    def __init__(self, app):
+        self.app = app
+        
+    def talk_to_model(self, user_prompt):
+        """Send a prompt to the selected model and return the response."""
+        messages = [self.app.system_prompt] + self.app.chat_history.history.copy()
+        messages.append({'role': 'user', 'content': user_prompt})
+        return ollama.chat(model=self.app.selected_model, messages=messages)
+        
+    def list_ollama_models(self):
+        """Get a list of available Ollama models."""
+        try:
+            response = requests.get("http://localhost:11434/api/tags", timeout=5)
+            response.raise_for_status()
+            return [model["name"] for model in response.json().get("models", [])]
+        except Exception as e:
+            raise RuntimeError(f"Failed to fetch models: {e}")
+        
+    def select_model(self):
+        """Display available models and let the user select one."""
+        models = self.list_ollama_models()
+        if not models:
+            print("No models installed.")
+            return None
+
+        print("\nAvailable Ollama models:")
+        for i, model in enumerate(models, 1):
+            print(f"{i}. {model}")
+
+        while True:
+            choice = input("\nSelect a model by number: ").strip()
+            if choice.isdigit():
+                index = int(choice) - 1
+                if 0 <= index < len(models):
+                    return models[index]
+            print("Invalid selection, try again.")
+    
+    def process_response(self, user_input, response):
+        """Process the response from the model, handles logging, and updates chat history."""
+        raw_response = response.get('message', {}).get('content', '')
+        if not raw_response:
+            print("Error: Response does not contain the expected 'message' or 'content' keys.")
+            return
+
+        clean_response = self.app.chat_history.strip_thoughts(raw_response) if self.app.think_filtering else raw_response
+        if not clean_response:
+            clean_response = "[No valid response received from the model.]"
+        print(f"\n{self.app.selected_model}: {clean_response}")
+
+        if self.app.verbosity:
+            if 'eval_count' in response and 'eval_duration' in response:
+                print(self.pull_eval_data(response))
+            else:
+                print("[italic][grey50]Evaluation data missing in response.[/grey50][/italic]")
+
+        if isinstance(clean_response, str):
+            self.app.chat_history.log_file(user_input, clean_response)
+        else:
+            print("Error: Response is not a valid string and will not be logged.")
+
+        self.app.chat_history.add_message("assistant", clean_response)
+
+    def pull_eval_data(self, response):
+        """Extract and format evaluation data from the response."""
+        eval_count = response.get('eval_count')
+        eval_duration_ns = response.get('eval_duration')
+        if not eval_count or not eval_duration_ns:
+            return "Invalid data: eval_count or eval_duration missing or zero."
+        eval_duration_s = eval_duration_ns / 1_000_000_000
+        avg_per_token_ms = (eval_duration_ns / eval_count) / 1_000_000
+        return (
+            f"[italic][grey50](Eval Count: {eval_count}, "
+            f"Eval Duration: {eval_duration_s:.2f}s, "
+            f"Average per-token time: {avg_per_token_ms:.2f}ms)[/grey50][/italic]"
+        )
