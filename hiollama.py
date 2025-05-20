@@ -22,9 +22,11 @@ class HiOllamaChat:
         "think_filtering": True,
         "MAX_HISTORY": 20,
         "system_prompt": "You are a direct, technical assistant. Don't be enthusiastic. No greetings, no apologies. No emojis or other symbols! Answer like you're helping a peer debug code.",
-        "prompts": {f"prompt{i}": "" for i in range(1, 11)}  # Add this line
+        "prompts": {f"prompt{i}": "" for i in range(1, 11)}
     }
 
+    #=== Initialization and Configuration ===
+    
     def __init__(self):
         self.console = Console()
         self.config = self.load_config()
@@ -37,8 +39,8 @@ class HiOllamaChat:
             "role": "system",
             "content": self.config.get("system_prompt", "You are a direct, technical assistant. Don't be enthusiastic. No greetings, no apologies. No emojis or other symbols! Answer like you're helping a peer debug code.")
         }
-        self.logging_enabled = self.config.get("logging_enabled", True)  # Load logging state
-        self.prompts = self.config.get("prompts", {f"prompt{i}": "" for i in range(1, 11)})  # Load prompts
+        self.logging_enabled = self.config.get("logging_enabled", True)
+        self.prompts = self.config.get("prompts", {f"prompt{i}": "" for i in range(1, 11)})
         self.COMMANDS = {
             "/help": self.cmd_help,
             "/quit": self.cmd_quit,
@@ -52,7 +54,7 @@ class HiOllamaChat:
             "/togglelog": self.cmd_togglelog,
             "/setprompt": self.cmd_setprompt,
             "/prompt": self.cmd_prompt,
-            "/showprompt": self.cmd_showprompt  # Add this line
+            "/showprompt": self.cmd_showprompt
         }
 
     def load_config(self):
@@ -72,35 +74,186 @@ class HiOllamaChat:
             self.config["think_filtering"] = self.think_filtering
             self.config["MAX_HISTORY"] = self.MAX_HISTORY
             self.config["system_prompt"] = self.system_prompt["content"]
-            self.config["logging_enabled"] = self.logging_enabled  # Save logging state
-            self.config["prompts"] = self.prompts  # Save prompts
+            self.config["logging_enabled"] = self.logging_enabled
+            self.config["prompts"] = self.prompts
             with open(self.CONFIG_PATH, "w", encoding="utf-8") as f:
                 json.dump(self.config, f, indent=2)
         except Exception as e:
             print(f"Failed to save config: {e}")
 
-    def spinner(self, stop_flag):
-        spinner_widget = Spinner("dots", text="Inference")
-        with Live(spinner_widget, refresh_per_second=10, console=self.console) as live:
-            while not stop_flag.is_set():
-                time.sleep(0.1)
+    #=== Utility Functions ===
+    
+    def clear_screen(self):
+        """Clear the terminal screen."""
+        os.system('cls' if os.name == 'nt' else 'clear')
 
+    def handle_error(self, error, context=""):
+        """Handle and log errors consistently."""
+        error_message = f"{context}: {error}" if context else f"Error: {error}"
+        print(error_message)
+        return error_message
+    
+    def get_numeric_input(self, prompt, min_val, max_val):
+        """Get a validated numeric input within a specified range."""
+        while True:
+            try:
+                value = input(prompt).strip()
+                if not value and min_val is None:  # Allow empty for optional inputs
+                    return None
+                num_value = int(value)
+                if min_val <= num_value <= max_val:
+                    return num_value
+                print(f"Please enter a number between {min_val} and {max_val}.")
+            except ValueError:
+                print("Invalid input. Please enter a valid number.")
+    
+    def load_file_as_prompt(self, filepath, filenotes):
+        """Load a file and format it as a prompt with instructions."""
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return f"{filenotes}:\n\n{content}"
+
+    #=== Chat History and Message Handling ===
+    
     def add_message(self, role, content):
+        """Add a message to the chat history, respecting the maximum history limit."""
         self.chat_history.append({"role": role, "content": content})
         if len(self.chat_history) > self.MAX_HISTORY:
             self.chat_history.pop(0)
 
     def strip_thoughts(self, text):
+        """Remove <think>...</think> sections from text."""
         return re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
 
     def print_chat_history(self):
+        """Display the current chat history."""
         print("\n--- Chat History ---")
         for msg in self.chat_history:
             role = msg.get("role", "unknown").capitalize()
             print(f"[{role}] {msg['content']}")
         print("--------------------\n")
+    
+    def log_file(self, prompt, response):
+        """Log the conversation to a file if logging is enabled."""
+        if not self.logging_enabled:
+            return
+        try:
+            timestamp = datetime.now()
+            log_dir = Path.home() / "hiollama_logs"
+            log_dir.mkdir(exist_ok=True)
+            log_filename = log_dir / f"{timestamp.strftime('%Y-%m-%d')}.txt"
+            with open(log_filename, "a", encoding="utf-8") as f:
+                f.write(f"[{timestamp.strftime('%H:%M:%S')}] You: {prompt}\n")
+                f.write(f"[{timestamp.strftime('%H:%M:%S')}] {self.selected_model}: {response}\n\n")
+        except Exception as e:
+            print(f"Failed to write chat log: {e}")
 
+    #=== Model Interaction ===
+    
+    def talkllm(self, userprompt):
+        """Send a prompt to the selected model and return the response."""
+        messages = [self.system_prompt] + self.chat_history.copy()
+        messages.append({'role': 'user', 'content': userprompt})
+        return ollama.chat(model=self.selected_model, messages=messages)
+
+    def list_ollama_models(self):
+        """Get a list of available Ollama models."""
+        try:
+            response = requests.get("http://localhost:11434/api/tags", timeout=5)
+            response.raise_for_status()
+            return [model["name"] for model in response.json().get("models", [])]
+        except Exception as e:
+            raise RuntimeError(f"Failed to fetch models: {e}")
+
+    def select_model(self):
+        """Display available models and let the user select one."""
+        models = self.list_ollama_models()
+        if not models:
+            print("No models installed.")
+            return None
+
+        print("\nAvailable Ollama models:")
+        for i, model in enumerate(models, 1):
+            print(f"{i}. {model}")
+
+        while True:
+            choice = input("\nSelect a model by number: ").strip()
+            if choice.isdigit():
+                index = int(choice) - 1
+                if 0 <= index < len(models):
+                    return models[index]
+            print("Invalid selection, try again.")
+    
+    def process_response(self, user_input, response):
+        """Process the response from the model, handles logging, and updates chat history."""
+        raw_response = response.get('message', {}).get('content', '')
+        if not raw_response:
+            print("Error: Response does not contain the expected 'message' or 'content' keys.")
+            return
+
+        clean_response = self.strip_thoughts(raw_response) if self.think_filtering else raw_response
+        if not clean_response:
+            clean_response = "[No valid response received from the model.]"
+        print(f"\n{self.selected_model}: {clean_response}")
+
+        if self.verbosity:
+            if 'eval_count' in response and 'eval_duration' in response:
+                print(self.pull_eval_data(response))
+            else:
+                print("[italic][grey50]Evaluation data missing in response.[/grey50][/italic]")
+
+        if isinstance(clean_response, str):
+            self.log_file(user_input, clean_response)
+        else:
+            print("Error: Response is not a valid string and will not be logged.")
+
+        self.add_message("assistant", clean_response)
+
+    def pull_eval_data(self, response):
+        """Extract and format evaluation data from the response."""
+        eval_count = response.get('eval_count')
+        eval_duration_ns = response.get('eval_duration')
+        if not eval_count or not eval_duration_ns:
+            return "Invalid data: eval_count or eval_duration missing or zero."
+        eval_duration_s = eval_duration_ns / 1_000_000_000
+        avg_per_token_ms = (eval_duration_ns / eval_count) / 1_000_000
+        return (
+            f"[italic][grey50](Eval Count: {eval_count}, "
+            f"Eval Duration: {eval_duration_s:.2f}s, "
+            f"Average per-token time: {avg_per_token_ms:.2f}ms)[/grey50][/italic]"
+        )
+
+    #=== UI Elements ===
+    
+    def spinner(self, stop_flag):
+        """Display a spinner while waiting for a task to complete."""
+        spinner_widget = Spinner("dots", text="Inference")
+        with Live(spinner_widget, refresh_per_second=10, console=self.console) as live:
+            while not stop_flag.is_set():
+                time.sleep(0.1)
+
+    def run_with_spinner(self, target, *args):
+        """Run a function with a spinner animation."""
+        stop_flag = threading.Event()
+        spinner_thread = threading.Thread(target=self.spinner, args=(stop_flag,))
+        spinner_thread.start()
+        result = target(*args)
+        stop_flag.set()
+        spinner_thread.join()
+        return result
+    
+    def generate_prompt_text(self):
+        """Generate the formatted prompt text shown before user input."""
+        return (
+            f"\n"
+            f"[italic][grey50]Max:[/grey50]"
+            f"[grey70]{self.MAX_HISTORY}[/grey70][/italic]"
+            f"[grey50] (Type /help for help.)[/grey50]\n"
+            f"[bold]You[/bold]"
+        )
+    
     def help_menu(self):
+        """Display the help menu with available commands."""
         print(
             "\n[bold]Welcome to 'Hi, Ollama!' v0.2[/bold]\n"
             "\n[bold]General Commands:[/bold]"
@@ -141,80 +294,20 @@ class HiOllamaChat:
             "\n"
         )
 
-    def load_file_as_prompt(self, filepath, filenotes):
-        with open(filepath, 'r', encoding='utf-8') as f:
-            content = f.read()
-        return f"{filenotes}:\n\n{content}"
-
-    def talkllm(self, userprompt):
-        messages = [self.system_prompt] + self.chat_history.copy()
-        messages.append({'role': 'user', 'content': userprompt})
-        return ollama.chat(model=self.selected_model, messages=messages)
-
-    def list_ollama_models(self):
-        try:
-            response = requests.get("http://localhost:11434/api/tags", timeout=5)
-            response.raise_for_status()
-            return [model["name"] for model in response.json().get("models", [])]
-        except Exception as e:
-            raise RuntimeError(f"Failed to fetch models: {e}")
-
-    def select_model(self):
-        models = self.list_ollama_models()
-        if not models:
-            print("No models installed.")
-            return None
-
-        print("\nAvailable Ollama models:")
-        for i, model in enumerate(models, 1):
-            print(f"{i}. {model}")
-
-        while True:
-            choice = input("\nSelect a model by number: ").strip()
-            if choice.isdigit():
-                index = int(choice) - 1
-                if 0 <= index < len(models):
-                    return models[index]
-            print("Invalid selection, try again.")
-
-    def log_file(self, prompt, response):
-        if not self.logging_enabled:
-            return
-        try:
-            timestamp = datetime.now()
-            log_dir = Path.home() / "hiollama_logs"  # Save logs in a subdirectory in the home folder
-            log_dir.mkdir(exist_ok=True)  # Ensure the directory exists
-            log_filename = log_dir / f"{timestamp.strftime('%Y-%m-%d')}.txt"
-            with open(log_filename, "a", encoding="utf-8") as f:
-                f.write(f"[{timestamp.strftime('%H:%M:%S')}] You: {prompt}\n")
-                f.write(f"[{timestamp.strftime('%H:%M:%S')}] {self.selected_model}: {response}\n\n")
-        except Exception as e:
-            print(f"Failed to write chat log: {e}")
-
-    def pull_eval_data(self, response):
-        eval_count = response.get('eval_count')
-        eval_duration_ns = response.get('eval_duration')
-        if not eval_count or not eval_duration_ns:
-            return "Invalid data: eval_count or eval_duration missing or zero."
-        eval_duration_s = eval_duration_ns / 1_000_000_000
-        avg_per_token_ms = (eval_duration_ns / eval_count) / 1_000_000
-        return (
-            f"[italic][grey50](Eval Count: {eval_count}, "
-            f"Eval Duration: {eval_duration_s:.2f}s, "
-            f"Average per-token time: {avg_per_token_ms:.2f}ms)[/grey50][/italic]"
-        )
-
-    # === Command Handlers ===
-
+    #=== Command Handlers ===
+    
     def cmd_help(self):
+        """Display the help menu."""
         self.help_menu()
 
     def cmd_quit(self):
+        """Save configuration and exit the program."""
         self.save_config()
         print("Exiting.")
         exit()
 
     def cmd_model(self):
+        """Select a different model."""
         selected = self.select_model()
         if selected:
             self.selected_model = selected
@@ -222,28 +315,33 @@ class HiOllamaChat:
             print(f"You selected: {self.selected_model}")
 
     def cmd_togglethink(self):
+        """Toggle filtering of LLM 'thought' sections."""
         self.think_filtering = not self.think_filtering
         self.config["think_filtering"] = self.think_filtering
         print(f"\nThink filtering is now: {self.think_filtering}")
 
     def cmd_clear(self):
-        confirm = input("Are you sure you want to clear the chat history? (yes/no): ").strip().lower()
-        if confirm == "yes":
+        """Clear the chat history after confirmation."""
+        confirm = input("Are you sure you want to clear the chat history? (y/n): ").strip().lower()
+        if confirm in ["y", "yes"]:
             self.chat_history.clear()
             print("\nChat history cleared.")
         else:
             print("\nClear operation canceled.")
 
     def cmd_history(self):
+        """Display the chat history."""
         self.print_chat_history()
 
     def cmd_system(self):
+        """Change the system prompt."""
         print(f"\nCurrent System Prompt: {self.system_prompt['content']}\n")
         user_system = input("New System Prompt: ")
         self.system_prompt = {"role": "system", "content": user_system}
         self.config["system_prompt"] = user_system
 
     def cmd_setmax(self):
+        """Set the maximum chat history size."""
         while True:
             new_limit = input("\nSet new maximum chat history (even number between 2–100): ").strip()
             if new_limit.isdigit():
@@ -260,25 +358,24 @@ class HiOllamaChat:
                 print("Invalid input. Please enter a number.")
 
     def cmd_verbosity(self):
+        """Toggle display of evaluation data after responses."""
         self.verbosity = not self.verbosity
         self.config["verbosity"] = self.verbosity
         print(f"\nVerbosity is now: {self.verbosity}")
 
     def cmd_togglelog(self):
+        """Toggle logging of chat history."""
         self.logging_enabled = not self.logging_enabled
         print(f"\nLogging is now: {self.logging_enabled}")
 
     def cmd_setprompt(self):
-        """
-        Allows the user to set a specific prompt (e.g., /setprompt 1).
-        """
+        """Set a saved prompt."""
         try:
             prompt_number = int(input("Enter prompt number (1-10): ").strip())
             if 1 <= prompt_number <= 10:
                 new_prompt = input(f"Enter the text for prompt{prompt_number}: ").strip()
                 self.prompts[f"prompt{prompt_number}"] = new_prompt
                 print(f"Prompt{prompt_number} set successfully!")
-                # Save the updated prompts to the config
                 self.save_config()
             else:
                 print("Invalid prompt number. Please enter a number between 1 and 10.")
@@ -286,9 +383,7 @@ class HiOllamaChat:
             print("Invalid input. Please enter a valid number.")
 
     def cmd_prompt(self):
-        """
-        Allows the user to use a specific prompt (e.g., /prompt 1).
-        """
+        """Use a saved prompt."""
         try:
             prompt_number = int(input("Enter prompt number (1-10): ").strip())
             if 1 <= prompt_number <= 10:
@@ -306,9 +401,7 @@ class HiOllamaChat:
             print("Invalid input. Please enter a valid number.")
 
     def cmd_showprompt(self):
-        """
-        Displays a specific prompt or all prompts if no number is provided.
-        """
+        """Display saved prompts."""
         try:
             prompt_number = input("Enter prompt number (1-10) or leave blank to show all: ").strip()
             if prompt_number == "":
@@ -327,49 +420,9 @@ class HiOllamaChat:
                 print("Invalid input. Please enter a number between 1 and 10, or leave blank to show all prompts.")
         except Exception as e:
             print(f"Error displaying prompts: {e}")
-
-    def process_response(self, user_input, response):
-        """
-        Processes the response from the model, handles logging, and updates chat history.
-        """
-        raw_response = response.get('message', {}).get('content', '')
-        if not raw_response:
-            print("Error: Response does not contain the expected 'message' or 'content' keys.")
-            return
-
-        clean_response = self.strip_thoughts(raw_response) if self.think_filtering else raw_response
-        if not clean_response:
-            clean_response = "[No valid response received from the model.]"
-        print(f"\n{self.selected_model}: {clean_response}")
-
-        if self.verbosity:
-            if 'eval_count' in response and 'eval_duration' in response:
-                print(self.pull_eval_data(response))
-            else:
-                print("[italic][grey50]Evaluation data missing in response.[/grey50][/italic]")
-
-        if isinstance(clean_response, str):
-            self.log_file(user_input, clean_response)
-        else:
-            print("Error: Response is not a valid string and will not be logged.")
-
-        self.add_message("assistant", clean_response)
-
-    def run_with_spinner(self, target, *args):
-        stop_flag = threading.Event()
-        spinner_thread = threading.Thread(target=self.spinner, args=(stop_flag,))
-        spinner_thread.start()
-        result = target(*args)
-        stop_flag.set()
-        spinner_thread.join()
-        return result
-
-    # === Command Handlers ===
-
+    
     def cmd_load(self, filepath):
-        """
-        Load a file and send it to the model with user instructions.
-        """
+        """Load a file and send it to the model with user instructions."""
         if not Path(filepath).exists():
             print(f"Error: File '{filepath}' does not exist.")
             return
@@ -380,60 +433,65 @@ class HiOllamaChat:
             print(f"\n[grey50]Sent [italic]{filepath}[/italic] -- hold on, this might take awhile...[/grey50]")
 
             self.add_message("user", file_prompt)
-            # Use the spinner while waiting for the model response
             response = self.run_with_spinner(self.talkllm, file_prompt)
-
             self.process_response(file_prompt, response)
         except Exception as e:
             print(f"Failed to load file: {e}")
 
-    # === Main Loop ===
+    #=== Main Application Logic ===
+    
+    def parse_and_execute_command(self, user_input):
+        """Handle command parsing and execution."""
+        if user_input.startswith('/'):
+            if user_input.lower().startswith("/load "):
+                filepath = user_input[len("/load "):].strip()
+                self.cmd_load(filepath)
+                return True
+            
+            command = user_input.split()[0].lower()
+            
+            if command in self.COMMANDS:
+                self.COMMANDS[command]()
+                return True
+            else:
+                print(f"Unknown command: {command}. Type /help for a list of commands.")
+                return True
+        
+        return False
+
+    def handle_regular_input(self, user_input):
+        """Process regular user input (non-commands)."""
+        self.add_message("user", user_input)
+        try:
+            response = self.run_with_spinner(self.talkllm, user_input)
+            self.process_response(user_input, response)
+        except ollama.APIError as e:
+            print(f"Ollama API Error: {e}")
+        except Exception as e:
+            print(f"Model Error: {e}")
 
     def run(self):
-        os.system('cls' if os.name == 'nt' else 'clear')
+        """Main application loop."""
+        self.clear_screen()
         print(f"\nLoaded config from: {self.CONFIG_PATH}\n")
         print(f"Model: {self.selected_model}")
 
         try:
             while True:
-                prompt_text = (
-                    f"\n"
-                    f"[italic][grey50]Max:[/grey50]"
-                    f"[grey70]{self.MAX_HISTORY}[/grey70][/italic]"
-                    f"[grey50] (Type /help for help.)[/grey50]\n"
-                    f"[bold]You[/bold]"
-                )
-
+                prompt_text = self.generate_prompt_text()
                 user_input = Prompt.ask(prompt_text).strip()
 
-                if user_input.lower().startswith("/load "):
-                    filepath = user_input[len("/load "):].strip()
-                    self.cmd_load(filepath)
+                if self.parse_and_execute_command(user_input):
                     continue
-
-                elif user_input.lower() in self.COMMANDS:
-                    self.COMMANDS[user_input.lower()]()
-                    continue
-
                 else:
-                    self.add_message("user", user_input)
-                    try:
-                        # Use the spinner while waiting for the model response
-                        response = self.run_with_spinner(self.talkllm, user_input)
-                    except ollama.APIError as e:
-                        print(f"Ollama API Error: {e}")
-                        continue
-                    except Exception as e:
-                        print(f"Model Error: {e}")
-                        continue
-
-                    # Call the method to process the response
-                    self.process_response(user_input, response)
+                    self.handle_regular_input(user_input)
 
         except KeyboardInterrupt:
             print("\nInterrupted. Saving config and exiting.")
         finally:
             self.save_config()
 
+# Entry point
 if __name__ == "__main__":
-    HiOllamaChat().run()
+    chat = HiOllamaChat()
+    chat.run()
