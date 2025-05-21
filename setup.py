@@ -13,7 +13,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "hiollama=hiollama.__main__:main",  # Optional: Add a CLI entry point
+            "hiollama=hiollama.__main__:main",
         ],
     },
 )
