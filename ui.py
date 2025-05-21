@@ -32,16 +32,18 @@ class UIManager:
         
     def generate_prompt_text(self):
         """Generate the formatted prompt text shown before user input."""
+        current_history_len = len(self.app.chat_history.history)
         return (
             f"\n"
-            f"[italic][grey50]Max:[/grey50]"
-            f"[grey70]{self.app.MAX_HISTORY}[/grey70][/italic]"
+            f"[italic][grey50]CH:[/grey50]"
+            f"[grey70]{current_history_len}/{self.app.MAX_HISTORY}[/grey70][/italic]"
             f"[grey50] (Type /help for help.)[/grey50]\n"
             f"[bold]You[/bold]"
         )
         
     def help_menu(self):
         """Display the help menu with available commands."""
+        current_history_len = len(self.app.chat_history.history)
         print(
             "\n[bold]Welcome to 'Hi, Ollama!' v0.2[/bold]\n"
             "\n[bold]General Commands:[/bold]"
@@ -79,7 +81,7 @@ class UIManager:
             f"\n  Verbosity:      {self.app.verbosity}"
             f"\n  Max History:    {self.app.MAX_HISTORY}"
             f"\n  System Prompt:  [italic]{self.app.system_prompt['content']}[/italic]"
-            "\n"
+            "\n" 
         )
         
     def clear_screen(self):
