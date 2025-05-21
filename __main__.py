@@ -1,5 +1,5 @@
 """Entry point for the hiollama package."""
-from hiollama.app import HiOllamaChat
+from .app import HiOllamaChat
 
 def main():
     chat = HiOllamaChat()
