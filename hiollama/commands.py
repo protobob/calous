@@ -7,6 +7,7 @@ from .utils import Utils
 class CommandHandler:
     def __init__(self, app):
         self.app = app
+        # Remove "/system" from the standard commands dictionary
         self.commands = {
             "/help": self.cmd_help,
             "/quit": self.cmd_quit,
@@ -14,7 +15,6 @@ class CommandHandler:
             "/togglethink": self.cmd_togglethink,
             "/clear": self.cmd_clear,
             "/history": self.cmd_history,
-            "/system": self.cmd_system,
             "/setmax": self.cmd_setmax,
             "/verbosity": self.cmd_verbosity,
             "/togglelog": self.cmd_togglelog,
@@ -25,20 +25,45 @@ class CommandHandler:
     
     def parse_and_execute(self, user_input):
         """Parse and execute commands."""
-        if user_input.startswith('/'):
-            if user_input.lower().startswith("/load "):
-                filepath = user_input[len("/load "):].strip()
-                self.cmd_load(filepath)
+        if not user_input.startswith('/'):
+            return False
+        
+        # Helper function to handle commands that need arguments
+        def handle_command_with_args(command_prefix, min_args, usage_msg, handler_func):
+            if user_input.lower().startswith(command_prefix + " "):
+                parts = user_input.split(" ", min_args)  # Split based on required args
+                
+                # Check if we have enough arguments
+                if len(parts) <= min_args:
+                    print(usage_msg)
+                    return True
+                    
+                # Extract arguments and call handler
+                args = [part.strip() for part in parts[1:]]
+                handler_func(*args)
                 return True
+            # Check for exact command match without arguments
+            elif user_input.lower() == command_prefix:
+                print(usage_msg)  # Show usage when command is used without arguments
+                return True
+            return False
+        
+        # Handle special commands that need arguments
+        if handle_command_with_args("/load", 2, "Usage: /load filename prompt", self.cmd_load):
+            return True
             
-            command = user_input.split()[0].lower()
-            
-            if command in self.commands:
-                self.commands[command]()
-                return True
-            else:
-                print(f"Unknown command: {command}. Type /help for a list of commands.")
-                return True
+        if handle_command_with_args("/system", 1, "Usage: /system new system prompt", self.cmd_system):
+            return True
+        
+        # Handle standard commands from the dictionary
+        command = user_input.split()[0].lower()
+        
+        if command in self.commands:
+            self.commands[command]()
+            return True
+        else:
+            print(f"Unknown command: {command}. Type /help for a list of commands.")
+            return True
         
         return False
         
@@ -79,13 +104,13 @@ class CommandHandler:
         """Display the chat history."""
         self.app.chat_history.print_history()
     
-    def cmd_system(self):
+    def cmd_system(self, new_prompt):
         """Change the system prompt."""
-        print(f"\nCurrent System Prompt: {self.app.system_prompt['content']}\n")
-        user_system = input("New System Prompt: ")
-        self.app.system_prompt = {"role": "system", "content": user_system}
-        self.app.config["system_prompt"] = user_system
-    
+        print(f"\nPrevious System Prompt: [grey50]{self.app.system_prompt['content']}[/grey50]")
+        self.app.system_prompt = {"role": "system", "content": new_prompt}
+        self.app.config["system_prompt"] = new_prompt
+        print(f"System prompt updated to: [grey50]{new_prompt}[/grey50]")
+
     def cmd_setmax(self):
         """Set the maximum chat history size."""
         while True:
@@ -164,14 +189,17 @@ class CommandHandler:
         except Exception as e:
             print(f"Error displaying prompts: {e}")
     
-    def cmd_load(self, filepath):
+    def cmd_load(self, filepath, file_message=""):
         """Load a file and send it to the model with user instructions."""
         if not Path(filepath).exists():
             print(f"Error: File '{filepath}' does not exist.")
             return
             
         try:
-            file_message = Prompt.ask("[bold]Instructions[/bold]")
+            # If no message was provided in the command, ask for it
+            if not file_message:
+                file_message = Prompt.ask("[bold]Instructions[/bold]")
+                
             file_prompt = Utils.load_file_as_prompt(filepath, file_message)
             print(f"\n[grey50]Sent [italic]{filepath}[/italic] -- hold on, this might take awhile...[/grey50]")
             self.app.handle_regular_input(file_prompt)

@@ -44,7 +44,9 @@ class HiOllamaChat:
             
     def handle_regular_input(self, user_input):
         """Process regular user input (non-commands)."""
-        self.chat_history.add_message("user", user_input)
+        # Add the user message to history before sending to the model
+        self.chat_history.add_message("user", user_input)  
+    
         try:
             response = self.ui.run_with_spinner(self.model.talk_to_model, user_input)
             self.model.process_response(user_input, response)
