@@ -12,12 +12,12 @@ class CommandHandler:
             "/help": self.cmd_help,
             "/quit": self.cmd_quit,
             "/model": self.cmd_model,
-            "/toggle_think": self.cmd_toggle_think,  # Updated name
+            "/toggle_think": self.cmd_toggle_think,
             "/clear": self.cmd_clear,
             "/history": self.cmd_history,
-            "/toggle_eval": self.cmd_toggle_eval,    # Updated name
-            "/toggle_log": self.cmd_toggle_log,      # Updated name
-            "/showprompt": self.cmd_showprompt
+            "/toggle_eval": self.cmd_toggle_eval,
+            "/toggle_log": self.cmd_toggle_log,
+            "/showvar": self.cmd_showvar  # Add the new command
         }
     
     def parse_and_execute(self, user_input):
@@ -59,6 +59,9 @@ class CommandHandler:
             return True
     
         if handle_command_with_args("/prompt", 1, "Usage: /prompt NUMBER (number between 1-10)", self.cmd_prompt):
+            return True
+    
+        if handle_command_with_args("/showprompt", 1, "Usage: /showprompt NUMBER or /showprompt all", self.cmd_showprompt):
             return True
     
         # Handle standard commands from the dictionary
@@ -183,24 +186,26 @@ class CommandHandler:
         except ValueError:
             print("Invalid input. Please enter a valid number.")
     
-    def cmd_showprompt(self):
+    def cmd_showprompt(self, prompt_selector="all"):
         """Display saved prompts."""
         try:
-            prompt_number = input("Enter prompt number (1-10) or leave blank to show all: ").strip()
-            if prompt_number == "":
+            if prompt_selector.lower() == "all":
                 # Show all prompts
                 print("\n--- Saved Prompts ---")
                 for i in range(1, 11):
                     prompt = self.app.prompts[f"prompt{i}"]
                     print(f"Prompt{i}: {prompt if prompt else '[Empty]'}")
                 print("---------------------\n")
-            elif prompt_number.isdigit() and 1 <= int(prompt_number) <= 10:
+            elif prompt_selector.isdigit():
                 # Show a specific prompt
-                prompt_number = int(prompt_number)
-                prompt = self.app.prompts[f"prompt{prompt_number}"]
-                print(f"\nPrompt{prompt_number}: {prompt if prompt else '[Empty]'}\n")
+                prompt_number = int(prompt_selector)
+                if 1 <= prompt_number <= 10:
+                    prompt = self.app.prompts[f"prompt{prompt_number}"]
+                    print(f"\nPrompt{prompt_number}: {prompt if prompt else '[Empty]'}\n")
+                else:
+                    print("Invalid prompt number. Please enter a number between 1 and 10.")
             else:
-                print("Invalid input. Please enter a number between 1 and 10, or leave blank to show all prompts.")
+                print("Invalid input. Use '/showprompt all' or '/showprompt NUMBER' (1-10).")
         except Exception as e:
             print(f"Error displaying prompts: {e}")
     
@@ -220,3 +225,7 @@ class CommandHandler:
             self.app.handle_regular_input(file_prompt)
         except Exception as e:
             print(f"Failed to load file: {e}")
+    
+    def cmd_showvar(self):
+        """Display system variables."""
+        self.app.ui.show_variables()

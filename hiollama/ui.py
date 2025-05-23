@@ -49,6 +49,7 @@ class UIManager:
             "\n[bold]General Commands:[/bold]"
             "\n  /help          - Show this help menu."
             "\n  /quit          - Exit the program and save the configuration."
+            "\n  /showvar       - Display current system variables."
             "\n"
             "\n[bold]Model Commands:[/bold]"
             "\n  /model         - Select a different model."
@@ -60,8 +61,8 @@ class UIManager:
             "\n                  Example: /setprompt 1 This is a saved prompt."
             "\n  /prompt        - Use a saved prompt. Usage: /prompt NUMBER"
             "\n                  Example: /prompt 1"
-            "\n  /showprompt    - Display saved prompts. Usage: /showprompt to view all, or enter a number (1-10)."
-            "\n                  Example: Type /showprompt, then enter '1' to view Prompt 1."
+            "\n  /showprompt    - Display saved prompts. Usage: /showprompt NUMBER or /showprompt all"
+            "\n                  Example: /showprompt 1 or /showprompt all"
             "\n  /system        - Change the system prompt. Usage: /system NEW_SYSTEM_PROMPT"
             "\n                  Example: /system You are a helpful AI assistant."
             "\n"
@@ -76,6 +77,15 @@ class UIManager:
             "\n  /load          - Load a file as a prompt. Usage: /load FILENAME PROMPT"
             "\n                  Example: /load example.txt Summarize this file."
             "\n"
+        )
+        
+    def clear_screen(self):
+        """Clear the terminal screen."""
+        os.system('cls' if os.name == 'nt' else 'clear')
+        
+    def show_variables(self):
+        """Display current system variables."""
+        print(
             "\n[bold]System Variables:[/bold]"
             f"\n  Model:          {self.app.selected_model}"
             f"\n  Logging:        {self.app.logging_enabled}"
@@ -83,9 +93,5 @@ class UIManager:
             f"\n  Verbosity:      {self.app.verbosity}"
             f"\n  Max History:    {self.app.MAX_HISTORY}"
             f"\n  System Prompt:  [italic]{self.app.system_prompt['content']}[/italic]"
-            "\n" 
+            "\n"
         )
-        
-    def clear_screen(self):
-        """Clear the terminal screen."""
-        os.system('cls' if os.name == 'nt' else 'clear')
