@@ -15,11 +15,8 @@ class CommandHandler:
             "/togglethink": self.cmd_togglethink,
             "/clear": self.cmd_clear,
             "/history": self.cmd_history,
-            # "/setmax": self.cmd_setmax,  # Remove this line
             "/verbosity": self.cmd_verbosity,
             "/togglelog": self.cmd_togglelog,
-            "/setprompt": self.cmd_setprompt,
-            "/prompt": self.cmd_prompt,
             "/showprompt": self.cmd_showprompt
         }
     
@@ -47,7 +44,7 @@ class CommandHandler:
                 print(usage_msg)  # Show usage when command is used without arguments
                 return True
             return False
-        
+    
         # Handle special commands that need arguments
         if handle_command_with_args("/load", 2, "Usage: /load filename prompt", self.cmd_load):
             return True
@@ -56,6 +53,12 @@ class CommandHandler:
             return True
             
         if handle_command_with_args("/setmax", 1, "Usage: /setmax NUMBER (even number between 2-100)", self.cmd_setmax):
+            return True
+            
+        if handle_command_with_args("/setprompt", 2, "Usage: /setprompt NUMBER PROMPT_TEXT (NUMBER must be 1-10)", self.cmd_setprompt):
+            return True
+            
+        if handle_command_with_args("/prompt", 1, "Usage: /prompt NUMBER (number between 1-10)", self.cmd_prompt):
             return True
     
         # Handle standard commands from the dictionary
@@ -142,12 +145,20 @@ class CommandHandler:
         self.app.config["logging_enabled"] = self.app.logging_enabled
         print(f"\nLogging is now: {self.app.logging_enabled}")
     
-    def cmd_setprompt(self):
+    def cmd_setprompt(self, prompt_number_str="", *prompt_parts):
         """Set a saved prompt."""
         try:
-            prompt_number = int(input("Enter prompt number (1-10): ").strip())
+            # Try to convert input to integer
+            prompt_number = int(prompt_number_str)
+            
+            # Check if the value is valid
             if 1 <= prompt_number <= 10:
-                new_prompt = input(f"Enter the text for prompt{prompt_number}: ").strip()
+                # Join all prompt parts to create the full prompt text
+                new_prompt = " ".join(prompt_parts).strip()
+                if not new_prompt:
+                    print("Error: Prompt text cannot be empty.")
+                    return
+                
                 self.app.prompts[f"prompt{prompt_number}"] = new_prompt
                 print(f"Prompt{prompt_number} set successfully!")
                 self.app.save_config()
@@ -156,10 +167,10 @@ class CommandHandler:
         except ValueError:
             print("Invalid input. Please enter a valid number.")
     
-    def cmd_prompt(self):
+    def cmd_prompt(self, prompt_number_str=""):
         """Use a saved prompt."""
         try:
-            prompt_number = int(input("Enter prompt number (1-10): ").strip())
+            prompt_number = int(prompt_number_str)
             if 1 <= prompt_number <= 10:
                 selected_prompt = self.app.prompts[f"prompt{prompt_number}"]
                 if selected_prompt:
