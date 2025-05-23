@@ -7,7 +7,7 @@ from .utils import Utils
 class CommandHandler:
     def __init__(self, app):
         self.app = app
-        # Remove "/system" from the standard commands dictionary
+        # Commands without arguments
         self.commands = {
             "/help": self.cmd_help,
             "/quit": self.cmd_quit,
@@ -15,7 +15,7 @@ class CommandHandler:
             "/togglethink": self.cmd_togglethink,
             "/clear": self.cmd_clear,
             "/history": self.cmd_history,
-            "/setmax": self.cmd_setmax,
+            # "/setmax": self.cmd_setmax,  # Remove this line
             "/verbosity": self.cmd_verbosity,
             "/togglelog": self.cmd_togglelog,
             "/setprompt": self.cmd_setprompt,
@@ -54,7 +54,10 @@ class CommandHandler:
             
         if handle_command_with_args("/system", 1, "Usage: /system new system prompt", self.cmd_system):
             return True
-        
+            
+        if handle_command_with_args("/setmax", 1, "Usage: /setmax NUMBER (even number between 2-100)", self.cmd_setmax):
+            return True
+    
         # Handle standard commands from the dictionary
         command = user_input.split()[0].lower()
         
@@ -111,20 +114,21 @@ class CommandHandler:
         self.app.config["system_prompt"] = new_prompt
         print(f"System prompt updated to: [grey50]{new_prompt}[/grey50]")
 
-    def cmd_setmax(self):
+    def cmd_setmax(self, new_limit_str=""):
         """Set the maximum chat history size."""
-        while True:
-            new_limit = input("\nSet new maximum chat history (even number between 2–100): ").strip()
-            if new_limit.isdigit():
-                new_limit = int(new_limit)
-                if 2 <= new_limit <= 100 and new_limit % 2 == 0:
-                    self.app.MAX_HISTORY = new_limit
-                    self.app.config["MAX_HISTORY"] = self.app.MAX_HISTORY
-                    print(f"\nMaximum chat history set to {self.app.MAX_HISTORY}")
-                    break
-                print("Please enter an even number between 2 and 100.")
+        try:
+            # Try to convert input to integer
+            new_limit = int(new_limit_str)
+            
+            # Check if the value is valid
+            if 2 <= new_limit <= 100 and new_limit % 2 == 0:
+                self.app.MAX_HISTORY = new_limit
+                self.app.config["MAX_HISTORY"] = self.app.MAX_HISTORY
+                print(f"\nMaximum chat history set to {self.app.MAX_HISTORY}")
             else:
-                print("Invalid input. Please enter a number.")
+                print("Invalid value. Please use an even number between 2 and 100.")
+        except ValueError:
+            print("Invalid input. Please enter a valid number.")
     
     def cmd_verbosity(self):
         """Toggle display of evaluation data after responses."""
