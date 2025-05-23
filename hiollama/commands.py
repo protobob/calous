@@ -12,11 +12,11 @@ class CommandHandler:
             "/help": self.cmd_help,
             "/quit": self.cmd_quit,
             "/model": self.cmd_model,
-            "/togglethink": self.cmd_togglethink,
+            "/toggle_think": self.cmd_toggle_think,  # Updated name
             "/clear": self.cmd_clear,
             "/history": self.cmd_history,
-            "/verbosity": self.cmd_verbosity,
-            "/togglelog": self.cmd_togglelog,
+            "/toggle_eval": self.cmd_toggle_eval,    # Updated name
+            "/toggle_log": self.cmd_toggle_log,      # Updated name
             "/showprompt": self.cmd_showprompt
         }
     
@@ -48,16 +48,16 @@ class CommandHandler:
         # Handle special commands that need arguments
         if handle_command_with_args("/load", 2, "Usage: /load filename prompt", self.cmd_load):
             return True
-            
+    
         if handle_command_with_args("/system", 1, "Usage: /system new system prompt", self.cmd_system):
             return True
-            
+    
         if handle_command_with_args("/setmax", 1, "Usage: /setmax NUMBER (even number between 2-100)", self.cmd_setmax):
             return True
-            
+    
         if handle_command_with_args("/setprompt", 2, "Usage: /setprompt NUMBER PROMPT_TEXT (NUMBER must be 1-10)", self.cmd_setprompt):
             return True
-            
+    
         if handle_command_with_args("/prompt", 1, "Usage: /prompt NUMBER (number between 1-10)", self.cmd_prompt):
             return True
     
@@ -91,7 +91,7 @@ class CommandHandler:
             self.app.config["selected_model"] = self.app.selected_model
             print(f"You selected: {self.app.selected_model}")
     
-    def cmd_togglethink(self):
+    def cmd_toggle_think(self):
         """Toggle filtering of LLM 'thought' sections."""
         self.app.think_filtering = not self.app.think_filtering
         self.app.config["think_filtering"] = self.app.think_filtering
@@ -133,13 +133,13 @@ class CommandHandler:
         except ValueError:
             print("Invalid input. Please enter a valid number.")
     
-    def cmd_verbosity(self):
+    def cmd_toggle_eval(self):
         """Toggle display of evaluation data after responses."""
         self.app.verbosity = not self.app.verbosity
         self.app.config["verbosity"] = self.app.verbosity
         print(f"\nVerbosity is now: {self.app.verbosity}")
     
-    def cmd_togglelog(self):
+    def cmd_toggle_log(self):
         """Toggle logging of chat history."""
         self.app.logging_enabled = not self.app.logging_enabled
         self.app.config["logging_enabled"] = self.app.logging_enabled
