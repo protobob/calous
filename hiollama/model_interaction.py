@@ -51,7 +51,14 @@ class ModelInteraction:
         clean_response = self.app.chat_history.strip_thoughts(raw_response) if self.app.think_filtering else raw_response
         if not clean_response:
             clean_response = "[No valid response received from the model.]"
-        print(f"\n{self.app.selected_model}: {clean_response}")
+        
+        # Determine color based on chat index
+        chat_color = "green" if getattr(self.app, 'active_chat_index', 0) == 0 else "blue"
+        chat_index = getattr(self.app, 'active_chat_index', 0)
+        
+        # Print with colored bar, colored chat number and underlined model name, response on a new line
+        print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]{chat_index + 1})[/bold {chat_color}][underline]{self.app.selected_model}[/underline]:\n")
+        print(f"{clean_response}")
 
         if self.app.verbosity:
             if 'eval_count' in response and 'eval_duration' in response:

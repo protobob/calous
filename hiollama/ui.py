@@ -33,12 +33,21 @@ class UIManager:
     def generate_prompt_text(self):
         """Generate the formatted prompt text shown before user input."""
         current_history_len = len(self.app.chat_history.history)
+        
+        # Determine color based on chat index
+        chat_color = "green" if getattr(self.app, 'active_chat_index', 0) == 0 else "blue"
+        
+        # Prepare the 'You' part with chat number if available
+        you_text = "[bold]You[/bold]"
+        if hasattr(self.app, 'active_chat_index'):
+            you_text = f"[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]{self.app.active_chat_index + 1})[/bold {chat_color}][bold]You[/bold]"
+            
         return (
             f"\n"
-            f"[italic][grey50]CH:[/grey50]"
+            f"[bold {chat_color}]|[/bold {chat_color}] [italic][bold {chat_color}]CH:[/bold {chat_color}]"  # Colored CH indicator with vertical bar
             f"[grey70]{current_history_len}/{self.app.MAX_HISTORY}[/grey70][/italic]"
             f"[grey50] (Type /help for help.)[/grey50]\n"
-            f"[bold]You[/bold]"
+            f"{you_text}"
         )
         
     def help_menu(self):

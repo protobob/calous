@@ -25,6 +25,10 @@ class HiOllamaChat:
         self.logging_enabled = self.config.get("logging_enabled", True)
         self.prompts = self.config.get("prompts", {f"prompt{i}": "" for i in range(1, 11)})
         
+        # For multi-instance support
+        self.active_chat_index = 0
+        self.chat_instances = []
+        
         # Initialize components
         self.ui = UIManager(self)
         self.chat_history = ChatHistory(self)
@@ -55,17 +59,22 @@ class HiOllamaChat:
         except Exception as e:
             print(f"Model Error: {e}")
             
-    def run(self):
+    def run(self, break_on_switch=False, skip_header=False):
         """Main application loop."""
-        self.ui.clear_screen()
-        print(f"\nLoaded config from: {ConfigManager.CONFIG_PATH}\n")
-        print(f"Model: {self.selected_model}")
+        if not skip_header:
+            self.ui.clear_screen()
+            print(f"\nLoaded config from: {ConfigManager.CONFIG_PATH}\n")
+            print(f"Model: {self.selected_model}")
 
         try:
             while True:
                 prompt_text = self.ui.generate_prompt_text()
                 user_input = Prompt.ask(prompt_text).strip()
 
+                # Check for switch command if in multi-instance mode
+                if break_on_switch and user_input.strip().lower() == "/switch":
+                    return  # Exit this run loop to switch to another instance
+                
                 if self.commands.parse_and_execute(user_input):
                     continue
                 else:
@@ -73,5 +82,6 @@ class HiOllamaChat:
 
         except KeyboardInterrupt:
             print("\nInterrupted. Saving config and exiting.")
+            raise  # Re-raise to let main handle the exit
         finally:
             self.save_config()
