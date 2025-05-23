@@ -1,6 +1,11 @@
+# Updated README for Hi, Ollama!
+
+Let me update the README to reflect the recent command changes:
+
+```markdown
 # Hi, Ollama!
 
-Version 0.5 -- May 20th, 2025
+Version 0.5 -- May 23rd, 2025
 
 A friendly command-line interface for interacting with Ollama language models.
 
@@ -82,26 +87,33 @@ qwen3:0.6B: Quantum computing uses quantum bits (qubits) to perform calculations
 ### General Commands
 - `/help` - Show the help menu
 - `/quit` - Exit the program and save the configuration
+- `/showvar` - Display current system variables (model, settings, etc.)
 
 ### Model Commands
 - `/model` - Select a different model
-- `/verbosity` - Toggle evaluation data display after responses
-- `/togglethink` - Toggle filtering of LLM "thoughts" (for reasoning models)
+- `/toggle_eval` - Toggle evaluation data display after responses
+- `/toggle_think` - Toggle filtering of LLM "thoughts" (for reasoning models)
 
 ### Prompt Commands
-- `/setprompt` - Set a saved prompt (1-10)
-- `/prompt` - Use a saved prompt (1-10)
-- `/showprompt` - Display saved prompts (1-10 or all)
-- `/system` - Change the system prompt
+- `/setprompt NUMBER PROMPT_TEXT` - Set a saved prompt (1-10)
+  - Example: `/setprompt 1 This is a saved prompt.`
+- `/prompt NUMBER` - Use a saved prompt (1-10)
+  - Example: `/prompt 1` 
+- `/showprompt NUMBER|all` - Display saved prompts
+  - Example: `/showprompt 1` or `/showprompt all`
+- `/system NEW_SYSTEM_PROMPT` - Change the system prompt
+  - Example: `/system You are a helpful AI assistant.`
 
 ### Chat History Commands
 - `/history` - Display the current chat history
 - `/clear` - Clear the current chat history
-- `/setmax` - Set the maximum chat history (even number between 2-100)
-- `/togglelog` - Toggle logging of chat history
+- `/setmax NUMBER` - Set the maximum chat history (even number between 2-100)
+  - Example: `/setmax 20`
+- `/toggle_log` - Toggle logging of chat history
 
 ### File Commands
-- `/load <filename>` - Load a file as a prompt
+- `/load FILENAME PROMPT` - Load a file as a prompt
+  - Example: `/load example.txt Summarize this file.`
 
 ## Configuration
 
