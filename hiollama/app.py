@@ -62,50 +62,80 @@ class HiOllamaChat:
             
     def run(self, break_on_switch=False, skip_header=False):
         """Main application loop."""
+        # Display header if needed
         if not skip_header:
-            self.ui.clear_screen()
-            print(f"\nLoaded config from: {ConfigManager.CONFIG_PATH}\n")
-            print(f"Model: {self.selected_model}")
+            self._display_header()
 
         try:            
             while True:
-                prompt_text = self.ui.generate_prompt_text()
-                user_input = Prompt.ask(prompt_text).strip()
-                  # Check if we need to switch chats (only happens when switching from the outside)
-                if break_on_switch and getattr(self, 'switch_requested', False):
-                    # Reset the flag for next time
-                    self.switch_requested = False
-                    # Also make sure any chat instances we're aware of have their flags reset
-                    if hasattr(self, 'chat_instances') and self.chat_instances:
-                        for chat in self.chat_instances:
-                            if hasattr(chat, 'switch_requested'):
-                                chat.switch_requested = False
-                    return  # Exit this run loop to switch to another instance
+                # Get user input
+                user_input = self._get_user_input()
                 
-                # Check for direct switch command
-                if break_on_switch and user_input.strip().lower() == "/switch":
-                    return  # Exit this run loop to switch to another instance
-                    # Check for direct twist command 
-                if break_on_switch and user_input.strip().lower() == "/twist":
-                    # Handle directly here to bypass command processing
-                    self.commands.cmd_twist()
-                    return  # Exit this run loop to switch to another instance
-                
-                # Special check for quit command (don't continue processing after quit)
-                if user_input.strip().lower() == "/quit":
-                    self.commands.cmd_quit()  # This will call exit() directly
-                    continue  # Skip further processing (this line never executes due to exit())
-                
-                if self.commands.parse_and_execute(user_input):
-                    # If the command handler sets switch_requested flag, handle it
-                    if break_on_switch and getattr(self, 'switch_requested', False):
-                        return  # Exit this run loop to switch to another instance
+                # Handle chat switching
+                if self._should_switch(user_input, break_on_switch):
+                    return
+                    
+                # Handle commands
+                if self._handle_commands(user_input, break_on_switch):
                     continue
-                else:
-                    self.handle_regular_input(user_input)
+                    
+                # Process regular input
+                self.handle_regular_input(user_input)
 
         except KeyboardInterrupt:
             print("\nInterrupted. Saving config and exiting.")
             raise  # Re-raise to let main handle the exit
         finally:
             self.save_config()
+
+    def _display_header(self):
+        """Display the application header."""
+        self.ui.clear_screen()
+        print(f"\nLoaded config from: {ConfigManager.CONFIG_PATH}\n")
+        print(f"Model: {self.selected_model}")
+
+    def _get_user_input(self):
+        """Get user input with prompt."""
+        prompt_text = self.ui.generate_prompt_text()
+        return Prompt.ask(prompt_text).strip()
+
+    def _should_switch(self, user_input, break_on_switch):
+        """Check if we should switch chats."""
+        # Check if switch requested programmatically
+        if break_on_switch and getattr(self, 'switch_requested', False):
+            self._reset_switch_flags()
+            return True
+            
+        # Check for direct switch command
+        if break_on_switch and user_input.strip().lower() == "/switch":
+            return True
+            
+        # Check for twist command
+        if break_on_switch and user_input.strip().lower() == "/twist":
+            self.commands.cmd_twist()
+            return True
+            
+        return False
+
+    def _reset_switch_flags(self):
+        """Reset switch flags on all chat instances."""
+        self.switch_requested = False
+        if hasattr(self, 'chat_instances') and self.chat_instances:
+            for chat in self.chat_instances:
+                if hasattr(chat, 'switch_requested'):
+                    chat.switch_requested = False
+
+    def _handle_commands(self, user_input, break_on_switch):
+        """Handle command processing."""
+        # Special check for quit command
+        if user_input.strip().lower() == "/quit":
+            self.commands.cmd_quit()
+            return True
+        
+        # Process other commands
+        if self.commands.parse_and_execute(user_input):
+            if break_on_switch and getattr(self, 'switch_requested', False):
+                return True
+            return True
+            
+        return False

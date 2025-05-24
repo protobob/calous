@@ -243,50 +243,55 @@ class CommandHandler:
         self.app.ui.show_variables()
         
     def cmd_twist(self):
-        """Twist command - Copy the last AI response, switch chats, and send it as a prompt.
-        
-        This command will:
-        1. Copy the last AI response from the current chat
-        2. Switch to the other chat
-        3. Use the copied response as the prompt in the new chat
-        """
-        # Find the last assistant message
-        last_assistant_msg = None
-        for msg in reversed(self.app.chat_history.history):
-            if msg.get("role") == "assistant":
-                last_assistant_msg = msg
-                break
-        
+        """Copy the last AI response, switch chats, and send it as a prompt."""
+        # Get last AI response
+        last_assistant_msg = self._find_last_assistant_message()
         if not last_assistant_msg:
             print("[bold red]No assistant response to twist![/bold red]")
             return
         
-        # Get the content to use as prompt in the other chat
+        # Get the content and validate
         twist_content = last_assistant_msg.get("content", "")
         if not twist_content:
             print("[bold red]Empty response to twist![/bold red]")
             return
         
-        # Show which message is being twisted
-        current_chat_color = "green" if self.app.active_chat_index == 0 else "blue"
-        print(f"[bold {current_chat_color}]↪ Twisting this message: [/bold {current_chat_color}][italic {current_chat_color}]\"{twist_content[:50]}{'...' if len(twist_content) > 50 else ''}\"[/italic {current_chat_color}]")
+        # Show twist preview and store content
+        self._display_twist_preview(twist_content)
+        self._store_twist_content(twist_content)
         
-        # Store the twist content for use after switching
+        # Request chat switch
+        self.app.switch_requested = True
+
+    def _find_last_assistant_message(self):
+        """Find the last assistant message in the chat history."""
+        for msg in reversed(self.app.chat_history.history):
+            if msg.get("role") == "assistant":
+                return msg
+        return None
+
+    def _display_twist_preview(self, content):
+        """Display a preview of the content being twisted."""
+        current_chat_color = "green" if self.app.active_chat_index == 0 else "blue"
+        preview = content[:50] + ('...' if len(content) > 50 else '')
+        print(f"[bold {current_chat_color}]↪ Twisting this message: "
+              f"[/bold {current_chat_color}][italic {current_chat_color}]\"{preview}\"[/italic {current_chat_color}]")
+
+    def _store_twist_content(self, content):
+        """Store the twist content for the other chat instance."""
         current_index = self.app.active_chat_index
         other_index = 1 - current_index
         
-        # Make sure all twist_content values are cleared first
+        # Clear any existing twist content
         for chat in self.app.chat_instances:
             if hasattr(chat, 'twist_content'):
                 chat.twist_content = None
         
-        # Then store the twist content on the target chat instance
-        self.app.chat_instances[other_index].twist_content = twist_content
+        # Store on target chat instance
+        target_chat = self.app.chat_instances[other_index]
+        target_chat.twist_content = content
         
-        # Determine target chat color
+        # Show confirmation
         target_chat_color = "green" if other_index == 0 else "blue"
-        print(f"[bold {target_chat_color}]Twisting response to Chat {other_index + 1}...[/bold {target_chat_color}]")
-        
-        # Signal to exit the run loop and switch chats
-        # We need to tell app.py to exit its run loop
-        self.app.switch_requested = True
+        print(f"[bold {target_chat_color}]Twisting response to Chat {other_index + 1}..."
+              f"[/bold {target_chat_color}]")

@@ -1,126 +1,160 @@
 """Entry point for the hiollama package."""
 from .app import HiOllamaChat
 from rich import print
+from typing import List, Optional
 
-def main():
-    # Create two chat instances
+def setup_chats() -> List[HiOllamaChat]:
+    """Initialize and configure chat instances."""
     chats = [HiOllamaChat(), HiOllamaChat()]
-    active_index = 0
     
-    for chat in chats:
-        # Pass active index and chat list to both instances
-        chat.active_chat_index = active_index
+    # Configure chat instances
+    for i, chat in enumerate(chats):
+        chat.active_chat_index = i
         chat.chat_instances = chats
     
-    print("\n[bold]Created two chat instances. Use '/switch' to toggle between them.\nUse '/twist' to send an AI response from one chat as a prompt to the other chat.[/bold]")
-    # Display initial context by simulating a switch to chat 0
-    chats[active_index].ui.clear_screen()
-    chat_color = "green"  # Chat 0 is green
+    return chats
+
+def display_welcome() -> None:
+    """Display welcome message for the application."""
+    print("\n[bold]Created two chat instances. Use '/switch' to toggle between them.\n"
+          "Use '/twist' to send an AI response from one chat as a prompt to the other chat.[/bold]")
+
+def display_chat_header(chat_index: int) -> str:
+    """Display the chat header and return the chat color."""
+    chat_color = "green" if chat_index == 0 else "blue"
     
-    # Print HIOLLAMA! in rainbow colors - fixed markup
-    print("\n[bold][red]H[/red][orange1]I[/orange1][yellow1]O[/yellow1][green]L[/green][blue]L[/blue][purple]A[/purple][magenta]M[/magenta][red]A[/red][orange1]![/orange1][/bold]\n")
+    # Print HIOLLAMA! in rainbow colors
+    print("\n[bold][red]H[/red][orange1]I[/orange1][yellow1]O[/yellow1][green]L[/green]"
+          "[blue]L[/blue][purple]A[/purple][magenta]M[/magenta][red]A[/red][orange1]![/orange1][/bold]\n")
     
     # Print chat header with color
-    print(f"[bold {chat_color}]CHAT {active_index + 1}_____________[/bold {chat_color}]")
+    print(f"[bold {chat_color}]CHAT {chat_index + 1}_____________[/bold {chat_color}]")
     
-    # Print this chat's system prompt with grey color and colored bar
-    print(f"[bold {chat_color}]|[/bold {chat_color}] [grey42]SYS: {chats[active_index].system_prompt['content']}[/grey42]")
+    return chat_color
+
+def display_chat_context(chat: HiOllamaChat, chat_color: str) -> None:
+    """Display the current chat context (system prompt, history)."""
+    # Print system prompt with grey color and colored bar
+    print(f"[bold {chat_color}]|[/bold {chat_color}] [grey42]SYS: {chat.system_prompt['content']}[/grey42]")
     
-    # First run flag - already showed header so set to False
-    first_run = False
+    # Find and display recent messages if they exist
+    last_messages = find_last_messages(chat)
+    if last_messages.get('user'):
+        display_message_preview(chat_color, "YOU", last_messages['user'])
+        
+    if last_messages.get('assistant'):
+        display_message_preview(chat_color, "LLM", last_messages['assistant'])
+
+def find_last_messages(chat):
+    """Find the last user and assistant messages in chat history."""
+    last_messages = {}
+    
+    if len(chat.chat_history.history) >= 2:
+        # Find the last assistant message first
+        for i, msg in enumerate(reversed(chat.chat_history.history)):
+            if msg.get("role") == "assistant":
+                last_messages['assistant'] = msg
+                
+                # Then look for the last user message before it
+                for umsg in reversed(chat.chat_history.history[:-(i+1)]):
+                    if umsg.get("role") == "user":
+                        last_messages['user'] = umsg
+                        break
+                break
+    
+    return last_messages
+
+def display_message_preview(chat_color, role, message):
+    """Display a preview of a message."""
+    content = message.get('content', '')
+    first_line = content.split('\n')[0]
+    preview = first_line[:100] + ('...' if len(first_line) > 100 or len(content.split('\n')) > 1 else '')
+    print(f"[bold {chat_color}]|[/bold {chat_color}] [grey42]{role}: {preview}[/grey42]")
+
+def handle_twist_content(chat: HiOllamaChat, source_index: int) -> None:
+    """Process and display twisted content from another chat."""
+    twist_content = chat.twist_content
+    
+    if not twist_content:
+        return
+        
+    # Determine source chat color
+    source_chat_color = "green" if source_index == 0 else "blue"
     
     try:
-        # Start with chat[0]
+        # Add a header for the twisted content
+        print(f"\n[bold {source_chat_color}]TWIST FROM CHAT {source_index + 1}:[/bold {source_chat_color}]")
+        
+        # Display content preview
+        if isinstance(twist_content, str):
+            first_line = twist_content.split('\n')[0]
+            preview = first_line[:100] + ('...' if len(first_line) > 100 or len(twist_content.split('\n')) > 1 else '')
+            print(f"[bold {source_chat_color}]|[/bold {source_chat_color}] [grey42]{preview}[/grey42]")
+        else:
+            print(f"[bold {source_chat_color}]|[/bold {source_chat_color}] [grey42][italic]Empty content[/italic][/grey42]")
+        
+        print()  # Add spacing
+        
+        # Send the twist content to the model
+        if twist_content is not None:
+            chat.handle_regular_input(twist_content)
+            
+    except Exception as e:
+        print(f"[bold red]Error handling twist content: {e}[/bold red]")
+    
+    # Clear twist content from both chats
+    chat.twist_content = None
+    chat.chat_instances[source_index].twist_content = None
+    
+    # Reset switch flags
+    chat.switch_requested = False
+    chat.chat_instances[source_index].switch_requested = False
+
+def save_all_configs(chats: List[HiOllamaChat]) -> None:
+    """Save configurations for all chat instances."""
+    print("\n[bold]Exiting and saving configurations.[/bold]")
+    for chat in chats:
+        try:
+            chat.save_config()
+        except Exception as e:
+            print(f"Error saving config: {e}")
+
+def main():
+    """Main application entry point."""
+    # Setup chat instances
+    chats = setup_chats()
+    active_index = 0
+    
+    # Display welcome and initial context
+    display_welcome()
+    chats[active_index].ui.clear_screen()
+    chat_color = display_chat_header(active_index)
+    display_chat_context(chats[active_index], chat_color)
+    
+    try:
+        # Main application loop
+        first_run = False  # Already showed header
         while True:
+            # Run the active chat until switch is requested
             chats[active_index].active_chat_index = active_index
             chats[active_index].run(break_on_switch=True, skip_header=(not first_run))
-            first_run = False  # After first run, don't show header again
-            # Toggle between 0 and 1
+            first_run = False
+            
+            # Switch to the other chat
             active_index = 1 - active_index
-            # Clear screen when switching
+            
+            # Display the new active chat's context
             chats[active_index].ui.clear_screen()
+            chat_color = display_chat_header(active_index)
+            display_chat_context(chats[active_index], chat_color)
             
-            # Color based on chat number
-            chat_color = "green" if active_index == 0 else "blue"
-            
-            # Print HIOLLAMA! in rainbow colors - fixed markup
-            print("\n[bold][red]H[/red][orange1]I[/orange1][yellow1]O[/yellow1][green]L[/green][blue]L[/blue][purple]A[/purple][magenta]M[/magenta][red]A[/red][orange1]![/orange1][/bold]\n")
-            
-            # Print chat header with color
-            print(f"[bold {chat_color}]CHAT {active_index + 1}_____________[/bold {chat_color}]")
-            # Print this chat's system prompt with grey color and colored bar
-            print(f"[bold {chat_color}]|[/bold {chat_color}] [grey42]SYS: {chats[active_index].system_prompt['content']}[/grey42]")
-            
-            # Add a more robust check for twist_content
-            twist_content = None
-            if hasattr(chats[active_index], 'twist_content') and chats[active_index].twist_content:
-                twist_content = chats[active_index].twist_content
-            
-            # Find the last user message and assistant response
-            last_user_msg = None
-            last_assistant_msg = None
-            
-            if len(chats[active_index].chat_history.history) >= 2:
-                # First find the last assistant message
-                for i, msg in enumerate(reversed(chats[active_index].chat_history.history)):
-                    if msg.get("role") == "assistant":
-                        last_assistant_msg = msg
-                        # Now look for the user message that came before it
-                        for umsg in reversed(chats[active_index].chat_history.history[:-(i+1)]):
-                            if umsg.get("role") == "user":
-                                last_user_msg = umsg
-                                break
-                        break
-                
-                # Print the user's last message with grey color and colored bar
-                if last_user_msg:
-                    print(f"[bold {chat_color}]|[/bold {chat_color}] [grey42]YOU: {last_user_msg.get('content')}[/grey42]")
-                # Print the AI's response with grey color and colored bar
-                if last_assistant_msg:
-                    print(f"[bold {chat_color}]|[/bold {chat_color}] [grey42]LLM: {last_assistant_msg.get('content')}[/grey42]")
-                
-            # If we have twist content, send it to the model
+            # Check for and handle any twisted content
+            twist_content = getattr(chats[active_index], 'twist_content', None)
             if twist_content:
-                # Determine source chat color (opposite of current chat color)
-                source_chat_index = 1 - active_index
-                source_chat_color = "green" if source_chat_index == 0 else "blue"
-                try:
-                    # Add a header similar to the CHAT header style
-                    print(f"\n[bold {source_chat_color}]TWIST FROM CHAT {source_chat_index + 1}_____________[/bold {source_chat_color}]")
-                    
-                    # Format the preview to make it clear it came from another chat, using the vertical bar style
-                    if twist_content is not None and isinstance(twist_content, str):
-                        # Get just the first line (or up to 100 chars if no newline)
-                        first_line = twist_content.split('\n')[0]
-                        preview = first_line[:100] + ('...' if len(first_line) > 100 or len(twist_content.split('\n')) > 1 else '')
-                        # Use same format as SYS/YOU/LLM messages with grey text and colored bar
-                        print(f"[bold {source_chat_color}]|[/bold {source_chat_color}] [grey42]{preview}[/grey42]")
-                    else:
-                        print(f"[bold {source_chat_color}]|[/bold {source_chat_color}] [grey42][italic]Empty content[/italic][/grey42]")
-                    
-                    # Add a small separator underneath
-                    print()
-                    
-                except Exception as e:
-                    print(f"[bold red]Error formatting twist content preview: {e}[/bold red]")
+                handle_twist_content(chats[active_index], 1 - active_index)
                 
-                # Use the handle_regular_input method to ensure consistent processing
-                if twist_content is not None:
-                    chats[active_index].handle_regular_input(twist_content)
-                # Clear the twist content regardless
-                chats[active_index].twist_content = None
-                chats[1-active_index].twist_content = None
-                # Also reset any switch_requested flags
-                chats[active_index].switch_requested = False
-                chats[1-active_index].switch_requested = False
-    
     except KeyboardInterrupt:
-        print("\n[bold]Exiting and saving configurations.[/bold]")
-        for chat in chats:
-            try:
-                chat.save_config()
-            except:
-                pass
+        save_all_configs(chats)
 
 if __name__ == "__main__":
     main()
