@@ -24,10 +24,11 @@ class HiOllamaChat:
         }
         self.logging_enabled = self.config.get("logging_enabled", True)
         self.prompts = self.config.get("prompts", {f"prompt{i}": "" for i in range(1, 11)})
-        
-        # For multi-instance support
+          # For multi-instance support
         self.active_chat_index = 0
         self.chat_instances = []
+        self.twist_content = None  # Initialize twist_content attribute
+        self.switch_requested = False  # Initialize switch_requested flag
         
         # Initialize components
         self.ui = UIManager(self)
@@ -66,16 +67,39 @@ class HiOllamaChat:
             print(f"\nLoaded config from: {ConfigManager.CONFIG_PATH}\n")
             print(f"Model: {self.selected_model}")
 
-        try:
+        try:            
             while True:
                 prompt_text = self.ui.generate_prompt_text()
                 user_input = Prompt.ask(prompt_text).strip()
-
-                # Check for switch command if in multi-instance mode
-                if break_on_switch and user_input.strip().lower() == "/switch":
+                  # Check if we need to switch chats (only happens when switching from the outside)
+                if break_on_switch and getattr(self, 'switch_requested', False):
+                    # Reset the flag for next time
+                    self.switch_requested = False
+                    # Also make sure any chat instances we're aware of have their flags reset
+                    if hasattr(self, 'chat_instances') and self.chat_instances:
+                        for chat in self.chat_instances:
+                            if hasattr(chat, 'switch_requested'):
+                                chat.switch_requested = False
                     return  # Exit this run loop to switch to another instance
                 
+                # Check for direct switch command
+                if break_on_switch and user_input.strip().lower() == "/switch":
+                    return  # Exit this run loop to switch to another instance
+                    # Check for direct twist command 
+                if break_on_switch and user_input.strip().lower() == "/twist":
+                    # Handle directly here to bypass command processing
+                    self.commands.cmd_twist()
+                    return  # Exit this run loop to switch to another instance
+                
+                # Special check for quit command (don't continue processing after quit)
+                if user_input.strip().lower() == "/quit":
+                    self.commands.cmd_quit()  # This will call exit() directly
+                    continue  # Skip further processing (this line never executes due to exit())
+                
                 if self.commands.parse_and_execute(user_input):
+                    # If the command handler sets switch_requested flag, handle it
+                    if break_on_switch and getattr(self, 'switch_requested', False):
+                        return  # Exit this run loop to switch to another instance
                     continue
                 else:
                     self.handle_regular_input(user_input)

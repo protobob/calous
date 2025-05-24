@@ -13,11 +13,11 @@ class CommandHandler:
             "/quit": self.cmd_quit,
             "/model": self.cmd_model,
             "/toggle_think": self.cmd_toggle_think,
-            "/clear": self.cmd_clear,
-            "/history": self.cmd_history,
+            "/clear": self.cmd_clear,            "/history": self.cmd_history,
             "/toggle_eval": self.cmd_toggle_eval,
             "/toggle_log": self.cmd_toggle_log,
-            "/showvar": self.cmd_showvar  # Add the new command
+            "/showvar": self.cmd_showvar,  # Add the new command
+            "/twist": self.cmd_twist  # Add the twist command
         }
     
     def parse_and_execute(self, user_input):
@@ -82,9 +82,22 @@ class CommandHandler:
     
     def cmd_quit(self):
         """Save configuration and exit the program."""
-        self.app.save_config()
-        print("Exiting.")
-        exit()
+        print("Saving configuration and exiting...")
+        
+        # Save configuration for all chat instances
+        if hasattr(self.app, 'chat_instances') and self.app.chat_instances:
+            for chat in self.app.chat_instances:
+                try:
+                    chat.save_config()
+                except Exception as e:
+                    print(f"Error saving config: {e}")
+        else:
+            # Just save this instance's config
+            self.app.save_config()
+        
+        # Use os._exit(0) to force exit all threads
+        import os
+        os._exit(0)
     
     def cmd_model(self):
         """Select a different model."""
@@ -225,7 +238,55 @@ class CommandHandler:
             self.app.handle_regular_input(file_prompt)
         except Exception as e:
             print(f"Failed to load file: {e}")
-    
     def cmd_showvar(self):
         """Display system variables."""
         self.app.ui.show_variables()
+        
+    def cmd_twist(self):
+        """Twist command - Copy the last AI response, switch chats, and send it as a prompt.
+        
+        This command will:
+        1. Copy the last AI response from the current chat
+        2. Switch to the other chat
+        3. Use the copied response as the prompt in the new chat
+        """
+        # Find the last assistant message
+        last_assistant_msg = None
+        for msg in reversed(self.app.chat_history.history):
+            if msg.get("role") == "assistant":
+                last_assistant_msg = msg
+                break
+        
+        if not last_assistant_msg:
+            print("[bold red]No assistant response to twist![/bold red]")
+            return
+        
+        # Get the content to use as prompt in the other chat
+        twist_content = last_assistant_msg.get("content", "")
+        if not twist_content:
+            print("[bold red]Empty response to twist![/bold red]")
+            return
+        
+        # Show which message is being twisted
+        current_chat_color = "green" if self.app.active_chat_index == 0 else "blue"
+        print(f"[bold {current_chat_color}]↪ Twisting this message: [/bold {current_chat_color}][italic {current_chat_color}]\"{twist_content[:50]}{'...' if len(twist_content) > 50 else ''}\"[/italic {current_chat_color}]")
+        
+        # Store the twist content for use after switching
+        current_index = self.app.active_chat_index
+        other_index = 1 - current_index
+        
+        # Make sure all twist_content values are cleared first
+        for chat in self.app.chat_instances:
+            if hasattr(chat, 'twist_content'):
+                chat.twist_content = None
+        
+        # Then store the twist content on the target chat instance
+        self.app.chat_instances[other_index].twist_content = twist_content
+        
+        # Determine target chat color
+        target_chat_color = "green" if other_index == 0 else "blue"
+        print(f"[bold {target_chat_color}]Twisting response to Chat {other_index + 1}...[/bold {target_chat_color}]")
+        
+        # Signal to exit the run loop and switch chats
+        # We need to tell app.py to exit its run loop
+        self.app.switch_requested = True

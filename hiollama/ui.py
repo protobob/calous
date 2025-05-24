@@ -54,11 +54,12 @@ class UIManager:
         """Display the help menu with available commands."""
         current_history_len = len(self.app.chat_history.history)
         print(
-            "\n[bold]Welcome to 'Hi, Ollama!' v0.2[/bold]\n"
-            "\n[bold]General Commands:[/bold]"
+            "\n[bold]Welcome to 'Hi, Ollama!' v0.2[/bold]\n"            "\n[bold]General Commands:[/bold]"
             "\n  /help          - Show this help menu."
             "\n  /quit          - Exit the program and save the configuration."
             "\n  /showvar       - Display current system variables."
+            "\n  /switch        - Switch between Chat 1 and Chat 2."
+            "\n  /twist         - Copy AI's last response, switch chats, and use it as prompt."
             "\n"
             "\n[bold]Model Commands:[/bold]"
             "\n  /model         - Select a different model."
