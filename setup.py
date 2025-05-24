@@ -1,8 +1,9 @@
 from setuptools import setup, find_packages
+from hiollama.constants import APP_VERSION
 
 setup(
     name="hiollama",
-    version="0.5",
+    version=APP_VERSION,  # Use the centralized version constant
     description="A friendly CLI for interacting with Ollama language models.",
     author="Ollie McDaniel",
     packages=find_packages(),  # Automatically find all packages in the project
