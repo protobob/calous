@@ -40,6 +40,9 @@ class HiOllamaChat:
         self.model = ModelInteraction(self)
         self.commands = CommandHandler(self)
         
+        # Initialize last response attribute
+        self.last_response = None  # Add this to store the last response
+        
     def save_config(self):
         """Save the current configuration."""
         self.config["selected_model"] = self.selected_model

@@ -76,8 +76,10 @@ class ModelInteraction:
         """Process the response from the model, handles logging, and updates chat history."""
         raw_response = response.get('message', {}).get('content', '')
         if not raw_response:
-            print("[bold red]Error:[/bold red] Response does not contain the expected 'message' or 'content' keys.")
             return
+
+        # Store the last response in the HiOllamaChat instance
+        self.app.last_response = response  # Store the entire response dictionary
 
         clean_response = self.app.chat_history.strip_thoughts(raw_response) if self.app.think_filtering else raw_response
         if not clean_response:

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2] - 2025-05-24
+
+### Changed
+
+- Updated `/twist` command to use the last response dictionary instead of assistant chat history.
+- Added `last_response` attribute to store the most recent AI response for better handling of twist functionality.
+
 ## [0.1.1-dev] - 2025-05-24
 
 ### Updated

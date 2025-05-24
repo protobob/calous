@@ -230,22 +230,20 @@ class CommandHandler:
 
     def cmd_twist(self):
         """Copy the last AI response, switch chats, and send it as a prompt."""
-        # Get last AI response
-        last_assistant_msg = self._find_last_assistant_message()
-        if not last_assistant_msg:
-            print("[bold red]No assistant response to twist![/bold red]")
+        # Get the last response dictionary
+        last_response = self.app.last_response
+        if not last_response:
             return
-        
-        # Get the content and validate
-        twist_content = last_assistant_msg.get("content", "")
+
+        # Extract the content from the last response
+        twist_content = last_response.get("message", {}).get("content", "")
         if not twist_content:
-            print("[bold red]Empty response to twist![/bold red]")
             return
-        
+
         # Show twist preview and store content
         self._display_twist_preview(twist_content)
         self._store_twist_content(twist_content)
-        
+
         # Request chat switch
         self.app.switch_requested = True
 
