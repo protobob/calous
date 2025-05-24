@@ -4,6 +4,7 @@ from rich.prompt import Prompt
 from rich import print
 from .utils import get_chat_color, format_message_preview, reset_twist_content
 from .constants import MAX_PROMPTS
+from .config import ConfigManager
 
 class CommandHandler:
     def __init__(self, app):
@@ -18,7 +19,7 @@ class CommandHandler:
             "/history": self.cmd_history,
             "/toggle_eval": self.cmd_toggle_eval,
             "/toggle_log": self.cmd_toggle_log,
-            "/showvar": self.cmd_showvar,
+            "/showvars": self.cmd_showvars,  # Updated command name
             "/twist": self.cmd_twist
         }
     
@@ -36,48 +37,22 @@ class CommandHandler:
                 if len(parts) <= min_args:
                     print(usage_msg)
                     return True
-                    
-                # Extract arguments and call handler
-                args = [part.strip() for part in parts[1:]]
-                handler_func(*args)
+                
+                handler_func(*parts[1:])
                 return True
-            # Check for exact command match without arguments
             elif user_input.lower() == command_prefix:
-                print(usage_msg)  # Show usage when command is used without arguments
+                handler_func()
                 return True
             return False
-    
-        # Handle special commands that need arguments
-        if handle_command_with_args("/load", 2, "Usage: /load filename prompt", self.cmd_load):
-            return True
-    
-        if handle_command_with_args("/system", 1, "Usage: /system new system prompt", self.cmd_system):
-            return True
-    
-        if handle_command_with_args("/setmax", 1, "Usage: /setmax NUMBER (even number between 2-100)", self.cmd_setmax):
-            return True
-    
-        if handle_command_with_args("/setprompt", 2, "Usage: /setprompt NUMBER PROMPT_TEXT (NUMBER must be 1-10)", self.cmd_setprompt):
-            return True
-    
-        if handle_command_with_args("/prompt", 1, "Usage: /prompt NUMBER (number between 1-10)", self.cmd_prompt):
-            return True
-    
-        if handle_command_with_args("/showprompt", 1, "Usage: /showprompt NUMBER or /showprompt all", self.cmd_showprompt):
-            return True
-    
-        # Handle standard commands from the dictionary
-        command = user_input.split()[0].lower()
-        
-        if command in self.commands:
-            self.commands[command]()
-            return True
-        else:
-            print(f"Unknown command: {command}. Type /help for a list of commands.")
-            return True
+
+        # Execute the command if it matches
+        for command, handler in self.commands.items():
+            if user_input.lower().startswith(command):
+                handler()
+                return True
         
         return False
-        
+
     def cmd_help(self):
         """Display the help menu."""
         self.app.ui.help_menu()
@@ -242,10 +217,20 @@ class CommandHandler:
         except Exception as e:
             print(f"Failed to load file: {e}")
             
-    def cmd_showvar(self):
-        """Display system variables."""
-        self.app.ui.show_variables()
-        
+    def cmd_showvars(self):
+        """Display application variables, including log and config paths."""
+        self.app.ui.display_variables(
+            active_chat_index=self.app.active_chat_index,
+            selected_model=self.app.selected_model,
+            verbosity=self.app.verbosity,
+            think_filtering=self.app.think_filtering,
+            max_history=self.app.MAX_HISTORY,
+            system_prompt=self.app.system_prompt['content'],
+            logging_enabled=self.app.logging_enabled,
+            log_dir=self.app.chat_history.log_dir,
+            config_path=ConfigManager.get_config_path(self.app.instance_index)
+        )
+
     def cmd_twist(self):
         """Copy the last AI response, switch chats, and send it as a prompt."""
         # Get last AI response

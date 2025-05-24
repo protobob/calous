@@ -9,7 +9,7 @@ from .utils import (
 
 def setup_chats() -> List[HiOllamaChat]:
     """Initialize and configure chat instances."""
-    chats = [HiOllamaChat(), HiOllamaChat()]
+    chats = [HiOllamaChat(0), HiOllamaChat(1)]
     
     # Configure chat instances
     for i, chat in enumerate(chats):

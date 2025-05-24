@@ -43,7 +43,7 @@ class UIManager:
         # Prepare the 'You' part with chat number if available
         you_text = "[bold]You[/bold]"
         if hasattr(self.app, 'active_chat_index'):
-            you_text = f"[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]{chat_index + 1})[/bold {chat_color}][bold]You[/bold]"
+            you_text = f"[bold {chat_color}]|[/bold {chat_color}][bold {chat_color}]{chat_index + 1})[/bold {chat_color}][bold]You[/bold]"
             
         return (
             f"\n"
@@ -109,3 +109,31 @@ class UIManager:
             f"\n  System Prompt:  [italic]{self.app.system_prompt['content']}[/italic]"
             "\n"
         )
+        
+    def display_variables(
+        self,
+        active_chat_index,
+        selected_model,
+        verbosity,
+        think_filtering,
+        max_history,
+        system_prompt,
+        logging_enabled,
+        log_dir,
+        config_path
+    ):
+        """Display application variables in a clean, aligned format."""
+        chat_color = get_chat_color(active_chat_index)
+
+        # Title with CHAT # in the chat color
+        print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]CHAT {active_chat_index + 1} VARIABLES[/bold {chat_color}]\n")
+
+        # Variables with updated formatting
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Selected Model:':<20} {selected_model}")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Max History:':<20} [bold cyan]{max_history}[/bold cyan]")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Verbosity:':<20} [bold][{'green' if verbosity else 'red'}]{verbosity}[/{'green' if verbosity else 'red'}][/bold]")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Think Filtering:':<20} [bold][{'green' if think_filtering else 'red'}]{think_filtering}[/{'green' if think_filtering else 'red'}][/bold]")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Logging Enabled:':<20} [bold][{'green' if logging_enabled else 'red'}]{logging_enabled}[/{'green' if logging_enabled else 'red'}][/bold]")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Config Path:':<20} [grey70]{config_path}[/grey70]")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Log Directory:':<20} [grey70]{log_dir}[/grey70]")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'System Prompt:':<20} [grey70]{system_prompt}[/grey70]\n")

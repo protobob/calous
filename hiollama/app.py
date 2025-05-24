@@ -12,8 +12,9 @@ from .utils import reset_switch_flags
 from .constants import DEFAULT_MODEL, DEFAULT_MAX_HISTORY, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS
 
 class HiOllamaChat:
-    def __init__(self):
-        self.config = ConfigManager.load_config()
+    def __init__(self, instance_index):
+        self.instance_index = instance_index
+        self.config = ConfigManager.load_config(instance_index)
         
         # Initialize attributes from config
         self.selected_model = self.config.get("selected_model", DEFAULT_MODEL)
@@ -28,14 +29,14 @@ class HiOllamaChat:
         self.prompts = self.config.get("prompts", {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)})
           
         # For multi-instance support
-        self.active_chat_index = 0
+        self.active_chat_index = instance_index
         self.chat_instances = []
         self.twist_content = None  # Initialize twist_content attribute
         self.switch_requested = False  # Initialize switch_requested flag
         
         # Initialize components
         self.ui = UIManager(self)
-        self.chat_history = ChatHistory(self)
+        self.chat_history = ChatHistory(self, instance_index)
         self.model = ModelInteraction(self)
         self.commands = CommandHandler(self)
         
@@ -48,7 +49,7 @@ class HiOllamaChat:
         self.config["system_prompt"] = self.system_prompt["content"]
         self.config["logging_enabled"] = self.logging_enabled
         self.config["prompts"] = self.prompts
-        ConfigManager.save_config(self.config)
+        ConfigManager.save_config(self.config, self.instance_index)
             
     def handle_regular_input(self, user_input):
         """Process regular user input (non-commands)."""
@@ -94,7 +95,7 @@ class HiOllamaChat:
     def _display_header(self):
         """Display the application header."""
         self.ui.clear_screen()
-        print(f"\nLoaded config from: {ConfigManager.CONFIG_PATH}\n")
+        print(f"\nLoaded config from: {ConfigManager.get_config_path(self.instance_index)}\n")
         print(f"Model: {self.selected_model}")
 
     def _get_user_input(self):

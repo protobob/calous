@@ -6,9 +6,12 @@ from rich import print
 from .constants import LOG_DIR
 
 class ChatHistory:
-    def __init__(self, app):
+    def __init__(self, app, instance_index):
         self.app = app
+        self.instance_index = instance_index
         self.history = []
+        self.log_dir = LOG_DIR / f"chat_{instance_index}"
+        self.log_dir.mkdir(parents=True, exist_ok=True)
         
     def add_message(self, role, content):
         """Add a message to the chat history, respecting the maximum history limit."""
@@ -34,9 +37,7 @@ class ChatHistory:
             return
         try:
             timestamp = datetime.now()
-            log_dir = LOG_DIR
-            log_dir.mkdir(exist_ok=True)
-            log_filename = log_dir / f"{timestamp.strftime('%Y-%m-%d')}.txt"
+            log_filename = self.log_dir / f"{timestamp.strftime('%Y-%m-%d')}.txt"
             with open(log_filename, "a", encoding="utf-8") as f:
                 f.write(f"[{timestamp.strftime('%H:%M:%S')}] You: {prompt}\n")
                 f.write(f"[{timestamp.strftime('%H:%M:%S')}] {self.app.selected_model}: {response}\n\n")
