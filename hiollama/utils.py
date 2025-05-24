@@ -1,7 +1,7 @@
 """Utility functions for the hiollama package."""
 from rich import print
 from typing import Optional, Dict, Any
-from .constants import CHAT_COLORS, MAX_PREVIEW_LENGTH, RAINBOW_COLORS, RAINBOW_TEXT, HEADER_SEPARATOR
+from .constants import CHAT_COLORS, MAX_PREVIEW_LENGTH, RAINBOW_COLORS, RAINBOW_TEXT, HEADER_SEPARATOR, APP_VERSION
 from pathlib import Path
 
 def get_chat_color(chat_index: int) -> str:
@@ -21,13 +21,17 @@ def format_message_preview(content: Any, max_length: int = MAX_PREVIEW_LENGTH) -
     return first_line[:max_length] + ('...' if has_more else '')
 
 def print_rainbow_header() -> None:
-    """Print the HIOLLAMA! header in rainbow colors."""
+    """Print the HIOLLAMA! header in rainbow colors with the version below."""
     rainbow_text = ""
     for i, char in enumerate(RAINBOW_TEXT):
         color = RAINBOW_COLORS[i % len(RAINBOW_COLORS)]
         rainbow_text += f"[{color}]{char}[/{color}]"
-        
-    print(f"\n[bold]{rainbow_text}[/bold]\n")
+    
+    # Print the rainbow header
+    print(f"\n[bold]{rainbow_text}[/bold]")
+    
+    # Print the version below the header in darker grey
+    print(f"[grey30]v.{APP_VERSION}[/grey30]\n")
 
 def print_chat_header(chat_index: int) -> str:
     """Print the chat header and return the chat color."""

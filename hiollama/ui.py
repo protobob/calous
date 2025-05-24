@@ -4,6 +4,7 @@ from rich.live import Live
 from rich.spinner import Spinner
 from rich.prompt import Prompt
 from rich import print
+from rich.table import Table
 import threading
 import time
 import os
@@ -53,43 +54,53 @@ class UIManager:
         
     def help_menu(self):
         """Display the help menu with available commands."""
-        current_history_len = len(self.app.chat_history.history)
-        print(
-            f"\n[bold]Welcome to 'Hi, Ollama!' v{APP_VERSION}[/bold]\n"            
-            "\n[bold]General Commands:[/bold]"
-            "\n  /help          - Show this help menu."
-            "\n  /quit          - Exit the program and save the configuration."
-            "\n  /showvar       - Display current system variables."
-            "\n  /switch        - Switch between Chat 1 and Chat 2."
-            "\n  /twist         - Copy AI's last response, switch chats, and use it as prompt."
-            "\n"
-            "\n[bold]Model Commands:[/bold]"
-            "\n  /model         - Select a different model."
-            "\n  /toggle_eval   - Toggle evaluation data display after responses."
-            "\n  /toggle_think  - Toggle filtering of LLM 'thoughts' (for reasoning models)."
-            "\n"
-            "\n[bold]Prompt Commands:[/bold]"
-            "\n  /setprompt     - Set a saved prompt. Usage: /setprompt NUMBER PROMPT_TEXT"
-            "\n                  Example: /setprompt 1 This is a saved prompt."
-            "\n  /prompt        - Use a saved prompt. Usage: /prompt NUMBER"
-            "\n                  Example: /prompt 1"
-            "\n  /showprompt    - Display saved prompts. Usage: /showprompt NUMBER or /showprompt all"
-            "\n                  Example: /showprompt 1 or /showprompt all"
-            "\n  /system        - Change the system prompt. Usage: /system NEW_SYSTEM_PROMPT"
-            "\n                  Example: /system You are a helpful AI assistant."
-            "\n"
-            "\n[bold]Chat History Commands:[/bold]"
-            "\n  /history       - Display the current chat history."
-            "\n  /clear         - Clear the current chat history."
-            "\n  /setmax        - Set maximum chat history. Usage: /setmax NUMBER (even number between 2-100)."
-            "\n                  Example: /setmax 20"
-            "\n  /toggle_log    - Toggle logging of chat history."
-            "\n"
-            "\n[bold]File Commands:[/bold]"
-            "\n  /load          - Load a file as a prompt. Usage: /load FILENAME PROMPT"
-            "\n                  Example: /load example.txt Summarize this file."
-            "\n"
-        )
+        # Define the command color as a variable
+        command_color = "dark_orange3"
+
+        # Create a table for the help menu
+        table = Table(show_header=False, box=None, padding=(0, 1))
+        table.add_column("Command", style=f"bold {command_color}", no_wrap=True)
+        table.add_column("Description", style="grey70")
+
+        # Add a header for General Commands
+        table.add_row("[bold white]General Commands:[/bold white]", "")
+        table.add_row(f"[bold {command_color}]/help[/bold {command_color}]", "Show this help menu.")
+        table.add_row(f"[bold {command_color}]/quit[/bold {command_color}]", "Exit the program and save the configuration.")
+        table.add_row(f"[bold {command_color}]/showvars[/bold {command_color}]", "Display current system variables.")
+        table.add_row(f"[bold {command_color}]/switch[/bold {command_color}]", f"Switch between [bold green]CHAT1[/bold green] and [bold blue]CHAT2[/bold blue].")
+        table.add_row(f"[bold {command_color}]/twist[/bold {command_color}]", "Copy AI's last response, switch chats, and use it as a prompt.")
+
+        # Add a header for Model Commands
+        table.add_row("", "")  # Empty row for spacing
+        table.add_row("[bold white]Model Commands:[/bold white]", "")
+        table.add_row(f"[bold {command_color}]/model[/bold {command_color}]", "Select a different model.")
+        table.add_row(f"[bold {command_color}]/toggle_eval[/bold {command_color}]", "Toggle evaluation data display after responses.")
+        table.add_row(f"[bold {command_color}]/toggle_think[/bold {command_color}]", "Toggle filtering of LLM 'thoughts'.")
+
+        # Add a header for Prompt Commands
+        table.add_row("", "")  # Empty row for spacing
+        table.add_row("[bold white]Prompt Commands:[/bold white]", "")
+        table.add_row(f"[bold {command_color}]/setprompt[/bold {command_color}]", f"Set a saved prompt. Usage: [bold {command_color}]/setprompt NUMBER PROMPT_TEXT[/bold {command_color}].")
+        table.add_row(f"[bold {command_color}]/prompt[/bold {command_color}]", f"Use a saved prompt. Usage: [bold {command_color}]/prompt NUMBER[/bold {command_color}].")
+        table.add_row(f"[bold {command_color}]/showprompt[/bold {command_color}]", f"Display saved prompts. Usage: [bold {command_color}]/showprompt NUMBER[/bold {command_color}] or [bold {command_color}]/showprompt all[/bold {command_color}].")
+        table.add_row(f"[bold {command_color}]/system[/bold {command_color}]", "Change the system prompt.")
+
+        # Add a header for Chat History Commands
+        table.add_row("", "")  # Empty row for spacing
+        table.add_row("[bold white]Chat History Commands:[/bold white]", "")
+        table.add_row(f"[bold {command_color}]/history[/bold {command_color}]", "Display the current chat history.")
+        table.add_row(f"[bold {command_color}]/clear[/bold {command_color}]", "Clear the current chat history.")
+        table.add_row(f"[bold {command_color}]/setmax[/bold {command_color}]", f"Set maximum chat history. Usage: [bold {command_color}]/setmax NUMBER[/bold {command_color}].")
+        table.add_row(f"[bold {command_color}]/toggle_log[/bold {command_color}]", "Toggle logging of chat history.")
+
+        # Add a header for File Commands
+        table.add_row("", "")  # Empty row for spacing
+        table.add_row("[bold white]File Commands:[/bold white]", "")
+        table.add_row(f"[bold {command_color}]/load[/bold {command_color}]", f"Load a file as a prompt. Usage: [bold {command_color}]/load FILENAME PROMPT[/bold {command_color}].")
+
+        # Print the table
+        print(f"\n[bold grey70]| GLOBAL HELP MENU[/bold grey70]\n")
+        print(table)
         
     def clear_screen(self):
         """Clear the terminal screen."""
