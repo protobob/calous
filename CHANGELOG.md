@@ -2,7 +2,7 @@
 
 ## [0.1.1-dev] - 2025-05-24
 
-### Changed
+### Updated
 
 - Improved the `/help` menu:
   - Updated command colors to `dark yellow` for better distinction.

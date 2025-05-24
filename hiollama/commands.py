@@ -27,30 +27,22 @@ class CommandHandler:
         """Parse and execute commands."""
         if not user_input.startswith('/'):
             return False
-        
-        # Helper function to handle commands that need arguments
-        def handle_command_with_args(command_prefix, min_args, usage_msg, handler_func):
-            if user_input.lower().startswith(command_prefix + " "):
-                parts = user_input.split(" ", min_args)  # Split based on required args
-                
-                # Check if we have enough arguments
-                if len(parts) <= min_args:
-                    print(usage_msg)
-                    return True
-                
-                handler_func(*parts[1:])
-                return True
-            elif user_input.lower() == command_prefix:
-                handler_func()
-                return True
-            return False
+
+        # Handle commands with arguments
+        if user_input.lower().startswith("/system "):
+            parts = user_input.split(" ", 1)  # Split into command and arguments
+            if len(parts) > 1:
+                self.cmd_system(parts[1])
+            else:
+                print("[bold red]Error:[/bold red] No system prompt provided.")
+            return True
 
         # Execute the command if it matches
         for command, handler in self.commands.items():
             if user_input.lower().startswith(command):
                 handler()
                 return True
-        
+
         return False
 
     def cmd_help(self):
@@ -103,8 +95,13 @@ class CommandHandler:
         """Display the chat history."""
         self.app.chat_history.print_history()
     
-    def cmd_system(self, new_prompt):
+    def cmd_system(self, *args):
         """Change the system prompt."""
+        new_prompt = " ".join(args).strip()
+        if not new_prompt:
+            print("[bold red]Error:[/bold red] System prompt cannot be empty.")
+            return
+
         print(f"\nPrevious System Prompt: [grey50]{self.app.system_prompt['content']}[/grey50]")
         self.app.system_prompt = {"role": "system", "content": new_prompt}
         self.app.config["system_prompt"] = new_prompt
