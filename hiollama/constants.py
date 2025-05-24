@@ -6,7 +6,7 @@ CHAT_COLORS = {0: "green", 1: "blue"}
 
 # UI formatting
 MAX_PREVIEW_LENGTH = 100
-HEADER_SEPARATOR = "_____________"
+HEADER_SEPARATOR = ": SUMMARY"
 
 # Rainbow text colors for logo
 RAINBOW_COLORS = ["red", "orange1", "yellow1", "green", "blue", "purple", "magenta", "red", "orange1"]

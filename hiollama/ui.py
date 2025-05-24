@@ -40,14 +40,12 @@ class UIManager:
         chat_index = getattr(self.app, 'active_chat_index', 0)
         chat_color = get_chat_color(chat_index)
         
-        # Prepare the 'You' part with chat number if available
-        you_text = "[bold]You[/bold]"
-        if hasattr(self.app, 'active_chat_index'):
-            you_text = f"[bold {chat_color}]|[/bold {chat_color}][bold {chat_color}]{chat_index + 1})[/bold {chat_color}][bold]You[/bold]"
-            
+        # Prepare the 'YOU:' part
+        you_text = f"[bold {chat_color}]|[/bold {chat_color}] [bold]YOU[/bold]"
+
         return (
             f"\n"
-            f"[bold {chat_color}]|[/bold {chat_color}] [italic][bold {chat_color}]CH:[/bold {chat_color}]"  # Colored CH indicator with vertical bar
+            f"[bold {chat_color}]|[/bold {chat_color}] [italic][bold {chat_color}]CH:[/bold {chat_color}]"
             f"[grey70]{current_history_len}/{self.app.MAX_HISTORY}[/grey70][/italic]"
             f"[grey50] (Type /help for help.)[/grey50]\n"
             f"{you_text}"
