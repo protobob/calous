@@ -1,7 +1,11 @@
 """Entry point for the hiollama package."""
 from .app import HiOllamaChat
 from rich import print
-from typing import List, Optional
+from typing import List, Dict, Any, Optional
+from .utils import (
+    get_chat_color, print_chat_header, print_message_with_bar, 
+    reset_twist_content, reset_switch_flags, format_message_preview
+)
 
 def setup_chats() -> List[HiOllamaChat]:
     """Initialize and configure chat instances."""
@@ -19,33 +23,7 @@ def display_welcome() -> None:
     print("\n[bold]Created two chat instances. Use '/switch' to toggle between them.\n"
           "Use '/twist' to send an AI response from one chat as a prompt to the other chat.[/bold]")
 
-def display_chat_header(chat_index: int) -> str:
-    """Display the chat header and return the chat color."""
-    chat_color = "green" if chat_index == 0 else "blue"
-    
-    # Print HIOLLAMA! in rainbow colors
-    print("\n[bold][red]H[/red][orange1]I[/orange1][yellow1]O[/yellow1][green]L[/green]"
-          "[blue]L[/blue][purple]A[/purple][magenta]M[/magenta][red]A[/red][orange1]![/orange1][/bold]\n")
-    
-    # Print chat header with color
-    print(f"[bold {chat_color}]CHAT {chat_index + 1}_____________[/bold {chat_color}]")
-    
-    return chat_color
-
-def display_chat_context(chat: HiOllamaChat, chat_color: str) -> None:
-    """Display the current chat context (system prompt, history)."""
-    # Print system prompt with grey color and colored bar
-    print(f"[bold {chat_color}]|[/bold {chat_color}] [grey42]SYS: {chat.system_prompt['content']}[/grey42]")
-    
-    # Find and display recent messages if they exist
-    last_messages = find_last_messages(chat)
-    if last_messages.get('user'):
-        display_message_preview(chat_color, "YOU", last_messages['user'])
-        
-    if last_messages.get('assistant'):
-        display_message_preview(chat_color, "LLM", last_messages['assistant'])
-
-def find_last_messages(chat):
+def find_last_messages(chat: HiOllamaChat) -> Dict[str, Any]:
     """Find the last user and assistant messages in chat history."""
     last_messages = {}
     
@@ -64,12 +42,18 @@ def find_last_messages(chat):
     
     return last_messages
 
-def display_message_preview(chat_color, role, message):
-    """Display a preview of a message."""
-    content = message.get('content', '')
-    first_line = content.split('\n')[0]
-    preview = first_line[:100] + ('...' if len(first_line) > 100 or len(content.split('\n')) > 1 else '')
-    print(f"[bold {chat_color}]|[/bold {chat_color}] [grey42]{role}: {preview}[/grey42]")
+def display_chat_context(chat: HiOllamaChat, chat_color: str) -> None:
+    """Display the current chat context (system prompt, history)."""
+    # Print system prompt with grey color and colored bar
+    print_message_with_bar(chat_color, "SYS", chat.system_prompt['content'])
+    
+    # Find and display recent messages if they exist
+    last_messages = find_last_messages(chat)
+    if last_messages.get('user'):
+        print_message_with_bar(chat_color, "YOU", last_messages['user'].get('content', ''))
+        
+    if last_messages.get('assistant'):
+        print_message_with_bar(chat_color, "LLM", last_messages['assistant'].get('content', ''))
 
 def handle_twist_content(chat: HiOllamaChat, source_index: int) -> None:
     """Process and display twisted content from another chat."""
@@ -79,19 +63,17 @@ def handle_twist_content(chat: HiOllamaChat, source_index: int) -> None:
         return
         
     # Determine source chat color
-    source_chat_color = "green" if source_index == 0 else "blue"
+    source_chat_color = get_chat_color(source_index)
     
     try:
         # Add a header for the twisted content
         print(f"\n[bold {source_chat_color}]TWIST FROM CHAT {source_index + 1}:[/bold {source_chat_color}]")
         
-        # Display content preview
+        # Display content preview using the utility function
         if isinstance(twist_content, str):
-            first_line = twist_content.split('\n')[0]
-            preview = first_line[:100] + ('...' if len(first_line) > 100 or len(twist_content.split('\n')) > 1 else '')
-            print(f"[bold {source_chat_color}]|[/bold {source_chat_color}] [grey42]{preview}[/grey42]")
+            print_message_with_bar(source_chat_color, "", twist_content)
         else:
-            print(f"[bold {source_chat_color}]|[/bold {source_chat_color}] [grey42][italic]Empty content[/italic][/grey42]")
+            print_message_with_bar(source_chat_color, "", "[italic]Empty content[/italic]")
         
         print()  # Add spacing
         
@@ -102,13 +84,9 @@ def handle_twist_content(chat: HiOllamaChat, source_index: int) -> None:
     except Exception as e:
         print(f"[bold red]Error handling twist content: {e}[/bold red]")
     
-    # Clear twist content from both chats
-    chat.twist_content = None
-    chat.chat_instances[source_index].twist_content = None
-    
-    # Reset switch flags
-    chat.switch_requested = False
-    chat.chat_instances[source_index].switch_requested = False
+    # Clear twist content and switch flags from both chats
+    reset_twist_content(chat)
+    reset_switch_flags(chat)
 
 def save_all_configs(chats: List[HiOllamaChat]) -> None:
     """Save configurations for all chat instances."""
@@ -128,7 +106,7 @@ def main():
     # Display welcome and initial context
     display_welcome()
     chats[active_index].ui.clear_screen()
-    chat_color = display_chat_header(active_index)
+    chat_color = print_chat_header(active_index)
     display_chat_context(chats[active_index], chat_color)
     
     try:
@@ -145,7 +123,7 @@ def main():
             
             # Display the new active chat's context
             chats[active_index].ui.clear_screen()
-            chat_color = display_chat_header(active_index)
+            chat_color = print_chat_header(active_index)
             display_chat_context(chats[active_index], chat_color)
             
             # Check for and handle any twisted content

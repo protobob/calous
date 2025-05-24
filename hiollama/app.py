@@ -8,6 +8,7 @@ from .commands import CommandHandler
 from .ui import UIManager
 from .chat_history import ChatHistory
 from .model_interaction import ModelInteraction
+from .utils import reset_switch_flags
 
 class HiOllamaChat:
     def __init__(self):
@@ -24,7 +25,8 @@ class HiOllamaChat:
         }
         self.logging_enabled = self.config.get("logging_enabled", True)
         self.prompts = self.config.get("prompts", {f"prompt{i}": "" for i in range(1, 11)})
-          # For multi-instance support
+          
+        # For multi-instance support
         self.active_chat_index = 0
         self.chat_instances = []
         self.twist_content = None  # Initialize twist_content attribute
@@ -101,29 +103,24 @@ class HiOllamaChat:
 
     def _should_switch(self, user_input, break_on_switch):
         """Check if we should switch chats."""
+        if not break_on_switch:
+            return False
+            
         # Check if switch requested programmatically
-        if break_on_switch and getattr(self, 'switch_requested', False):
-            self._reset_switch_flags()
+        if getattr(self, 'switch_requested', False):
+            reset_switch_flags(self)
             return True
             
         # Check for direct switch command
-        if break_on_switch and user_input.strip().lower() == "/switch":
+        if user_input.strip().lower() == "/switch":
             return True
             
         # Check for twist command
-        if break_on_switch and user_input.strip().lower() == "/twist":
+        if user_input.strip().lower() == "/twist":
             self.commands.cmd_twist()
             return True
             
         return False
-
-    def _reset_switch_flags(self):
-        """Reset switch flags on all chat instances."""
-        self.switch_requested = False
-        if hasattr(self, 'chat_instances') and self.chat_instances:
-            for chat in self.chat_instances:
-                if hasattr(chat, 'switch_requested'):
-                    chat.switch_requested = False
 
     def _handle_commands(self, user_input, break_on_switch):
         """Handle command processing."""

@@ -2,6 +2,7 @@
 import ollama
 import requests
 from rich import print
+from .utils import get_chat_color
 
 class ModelInteraction:
     def __init__(self, app):
@@ -53,8 +54,8 @@ class ModelInteraction:
             clean_response = "[No valid response received from the model.]"
         
         # Determine color based on chat index
-        chat_color = "green" if getattr(self.app, 'active_chat_index', 0) == 0 else "blue"
         chat_index = getattr(self.app, 'active_chat_index', 0)
+        chat_color = get_chat_color(chat_index)
         
         # Print with colored bar, colored chat number and underlined model name, response on a new line
         print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]{chat_index + 1})[/bold {chat_color}][underline]{self.app.selected_model}[/underline]:\n")

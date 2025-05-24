@@ -7,6 +7,7 @@ from rich import print
 import threading
 import time
 import os
+from .utils import get_chat_color
 
 class UIManager:
     def __init__(self, app):
@@ -35,12 +36,13 @@ class UIManager:
         current_history_len = len(self.app.chat_history.history)
         
         # Determine color based on chat index
-        chat_color = "green" if getattr(self.app, 'active_chat_index', 0) == 0 else "blue"
+        chat_index = getattr(self.app, 'active_chat_index', 0)
+        chat_color = get_chat_color(chat_index)
         
         # Prepare the 'You' part with chat number if available
         you_text = "[bold]You[/bold]"
         if hasattr(self.app, 'active_chat_index'):
-            you_text = f"[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]{self.app.active_chat_index + 1})[/bold {chat_color}][bold]You[/bold]"
+            you_text = f"[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]{chat_index + 1})[/bold {chat_color}][bold]You[/bold]"
             
         return (
             f"\n"
@@ -54,7 +56,8 @@ class UIManager:
         """Display the help menu with available commands."""
         current_history_len = len(self.app.chat_history.history)
         print(
-            "\n[bold]Welcome to 'Hi, Ollama!' v0.2[/bold]\n"            "\n[bold]General Commands:[/bold]"
+            "\n[bold]Welcome to 'Hi, Ollama!' v0.2[/bold]\n"            
+            "\n[bold]General Commands:[/bold]"
             "\n  /help          - Show this help menu."
             "\n  /quit          - Exit the program and save the configuration."
             "\n  /showvar       - Display current system variables."

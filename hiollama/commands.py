@@ -2,7 +2,7 @@
 from pathlib import Path
 from rich.prompt import Prompt
 from rich import print
-from .utils import Utils
+from .utils import get_chat_color, format_message_preview, reset_twist_content
 
 class CommandHandler:
     def __init__(self, app):
@@ -13,11 +13,12 @@ class CommandHandler:
             "/quit": self.cmd_quit,
             "/model": self.cmd_model,
             "/toggle_think": self.cmd_toggle_think,
-            "/clear": self.cmd_clear,            "/history": self.cmd_history,
+            "/clear": self.cmd_clear,
+            "/history": self.cmd_history,
             "/toggle_eval": self.cmd_toggle_eval,
             "/toggle_log": self.cmd_toggle_log,
-            "/showvar": self.cmd_showvar,  # Add the new command
-            "/twist": self.cmd_twist  # Add the twist command
+            "/showvar": self.cmd_showvar,
+            "/twist": self.cmd_twist
         }
     
     def parse_and_execute(self, user_input):
@@ -233,11 +234,13 @@ class CommandHandler:
             if not file_message:
                 file_message = Prompt.ask("[bold]Instructions[/bold]")
                 
+            from .utils import Utils
             file_prompt = Utils.load_file_as_prompt(filepath, file_message)
             print(f"\n[grey50]Sent [italic]{filepath}[/italic] -- hold on, this might take awhile...[/grey50]")
             self.app.handle_regular_input(file_prompt)
         except Exception as e:
             print(f"Failed to load file: {e}")
+            
     def cmd_showvar(self):
         """Display system variables."""
         self.app.ui.show_variables()
@@ -272,8 +275,8 @@ class CommandHandler:
 
     def _display_twist_preview(self, content):
         """Display a preview of the content being twisted."""
-        current_chat_color = "green" if self.app.active_chat_index == 0 else "blue"
-        preview = content[:50] + ('...' if len(content) > 50 else '')
+        current_chat_color = get_chat_color(self.app.active_chat_index)
+        preview = format_message_preview(content, 50)
         print(f"[bold {current_chat_color}]↪ Twisting this message: "
               f"[/bold {current_chat_color}][italic {current_chat_color}]\"{preview}\"[/italic {current_chat_color}]")
 
@@ -283,15 +286,13 @@ class CommandHandler:
         other_index = 1 - current_index
         
         # Clear any existing twist content
-        for chat in self.app.chat_instances:
-            if hasattr(chat, 'twist_content'):
-                chat.twist_content = None
+        reset_twist_content(self.app)
         
         # Store on target chat instance
         target_chat = self.app.chat_instances[other_index]
         target_chat.twist_content = content
         
         # Show confirmation
-        target_chat_color = "green" if other_index == 0 else "blue"
+        target_chat_color = get_chat_color(other_index)
         print(f"[bold {target_chat_color}]Twisting response to Chat {other_index + 1}..."
               f"[/bold {target_chat_color}]")
