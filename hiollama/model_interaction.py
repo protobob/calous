@@ -3,6 +3,7 @@ import ollama
 import requests
 from rich import print
 from .utils import get_chat_color
+from .constants import OLLAMA_API_URL, API_TIMEOUT
 
 class ModelInteraction:
     def __init__(self, app):
@@ -17,7 +18,7 @@ class ModelInteraction:
     def list_ollama_models(self):
         """Get a list of available Ollama models."""
         try:
-            response = requests.get("http://localhost:11434/api/tags", timeout=5)
+            response = requests.get(OLLAMA_API_URL, timeout=API_TIMEOUT)
             response.raise_for_status()
             return [model["name"] for model in response.json().get("models", [])]
         except Exception as e:

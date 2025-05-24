@@ -1,17 +1,17 @@
 """Configuration management for Hi, Ollama!"""
 import json
-from pathlib import Path
 from rich import print
+from .constants import CONFIG_PATH, DEFAULT_MODEL, DEFAULT_MAX_HISTORY, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS
 
 class ConfigManager:
-    CONFIG_PATH = Path.home() / ".hiollama_config.json"
+    CONFIG_PATH = CONFIG_PATH
     DEFAULT_CONFIG = {
-        "selected_model": "qwen3:0.6B",
+        "selected_model": DEFAULT_MODEL,
         "verbosity": True,
         "think_filtering": True,
-        "MAX_HISTORY": 20,
-        "system_prompt": "You are a direct, technical assistant. Don't be enthusiastic. No greetings, no apologies. No emojis or other symbols! Answer like you're helping a peer debug code.",
-        "prompts": {f"prompt{i}": "" for i in range(1, 11)},
+        "MAX_HISTORY": DEFAULT_MAX_HISTORY,
+        "system_prompt": DEFAULT_SYSTEM_PROMPT,
+        "prompts": {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)},
         "logging_enabled": True
     }
     

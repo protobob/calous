@@ -3,6 +3,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 from rich import print
+from .constants import LOG_DIR
 
 class ChatHistory:
     def __init__(self, app):
@@ -33,7 +34,7 @@ class ChatHistory:
             return
         try:
             timestamp = datetime.now()
-            log_dir = Path.home() / "hiollama_logs"
+            log_dir = LOG_DIR
             log_dir.mkdir(exist_ok=True)
             log_filename = log_dir / f"{timestamp.strftime('%Y-%m-%d')}.txt"
             with open(log_filename, "a", encoding="utf-8") as f:

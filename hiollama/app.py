@@ -9,22 +9,23 @@ from .ui import UIManager
 from .chat_history import ChatHistory
 from .model_interaction import ModelInteraction
 from .utils import reset_switch_flags
+from .constants import DEFAULT_MODEL, DEFAULT_MAX_HISTORY, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS
 
 class HiOllamaChat:
     def __init__(self):
         self.config = ConfigManager.load_config()
         
         # Initialize attributes from config
-        self.selected_model = self.config.get("selected_model", "qwen3:0.6B")
+        self.selected_model = self.config.get("selected_model", DEFAULT_MODEL)
         self.verbosity = self.config.get("verbosity", True)
         self.think_filtering = self.config.get("think_filtering", True)
-        self.MAX_HISTORY = self.config.get("MAX_HISTORY", 20)
+        self.MAX_HISTORY = self.config.get("MAX_HISTORY", DEFAULT_MAX_HISTORY)
         self.system_prompt = {
             "role": "system",
-            "content": self.config.get("system_prompt", "You are a direct, technical assistant. Don't be enthusiastic. No greetings, no apologies. No emojis or other symbols! Answer like you're helping a peer debug code.")
+            "content": self.config.get("system_prompt", DEFAULT_SYSTEM_PROMPT)
         }
         self.logging_enabled = self.config.get("logging_enabled", True)
-        self.prompts = self.config.get("prompts", {f"prompt{i}": "" for i in range(1, 11)})
+        self.prompts = self.config.get("prompts", {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)})
           
         # For multi-instance support
         self.active_chat_index = 0

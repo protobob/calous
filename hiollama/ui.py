@@ -8,6 +8,7 @@ import threading
 import time
 import os
 from .utils import get_chat_color
+from .constants import APP_VERSION
 
 class UIManager:
     def __init__(self, app):
@@ -56,7 +57,7 @@ class UIManager:
         """Display the help menu with available commands."""
         current_history_len = len(self.app.chat_history.history)
         print(
-            "\n[bold]Welcome to 'Hi, Ollama!' v0.2[/bold]\n"            
+            f"\n[bold]Welcome to 'Hi, Ollama!' v{APP_VERSION}[/bold]\n"            
             "\n[bold]General Commands:[/bold]"
             "\n  /help          - Show this help menu."
             "\n  /quit          - Exit the program and save the configuration."

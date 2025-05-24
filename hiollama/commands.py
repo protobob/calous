@@ -3,6 +3,7 @@ from pathlib import Path
 from rich.prompt import Prompt
 from rich import print
 from .utils import get_chat_color, format_message_preview, reset_twist_content
+from .constants import MAX_PROMPTS
 
 class CommandHandler:
     def __init__(self, app):
@@ -169,7 +170,7 @@ class CommandHandler:
             prompt_number = int(prompt_number_str)
             
             # Check if the value is valid
-            if 1 <= prompt_number <= 10:
+            if 1 <= prompt_number <= MAX_PROMPTS:
                 # Join all prompt parts to create the full prompt text
                 new_prompt = " ".join(prompt_parts).strip()
                 if not new_prompt:
@@ -180,7 +181,7 @@ class CommandHandler:
                 print(f"Prompt{prompt_number} set successfully!")
                 self.app.save_config()
             else:
-                print("Invalid prompt number. Please enter a number between 1 and 10.")
+                print(f"Invalid prompt number. Please enter a number between 1 and {MAX_PROMPTS}.")
         except ValueError:
             print("Invalid input. Please enter a valid number.")
     
@@ -188,7 +189,7 @@ class CommandHandler:
         """Use a saved prompt."""
         try:
             prompt_number = int(prompt_number_str)
-            if 1 <= prompt_number <= 10:
+            if 1 <= prompt_number <= MAX_PROMPTS:
                 selected_prompt = self.app.prompts[f"prompt{prompt_number}"]
                 if selected_prompt:
                     print(f"Using Prompt{prompt_number}: {selected_prompt}")
@@ -196,7 +197,7 @@ class CommandHandler:
                 else:
                     print(f"Prompt{prompt_number} is empty. Set it first using /setprompt.")
             else:
-                print("Invalid prompt number. Please enter a number between 1 and 10.")
+                print(f"Invalid prompt number. Please enter a number between 1 and {MAX_PROMPTS}.")
         except ValueError:
             print("Invalid input. Please enter a valid number.")
     
@@ -206,20 +207,20 @@ class CommandHandler:
             if prompt_selector.lower() == "all":
                 # Show all prompts
                 print("\n--- Saved Prompts ---")
-                for i in range(1, 11):
+                for i in range(1, MAX_PROMPTS + 1):
                     prompt = self.app.prompts[f"prompt{i}"]
                     print(f"Prompt{i}: {prompt if prompt else '[Empty]'}")
                 print("---------------------\n")
             elif prompt_selector.isdigit():
                 # Show a specific prompt
                 prompt_number = int(prompt_selector)
-                if 1 <= prompt_number <= 10:
+                if 1 <= prompt_number <= MAX_PROMPTS:
                     prompt = self.app.prompts[f"prompt{prompt_number}"]
                     print(f"\nPrompt{prompt_number}: {prompt if prompt else '[Empty]'}\n")
                 else:
-                    print("Invalid prompt number. Please enter a number between 1 and 10.")
+                    print(f"Invalid prompt number. Please enter a number between 1 and {MAX_PROMPTS}.")
             else:
-                print("Invalid input. Use '/showprompt all' or '/showprompt NUMBER' (1-10).")
+                print(f"Invalid input. Use '/showprompt all' or '/showprompt NUMBER' (1-{MAX_PROMPTS}).")
         except Exception as e:
             print(f"Error displaying prompts: {e}")
     
