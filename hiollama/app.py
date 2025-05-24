@@ -56,9 +56,6 @@ class HiOllamaChat:
             
     def handle_regular_input(self, user_input):
         """Process regular user input (non-commands)."""
-        # Add the user message to history before sending to the model
-        self.chat_history.add_message("user", user_input)  
-    
         try:
             response = self.ui.run_with_spinner(self.model.talk_to_model, user_input)
             self.model.process_response(user_input, response)
@@ -66,7 +63,10 @@ class HiOllamaChat:
             print(f"Ollama API Error: {e}")
         except Exception as e:
             print(f"Model Error: {e}")
-            
+    
+        # Add the user message to history after sending to the model
+        self.chat_history.add_message("user", user_input)
+        
     def run(self, break_on_switch=False, skip_header=False):
         """Main application loop."""
         # Display header if needed

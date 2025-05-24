@@ -26,20 +26,18 @@ def display_welcome() -> None:
 def find_last_messages(chat: HiOllamaChat) -> Dict[str, Any]:
     """Find the last user and assistant messages in chat history."""
     last_messages = {}
-    
-    if len(chat.chat_history.history) >= 2:
-        # Find the last assistant message first
-        for i, msg in enumerate(reversed(chat.chat_history.history)):
-            if msg.get("role") == "assistant":
-                last_messages['assistant'] = msg
-                
-                # Then look for the last user message before it
-                for umsg in reversed(chat.chat_history.history[:-(i+1)]):
-                    if umsg.get("role") == "user":
-                        last_messages['user'] = umsg
-                        break
-                break
-    
+
+    # Iterate through the chat history in reverse to find the last assistant and user messages
+    for msg in reversed(chat.chat_history.history):
+        if not last_messages.get('assistant') and msg.get("role") == "assistant":
+            last_messages['assistant'] = msg
+        elif not last_messages.get('user') and msg.get("role") == "user":
+            last_messages['user'] = msg
+        
+        # Stop searching if both messages are found
+        if last_messages.get('assistant') and last_messages.get('user'):
+            break
+
     return last_messages
 
 def display_chat_context(chat: HiOllamaChat, chat_color: str) -> None:
@@ -47,11 +45,13 @@ def display_chat_context(chat: HiOllamaChat, chat_color: str) -> None:
     # Print system prompt with grey color and colored bar
     print_message_with_bar(chat_color, "SYS", chat.system_prompt['content'])
     
-    # Find and display recent messages if they exist
+    # Display the last user message
     last_messages = find_last_messages(chat)
     if last_messages.get('user'):
-        print_message_with_bar(chat_color, "YOU", last_messages['user'].get('content', ''))
-        
+            print_message_with_bar(chat_color, "YOU", last_messages['user'].get('content', ''))
+    
+    # Display the last assistant message
+    last_messages = find_last_messages(chat)
     if last_messages.get('assistant'):
         print_message_with_bar(chat_color, "LLM", last_messages['assistant'].get('content', ''))
 
