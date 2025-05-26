@@ -102,37 +102,46 @@ def main():
     # Setup chat instances
     chats = setup_chats()
     active_index = 0
-    
-    # Display welcome and initial context
+
+    # Display welcome message and initial context
     display_welcome()
-    chats[active_index].ui.clear_screen()
-    chat_color = print_chat_header(active_index)
-    display_chat_context(chats[active_index], chat_color)
-    
+    initialize_chat_context(chats, active_index)
+
     try:
         # Main application loop
-        first_run = False  # Already showed header
-        while True:
-            # Run the active chat until switch is requested
-            chats[active_index].active_chat_index = active_index
-            chats[active_index].run(break_on_switch=True, skip_header=(not first_run))
-            first_run = False
-            
-            # Switch to the other chat
-            active_index = 1 - active_index
-            
-            # Display the new active chat's context
-            chats[active_index].ui.clear_screen()
-            chat_color = print_chat_header(active_index)
-            display_chat_context(chats[active_index], chat_color)
-            
-            # Check for and handle any twisted content
-            twist_content = getattr(chats[active_index], 'twist_content', None)
-            if twist_content:
-                handle_twist_content(chats[active_index], 1 - active_index)
-                
+        run_application_loop(chats, active_index)
     except KeyboardInterrupt:
         save_all_configs(chats)
 
-if __name__ == "__main__":
-    main()
+
+def initialize_chat_context(chats: List[HiOllamaChat], active_index: int) -> None:
+    """Initialize and display the context for the active chat."""
+    chats[active_index].ui.clear_screen()
+    chat_color = print_chat_header(active_index)
+    display_chat_context(chats[active_index], chat_color)
+
+
+def run_application_loop(chats: List[HiOllamaChat], active_index: int) -> None:
+    """Run the main application loop."""
+    first_run = True
+    while True:
+        # Run the active chat until a switch is requested
+        chats[active_index].active_chat_index = active_index
+        chats[active_index].run(break_on_switch=True, skip_header=(not first_run))
+        first_run = False
+
+        # Switch to the other chat
+        active_index = 1 - active_index
+
+        # Display the new active chat's context
+        initialize_chat_context(chats, active_index)
+
+        # Handle any twisted content
+        handle_twist_if_present(chats, active_index)
+
+
+def handle_twist_if_present(chats: List[HiOllamaChat], active_index: int) -> None:
+    """Check for and handle any twisted content."""
+    twist_content = getattr(chats[active_index], 'twist_content', None)
+    if twist_content:
+        handle_twist_content(chats[active_index], 1 - active_index)

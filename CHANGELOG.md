@@ -1,6 +1,13 @@
 # Changelog
 
-## [0.1.2] - 2025-05-24
+## [0.1.3.dev] - 2025-05-26
+
+### Changed
+- Refactored `main` function for improved readability and modularity.
+- Added `handle_twist_if_present` to process twisted content during chat switching.
+- Improved `initialize_chat_context` for better context initialization.
+
+## [0.1.2.dev] - 2025-05-24
 
 ### Changed
 

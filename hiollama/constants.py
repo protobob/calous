@@ -29,4 +29,4 @@ CONFIG_PATH = Path.home() / ".hiollama_config.json"
 MAX_PROMPTS = 10
 
 # Application metadata
-APP_VERSION = "0.1.2.dev"  # Updated version
+APP_VERSION = "0.1.3.dev"  # Updated version
