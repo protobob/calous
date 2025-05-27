@@ -13,12 +13,19 @@ from .utils import print_rainbow_header
 from .constants import DEFAULT_MODEL, DEFAULT_MAX_HISTORY, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS
 
 class HiOllamaChat:
+    # Class-level global configuration
+    _global_config = None
+    
     def __init__(self, instance_index):
         self.instance_index = instance_index
         self.config = ConfigManager.load_config(instance_index)
         
+        # Load global config if not already loaded
+        if HiOllamaChat._global_config is None:
+            HiOllamaChat._global_config = ConfigManager.load_global_config()
+        
         # Initialize attributes from config
-        self.selected_model = self.config.get("selected_model", DEFAULT_MODEL)
+        self.selected_model = HiOllamaChat._global_config.get("selected_model", DEFAULT_MODEL)
         self.verbosity = self.config.get("verbosity", True)
         self.think_filtering = self.config.get("think_filtering", True)
         self.MAX_HISTORY = self.config.get("MAX_HISTORY", DEFAULT_MAX_HISTORY)
@@ -43,10 +50,30 @@ class HiOllamaChat:
         
         # Initialize last response attribute
         self.last_response = None  # Add this to store the last response
+    
+    @classmethod
+    def update_global_model(cls, new_model):
+        """Update the selected model globally across all instances."""
+        if cls._global_config is None:
+            cls._global_config = ConfigManager.load_global_config()
+        
+        cls._global_config["selected_model"] = new_model
+        ConfigManager.save_global_config(cls._global_config)
+        
+        # Update all existing instances
+        for instance in getattr(cls, '_all_instances', []):
+            instance.selected_model = new_model
+    
+    @classmethod
+    def register_instance(cls, instance):
+        """Register an instance for global updates."""
+        if not hasattr(cls, '_all_instances'):
+            cls._all_instances = []
+        cls._all_instances.append(instance)
         
     def save_config(self):
         """Save the current configuration."""
-        self.config["selected_model"] = self.selected_model
+        # Save instance-specific config (excluding selected_model)
         self.config["verbosity"] = self.verbosity
         self.config["think_filtering"] = self.think_filtering
         self.config["MAX_HISTORY"] = self.MAX_HISTORY
@@ -54,7 +81,12 @@ class HiOllamaChat:
         self.config["logging_enabled"] = self.logging_enabled
         self.config["prompts"] = self.prompts
         ConfigManager.save_config(self.config, self.instance_index)
-            
+        
+        # Save global config (selected_model)
+        if HiOllamaChat._global_config is not None:
+            HiOllamaChat._global_config["selected_model"] = self.selected_model
+            ConfigManager.save_global_config(HiOllamaChat._global_config)
+    
     def handle_regular_input(self, user_input):
         """Process regular user input (non-commands)."""
         try:

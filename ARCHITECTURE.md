@@ -1,23 +1,26 @@
 # Hi, Ollama! - Technical Architecture
 
-This document provides a technical overview of the `hiollama` project - a command-line interface for interacting with Ollama language models. It explains the package structure, component relationships, and how data flows through the system.
+This document provides a technical overview of the `hiollama` project - a dual-chat command-line interface for interacting with Ollama language models. It explains the package structure, component relationships, and how data flows through the system.
 
 ## Project Structure
 
+```
 hiollama/
 ├── README.md               # User documentation
+├── CHANGELOG.md            # Version history and changes
+├── ARCHITECTURE.md         # This technical documentation
 ├── setup.py                # Package installation configuration
 ├── hiollama/               # Main package directory
 │   ├── __init__.py         # Package initialization
-│   ├── __main__.py         # Entry point
-│   ├── app.py              # Main application class
-│   ├── chat_history.py     # Chat history management
-│   ├── commands.py         # Command handlers
-│   ├── config.py           # Configuration management
-│   ├── constants.py        # Shared constants
-│   ├── model_interaction.py # Model communication logic
-│   ├── ui.py               # User interface elements
-│   └── utils.py            # Utility functions
+│   ├── __main__.py         # Entry point and dual-chat orchestration
+│   ├── app.py              # Main HiOllamaChat class with global model management
+│   ├── chat_history.py     # Instance-specific chat history management
+│   ├── commands.py         # Command handlers with chat-aware functionality
+│   ├── config.py           # Configuration management (global + per-instance)
+│   ├── constants.py        # Shared constants and defaults
+│   ├── model_interaction.py # Ollama API communication
+│   ├── ui.py               # Rich-based user interface with chat colors
+│   └── utils.py            # Utility functions for formatting and chat management
 └── hiollama.egg-info/      # Package metadata (generated)
 ```
 
@@ -25,143 +28,247 @@ hiollama/
 
 The application uses a modular design pattern with these key components:
 
-1. **`HiOllamaChat` (app.py)**: The central class that coordinates all other components and manages the application state. It supports multi-instance chat functionality and handles user input, commands, and model interactions.
+### Core Classes
 
-2. **`ConfigManager` (config.py)**: Handles loading and saving configuration settings for each chat instance. Configurations are stored in JSON files, allowing instance-specific settings.
+1. **`HiOllamaChat` (app.py)**: The central application class that coordinates all other components and manages chat state. Features:
+   - Class-level global model management
+   - Instance registration system for synchronized updates
+   - Dual-chat switching and twist functionality
+   - Configuration management per instance
 
-3. **`UIManager` (ui.py)**: Manages user interface elements, including formatted prompts, spinners, and help menus, using the Rich library.
+2. **`ConfigManager` (config.py)**: Handles both global and instance-specific configuration:
+   - **Global Config**: `~/.hiollama_config_global.json` (shared model selection)
+   - **Instance Configs**: `~/.hiollama_config_0.json`, `~/.hiollama_config_1.json`
+   - Automatic separation of global vs instance-specific settings
 
-4. **`ChatHistory` (chat_history.py)**: Manages conversation history, including adding/removing messages, logging, and displaying chat history.
+3. **`UIManager` (ui.py)**: Rich-based interface management:
+   - Color-coded chat instances (green/blue)
+   - Interactive prompts and spinners
+   - Formatted help menus and variable displays
+   - Chat-aware prompt generation
 
-5. **`ModelInteraction` (model_interaction.py)**: Handles communication with Ollama models, including sending prompts, processing responses, and listing available models.
+4. **`ChatHistory` (chat_history.py)**: Instance-specific conversation management:
+   - Per-chat message storage with configurable limits
+   - Automatic logging to separate directories
+   - Thought filtering for reasoning models
+   - History display and clearing functionality
 
-6. **`CommandHandler` (commands.py)**: Parses and executes commands prefixed with a slash (e.g., `/help`, `/model`). Supports commands for managing chat history, models, prompts, and system settings.
+5. **`ModelInteraction` (model_interaction.py)**: Ollama API communication:
+   - Native `ollama.chat()` and `ollama.list()` integration
+   - Response processing with evaluation data
+   - Model selection interface
+   - Error handling for API failures
 
-7. **`Utils` (utils.py)**: Contains utility functions for formatting messages, printing headers, and loading files as prompts.
+6. **`CommandHandler` (commands.py)**: Comprehensive command system:
+   - Global model changes affecting both chats
+   - Chat switching and twist functionality
+   - Prompt management (save/load/use)
+   - Configuration toggles and file loading
 
-8. **`Constants` (constants.py)**: Defines shared constants, such as default configurations, API settings, and UI colors.
+### Utility Components
 
-## Data Flow and Process
+7. **`Utils` (utils.py)**: Shared utility functions:
+   - Chat color management
+   - Message formatting and previews
+   - Rainbow header display
+   - Switch/twist state management
+
+8. **`Constants` (constants.py)**: Centralized configuration:
+   - UI colors and formatting
+   - Default settings and limits
+   - File paths and API endpoints
+   - Version management
+
+## Data Flow and Architecture Patterns
 
 ### Initialization Process
 
-1. The `__main__.py` file creates two instances of `HiOllamaChat` for multi-instance support.
-2. Each `HiOllamaChat` instance loads its configuration and initializes its components.
-3. The main application loop alternates between the two chat instances.
+1. **Dual-Chat Setup**: `__main__.py` creates two `HiOllamaChat` instances
+2. **Global Registration**: Each instance registers for global model updates
+3. **Configuration Loading**: 
+   - Global config loaded once at class level
+   - Instance configs loaded separately for each chat
+4. **Component Initialization**: UI, history, model interaction, and commands initialized per instance
 
-### Main Application Loop
+### Global Model Management
 
-1. The application displays a prompt using `UIManager.generate_prompt_text()`.
-2. The user enters text input.
-3. The input is processed:
-   - If it begins with `/`, it's sent to `CommandHandler.parse_and_execute()`.
-   - Otherwise, it's sent to `HiOllamaChat.handle_regular_input()`.
+```
+┌─────────────────┐    ┌─────────────────┐
+│   Chat 1        │    │   Chat 2        │
+│                 │    │                 │
+│ ┌─────────────┐ │    │ ┌─────────────┐ │
+│ │ /model cmd  │ │───▶│ │ Auto-update │ │
+│ └─────────────┘ │    │ └─────────────┘ │
+└─────────────────┘    └─────────────────┘
+         │                       ▲
+         ▼                       │
+┌─────────────────────────────────────────┐
+│        Global Config                    │
+│  ~/.hiollama_config_global.json        │
+│  { "selected_model": "qwen3:0.6B" }    │
+└─────────────────────────────────────────┘
+```
 
-### Regular Input Processing
+### Chat Switching and Twist Flow
 
-1. The input is added to chat history with `ChatHistory.add_message()`.
-2. A spinner animation is displayed with `UIManager.run_with_spinner()`.
-3. The model is queried via `ModelInteraction.talk_to_model()`.
-4. The response is processed through `ModelInteraction.process_response()`.
-5. The response is added to chat history and displayed to the user.
+```
+Chat 1 ──/switch──▶ Chat 2
+   │                   ▲
+   │                   │
+   ▼                   │
+/twist ────────────────┘
+   │
+   ▼
+Last Response → Twist Content → Chat 2 Prompt
+```
 
-### Command Processing
+### Command Processing Architecture
 
-Commands are methods in the `CommandHandler` class prefixed with `cmd_`:
+Commands follow a structured pattern:
+- **Input Parsing**: Commands identified by `/` prefix
+- **Argument Handling**: Complex commands parse arguments
+- **Global Updates**: Model changes propagate to all instances
+- **State Management**: Switch/twist requests handled via flags
 
-- `/help` → `cmd_help()`: Displays the help menu.
-- `/model` → `cmd_model()`: Selects a different model.
-- `/clear` → `cmd_clear()`: Clears the chat history.
-- `/twist` → `cmd_twist()`: Copies the last AI response to the other chat instance.
-...and more.
+### Configuration Hierarchy
 
-### Configuration Management
+```
+Global Settings (Shared)
+├── selected_model
+└── [Future global settings]
 
-- Configurations are stored in instance-specific JSON files (e.g., `~/.hiollama_config_0.json`).
-- Loaded at startup via `ConfigManager.load_config()`.
-- Updated when settings change and saved on exit via `ConfigManager.save_config()`.
+Instance Settings (Per-Chat)
+├── system_prompt
+├── verbosity
+├── think_filtering
+├── MAX_HISTORY
+├── saved_prompts (1-10)
+└── logging_enabled
+```
 
-### Logs
+## Key Features Implementation
 
-- Chat logs are stored in `~/hiollama_logs/` with instance-specific subdirectories.
-- File names are based on the current date.
-- Logging can be toggled with the `/toggle_log` command.
+### Dual-Chat System
 
-## Key Features
+- **Independent State**: Each chat maintains separate history, logs, and settings
+- **Synchronized Updates**: Model changes apply globally via class-level management
+- **Seamless Switching**: `/switch` command with state preservation
+- **Twist Functionality**: Response copying between chats with preview
 
-### Multi-Instance Chat
+### Advanced State Management
 
-- Supports two simultaneous chat instances.
-- Users can switch between chats with `/switch`.
-- Responses from one chat can be sent as prompts to the other using `/twist`.
+- **Instance Registration**: New instances automatically register for global updates
+- **Flag-based Switching**: `switch_requested` and `twist_content` attributes coordinate chat changes
+- **Configuration Separation**: Global vs instance-specific settings properly isolated
 
-### Chat History Management
+### Rich Terminal Interface
 
-- Messages are stored in memory as a list of message objects.
-- Maximum history size is configurable (default: 20 messages).
-- History can be viewed with the `/history` command.
+- **Color Coding**: Green (Chat 1) and Blue (Chat 2) with consistent theming
+- **Dynamic Prompts**: Chat-aware prompt generation with history counters
+- **Interactive Elements**: Spinners, confirmations, and formatted displays
+- **Rainbow Header**: Version display with colorful branding
 
-### Model Interaction
+### File and Prompt Management
 
-- Communicates with locally installed Ollama models.
-- Passes system prompts and chat history for context.
-- Formats responses and displays evaluation statistics (optional).
-- Supports filtering of "thought" sections in responses.
+- **Saved Prompts**: 10 slots per chat instance with persistence
+- **File Loading**: Code and text file processing with instructions
+- **System Prompts**: Per-chat customization with defaults
+- **History Management**: Configurable limits with automatic trimming
 
-### Prompt Management
+## Technical Decisions and Patterns
 
-- Saves up to 10 custom prompts.
-- Prompts can be set, viewed, and used with commands.
-- System prompts can be customized.
+### Class-Level Global State
 
-### File Processing
+```python
+class HiOllamaChat:
+    _global_config = None  # Shared across all instances
+    _all_instances = []    # Instance registry for updates
+```
 
-- Can load file contents as prompts.
-- Supports adding instructions for how to process the file.
+Benefits:
+- Ensures model consistency across chats
+- Enables synchronized updates
+- Maintains separation of concerns
 
-## Package Installation
+### Command Pattern Implementation
 
-The project uses standard Python packaging:
+Commands use method mapping with argument parsing:
+```python
+self.commands = {
+    "/help": self.cmd_help,
+    "/model": self.cmd_model,
+    # ... more commands
+}
+```
 
-- `setup.py` defines metadata and dependencies.
-- `entry_points` defines the console script `hiollama`.
-- Installation via `pip install -e .` makes it available system-wide.
+### Configuration Strategy
 
-## Technical Decisions
+- **JSON Storage**: Human-readable and editable
+- **Automatic Separation**: Global vs instance settings
+- **Default Fallbacks**: Graceful handling of missing configs
+- **Error Recovery**: Continues with defaults on load failures
 
-### Rich Library
+### Modern Ollama Integration
 
-The project uses the Rich library for:
+- **Native API**: Uses `ollama.chat()` and `ollama.list()`
+- **Response Objects**: Proper handling of structured responses
+- **Error Handling**: Comprehensive exception management
+- **Evaluation Data**: Optional performance metrics display
 
-- Formatted console output.
-- Spinners for async operations.
-- Interactive prompts.
-- ANSI color and style support.
+## Extending the Architecture
 
-### Modular Design
+### Adding New Commands
 
-- Each component has a single responsibility.
-- Components communicate through the central `HiOllamaChat` class.
-- This makes the code more maintainable and testable.
+1. Add method to `CommandHandler` class
+2. Register in `commands` dictionary
+3. Update help menu in `UIManager`
+4. Add any required configuration options
 
-### Command Pattern
+### Adding Global Settings
 
-- Commands are implemented using a simple command pattern.
-- The `CommandHandler` maps command strings to methods.
-- This makes it easy to add new commands.
+1. Extend `DEFAULT_GLOBAL_CONFIG` in `ConfigManager`
+2. Update `update_global_model` pattern for new setting
+3. Implement synchronization across instances
 
-### Config as JSON
+### Adding Instance Features
 
-- Configuration is stored as a simple JSON file.
-- This makes it easy to save/load settings.
-- It's also human-readable and editable outside the app.
+1. Add to `DEFAULT_CONFIG` in `ConfigManager`
+2. Initialize in `HiOllamaChat.__init__()`
+3. Implement save/load in configuration methods
+4. Add UI elements as needed
 
-## Adding New Features
+## Performance and Scalability
 
-To add a new feature:
+### Memory Management
+- History limits prevent unbounded growth
+- Configuration caching reduces I/O
+- Instance registration allows controlled updates
 
-1. Determine which component it belongs in.
-2. Add the necessary methods to that component.
-3. If it's a new command, add it to the `commands` dictionary in `CommandHandler.__init__()`.
-4. Update the help menu in `UIManager.help_menu()` if needed.
-5. Add any new configuration options to `ConfigManager.DEFAULT_CONFIG`.
+### File I/O Optimization
+- Lazy configuration loading
+- Separate global/instance file access
+- Error-tolerant save operations
+
+### Threading Considerations
+- Spinner animations run in separate threads
+- UI updates synchronized through Rich library
+- Graceful shutdown with proper cleanup
+
+## Security and Error Handling
+
+### Input Validation
+- Command argument parsing with type checking
+- File path validation for load operations
+- Configuration value bounds checking
+
+### Error Recovery
+- Default configuration fallbacks
+- Graceful API failure handling
+- User feedback for all error conditions
+
+### Data Persistence
+- Automatic configuration saving
+- Separate log directories per instance
+- Timestamp-based log file organization
+
+This architecture provides a robust, extensible foundation for the dual-chat Ollama interface while maintaining clean separation of concerns and enabling future enhancements.

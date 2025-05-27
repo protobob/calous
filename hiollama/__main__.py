@@ -11,10 +11,12 @@ def setup_chats() -> List[HiOllamaChat]:
     """Initialize and configure chat instances."""
     chats = [HiOllamaChat(0), HiOllamaChat(1)]
     
-    # Configure chat instances
+    # Configure chat instances and register them for global updates
     for i, chat in enumerate(chats):
         chat.active_chat_index = i
         chat.chat_instances = chats
+        # Register each instance for global model updates
+        HiOllamaChat.register_instance(chat)
     
     return chats
 
