@@ -73,13 +73,9 @@ class CommandHandler:
         selected = self.app.model.select_model()
         if selected:
             # Update the model globally
-            self.app.__class__.update_global_model(selected)
-            print(f"\nModel changed globally to: {selected}")
-            
-            # Confirm all instances are updated
-            if hasattr(self.app, 'chat_instances') and self.app.chat_instances:
-                active_instances = len([chat for chat in self.app.chat_instances if chat is not None])
-                print(f"Updated model for {active_instances} chat instance(s).")
+            updated_count = self.app.update_global_model(selected)
+            print(f"Model changed globally to: {selected}")
+            print(f"Updated model for {updated_count} chat instance(s).")
     
     def cmd_toggle_think(self):
         """Toggle filtering of LLM 'thought' sections."""

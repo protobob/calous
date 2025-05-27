@@ -1,5 +1,4 @@
 """Main application class for Hi, Ollama!"""
-import ollama
 from rich.prompt import Prompt
 from rich import print
 
@@ -39,8 +38,8 @@ class HiOllamaChat:
         # For multi-instance support
         self.active_chat_index = instance_index
         self.chat_instances = []
-        self.twist_content = None  # Initialize twist_content attribute
-        self.switch_requested = False  # Initialize switch_requested flag
+        self.twist_content = None
+        self.switch_requested = False
         
         # Initialize components
         self.ui = UIManager(self)
@@ -49,27 +48,24 @@ class HiOllamaChat:
         self.commands = CommandHandler(self)
         
         # Initialize last response attribute
-        self.last_response = None  # Add this to store the last response
+        self.last_response = None
     
-    @classmethod
-    def update_global_model(cls, new_model):
+    def update_global_model(self, new_model):
         """Update the selected model globally across all instances."""
-        if cls._global_config is None:
-            cls._global_config = ConfigManager.load_global_config()
+        if HiOllamaChat._global_config is None:
+            HiOllamaChat._global_config = ConfigManager.load_global_config()
         
-        cls._global_config["selected_model"] = new_model
-        ConfigManager.save_global_config(cls._global_config)
+        HiOllamaChat._global_config["selected_model"] = new_model
+        ConfigManager.save_global_config(HiOllamaChat._global_config)
         
-        # Update all existing instances
-        for instance in getattr(cls, '_all_instances', []):
-            instance.selected_model = new_model
-    
-    @classmethod
-    def register_instance(cls, instance):
-        """Register an instance for global updates."""
-        if not hasattr(cls, '_all_instances'):
-            cls._all_instances = []
-        cls._all_instances.append(instance)
+        # Update all existing instances using chat_instances
+        updated_count = 0
+        for instance in self.chat_instances:
+            if instance is not None:
+                instance.selected_model = new_model
+                updated_count += 1
+        
+        return updated_count
         
     def save_config(self):
         """Save the current configuration."""

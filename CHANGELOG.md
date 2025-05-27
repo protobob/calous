@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.6.dev] - 2025-05-27
+
+### Changed
+
+- Simplified global model management by removing redundant instance registration system.
+- Updated `update_global_model()` to use existing `chat_instances` instead of separate `_all_instances`.
+- Streamlined dual-chat architecture by leveraging already available instance references.
+
+### Technical
+
+- Removed unnecessary `register_instance()` class method from `HiOllamaChat`.
+- Eliminated redundant `_all_instances` class variable.
+- Improved code clarity by using single source of truth for chat instance management.
+
 ## [0.1.5.dev] - 2025-05-27
 
 ### Added
