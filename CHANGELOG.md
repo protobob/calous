@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.8.dev] - 2025-05-27
+
+### Changed
+
+- Updated `/history` command output to match `/showvars` style formatting.
+- Chat history now displays with colored bars, role color-coding, and consistent START/END headers.
+- USER messages shown in bold, ASSISTANT messages in cyan, message content in grey70.
+
+### Technical
+
+- Modified `ChatHistory.print_history()` method to use consistent UI styling across commands.
+- Enhanced readability with clear START CHAT # HISTORY and END CHAT # HISTORY delimiters.
+
 ## [0.1.7.dev] - 2025-05-27
 
 ### Fixed

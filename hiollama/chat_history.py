@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from rich import print
 from .constants import LOG_DIR
+from .utils import get_chat_color
 
 class ChatHistory:
     def __init__(self, app, instance_index):
@@ -24,13 +25,33 @@ class ChatHistory:
         return re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
 
     def print_history(self):
-        """Display the current chat history."""
-        print("\n--- Chat History ---")
-        for msg in self.history:
-            role = msg.get("role", "unknown").capitalize()
-            print(f"[{role}] {msg['content']}")
-        print("--------------------\n")
-    
+        """Display the current chat history with styled formatting."""
+        chat_color = get_chat_color(self.app.active_chat_index)
+        
+        # Start header with CHAT # in the chat color
+        print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]START CHAT {self.app.active_chat_index + 1} HISTORY[/bold {chat_color}]\n")
+        
+        if not self.history:
+            print(f"[bold {chat_color}]|[/bold {chat_color}] [grey70]No messages in history.[/grey70]")
+        else:
+            for i, msg in enumerate(self.history, 1):
+                role = msg.get("role", "unknown").upper()
+                content = msg.get("content", "")
+                
+                # Color code the role
+                if role == "USER":
+                    role_color = "bold"
+                elif role == "ASSISTANT":
+                    role_color = "cyan"
+                else:
+                    role_color = "grey70"
+                
+                # Display message with consistent formatting
+                print(f"[bold {chat_color}]|[/bold {chat_color}] [{role_color}]{role}[/{role_color}]: [grey70]{content}[/grey70]")
+        
+        # End header with CHAT # in the chat color
+        print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]END CHAT {self.app.active_chat_index + 1} HISTORY[/bold {chat_color}]\n")
+
     def log_file(self, prompt, response):
         """Log the conversation to a file if logging is enabled."""
         if not self.app.logging_enabled:
