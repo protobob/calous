@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.7.dev] - 2025-05-27
+
+### Fixed
+
+- Fixed `/showprompt` command to properly default to "all" when no arguments provided.
+- Restored invalid command detection for malformed commands starting with `/`.
+
+### Technical
+
+- Updated command parsing logic to handle `/showprompt` without arguments.
+- Added proper fallback handling for unrecognized commands starting with `/`.
+
 ## [0.1.6.dev] - 2025-05-27
 
 ### Changed

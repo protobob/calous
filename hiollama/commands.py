@@ -37,13 +37,71 @@ class CommandHandler:
                 print("[bold red]Error:[/bold red] No system prompt provided.")
             return True
 
-        # Execute the command if it matches
+        # Handle commands with arguments that need special parsing
+        user_input_lower = user_input.lower()
+        
+        # Handle /setmax command
+        if user_input_lower.startswith("/setmax "):
+            parts = user_input.split(" ", 1)
+            if len(parts) > 1:
+                self.cmd_setmax(parts[1])
+            else:
+                print("[bold red]Error:[/bold red] No maximum value provided.")
+            return True
+        
+        # Handle /setprompt command
+        if user_input_lower.startswith("/setprompt "):
+            parts = user_input.split(" ", 2)
+            if len(parts) >= 3:
+                self.cmd_setprompt(parts[1], *parts[2:])
+            else:
+                print("[bold red]Error:[/bold red] Usage: /setprompt NUMBER PROMPT_TEXT")
+            return True
+        
+        # Handle /prompt command
+        if user_input_lower.startswith("/prompt "):
+            parts = user_input.split(" ", 1)
+            if len(parts) > 1:
+                self.cmd_prompt(parts[1])
+            else:
+                print("[bold red]Error:[/bold red] Usage: /prompt NUMBER")
+            return True
+        
+        # Handle /showprompt command
+        if user_input_lower.startswith("/showprompt"):
+            if user_input_lower == "/showprompt":
+                # No arguments provided, default to all
+                self.cmd_showprompt("all")
+            else:
+                # Arguments provided
+                parts = user_input.split(" ", 1)
+                if len(parts) > 1:
+                    self.cmd_showprompt(parts[1])
+                else:
+                    self.cmd_showprompt("all")
+            return True
+        
+        # Handle /load command
+        if user_input_lower.startswith("/load "):
+            parts = user_input.split(" ", 2)
+            if len(parts) >= 2:
+                filepath = parts[1]
+                instructions = parts[2] if len(parts) > 2 else ""
+                self.cmd_load(filepath, instructions)
+            else:
+                print("[bold red]Error:[/bold red] Usage: /load FILENAME [INSTRUCTIONS]")
+            return True
+
+        # Execute the command if it matches (no arguments)
         for command, handler in self.commands.items():
-            if user_input.lower().startswith(command):
+            if user_input.lower() == command:
                 handler()
                 return True
 
-        return False
+        # If we get here, it's an invalid command starting with /
+        print(f"\n[bold red]Invalid command:[/bold red] {user_input}")
+        print("[grey50]Type /help to see available commands.[/grey50]")
+        return True
 
     def cmd_help(self):
         """Display the help menu."""
