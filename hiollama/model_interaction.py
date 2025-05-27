@@ -46,10 +46,9 @@ class ModelInteraction:
     def list_ollama_models(self):
         """Get a list of available Ollama models."""
         try:
-            response = requests.get("http://localhost:11434/api/tags", timeout=5)
-            response.raise_for_status()
-            return [model["name"] for model in response.json().get("models", [])]
-        except requests.exceptions.RequestException as e:
+            response = ollama.list()
+            return [model.model for model in response.models]
+        except Exception as e:
             print(f"[bold red]Error fetching models:[/bold red] {e}")
             return []
 
