@@ -9,6 +9,7 @@ from .ui import UIManager
 from .chat_history import ChatHistory
 from .model_interaction import ModelInteraction
 from .utils import reset_switch_flags
+from .utils import print_rainbow_header
 from .constants import DEFAULT_MODEL, DEFAULT_MAX_HISTORY, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS
 
 class HiOllamaChat:
@@ -98,6 +99,7 @@ class HiOllamaChat:
     def _display_header(self):
         """Display the application header."""
         self.ui.clear_screen()
+        print_rainbow_header()
         print(f"\nLoaded config from: {ConfigManager.get_config_path(self.instance_index)}\n")
         print(f"Model: {self.selected_model}")
 

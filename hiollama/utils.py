@@ -37,9 +37,6 @@ def print_chat_header(chat_index: int) -> str:
     """Print the chat header and return the chat color."""
     chat_color = get_chat_color(chat_index)
     
-    # Print rainbow header
-    print_rainbow_header()
-    
     # Print chat header with color
     print(f"[bold {chat_color}]CHAT {chat_index + 1}{HEADER_SEPARATOR}[/bold {chat_color}]")
     

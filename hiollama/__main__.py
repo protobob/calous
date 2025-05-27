@@ -18,11 +18,6 @@ def setup_chats() -> List[HiOllamaChat]:
     
     return chats
 
-def display_welcome() -> None:
-    """Display welcome message for the application."""
-    print("\n[bold]Created two chat instances. Use '/switch' to toggle between them.\n"
-          "Use '/twist' to send an AI response from one chat as a prompt to the other chat.[/bold]")
-
 def find_last_messages(chat: HiOllamaChat) -> Dict[str, Any]:
     """Find the last user and assistant messages in chat history."""
     last_messages = {}
@@ -104,7 +99,6 @@ def main():
     active_index = 0
 
     # Display welcome message and initial context
-    display_welcome()
     initialize_chat_context(chats, active_index)
 
     try:
