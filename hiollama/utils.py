@@ -66,6 +66,23 @@ def reset_twist_content(app_instance) -> None:
             if hasattr(chat, 'twist_content'):
                 chat.twist_content = None
 
+def find_last_messages(chat_history) -> Dict[str, Any]:
+    """Find the last user and assistant messages in chat history."""
+    last_messages = {}
+
+    # Iterate through the chat history in reverse to find the last assistant and user messages
+    for msg in reversed(chat_history.history):
+        if not last_messages.get('assistant') and msg.get("role") == "assistant":
+            last_messages['assistant'] = msg
+        elif not last_messages.get('user') and msg.get("role") == "user":
+            last_messages['user'] = msg
+        
+        # Stop searching if both messages are found
+        if last_messages.get('assistant') and last_messages.get('user'):
+            break
+
+    return last_messages
+
 # Keeping existing class for file loading
 class Utils:
     @staticmethod

@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.1.10.dev] - 2025-05-28
+
+### Enhanced
+
+- **Active Chats Overview**: Added new UI section showing all configured chats with system prompts.
+- Shows active chat with arrow indicator (►) and displays truncated system prompts for quick reference.
+- Added "/switch to change" hint next to ACTIVE CHATS header for better user guidance.
+- Conditional display of CHAT # SUMMARY section - only shows when chat history exists.
+
+### Technical
+
+- Moved `display_chat_context()` functionality from `__main__.py` to `UIManager` class for better organization.
+- Added `display_active_chats_overview()` method to `UIManager` for multi-chat UI preparation.
+- Moved `find_last_messages()` utility function to `utils.py` for better code organization.
+- Updated UI styling consistency with grey50 color for help hints.
+
 ## [0.1.9.dev] - 2025-05-28
 
 ### Enhanced

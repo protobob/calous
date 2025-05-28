@@ -2,12 +2,23 @@
 from .app import HiOllamaChat
 from rich import print
 from typing import List, Dict, Any, Optional
+import os
 from .utils import (
     get_chat_color, print_chat_header, print_message_with_bar, 
-    reset_twist_content, reset_switch_flags, format_message_preview
+    reset_twist_content, reset_switch_flags, format_message_preview,
+    print_rainbow_header
 )
+from .constants import DEFAULT_NUM_CHATS
+from .config import ConfigManager
 
-def setup_chats(num_chats: int = 2) -> List[HiOllamaChat]:
+def display_startup_header():
+    """Display the application startup header."""
+    # Clear screen first
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print_rainbow_header()
+    #print(f"Loaded config from: {ConfigManager.get_config_path(0)}\n")
+
+def setup_chats(num_chats: int = DEFAULT_NUM_CHATS) -> List[HiOllamaChat]:
     """Initialize and configure chat instances."""
     chats = [HiOllamaChat(i) for i in range(num_chats)]
     
@@ -17,38 +28,6 @@ def setup_chats(num_chats: int = 2) -> List[HiOllamaChat]:
         chat.chat_instances = chats
     
     return chats
-
-def find_last_messages(chat: HiOllamaChat) -> Dict[str, Any]:
-    """Find the last user and assistant messages in chat history."""
-    last_messages = {}
-
-    # Iterate through the chat history in reverse to find the last assistant and user messages
-    for msg in reversed(chat.chat_history.history):
-        if not last_messages.get('assistant') and msg.get("role") == "assistant":
-            last_messages['assistant'] = msg
-        elif not last_messages.get('user') and msg.get("role") == "user":
-            last_messages['user'] = msg
-        
-        # Stop searching if both messages are found
-        if last_messages.get('assistant') and last_messages.get('user'):
-            break
-
-    return last_messages
-
-def display_chat_context(chat: HiOllamaChat, chat_color: str) -> None:
-    """Display the current chat context (system prompt, history)."""
-    # Print system prompt with grey color and colored bar
-    print_message_with_bar(chat_color, "SYS", chat.system_prompt['content'])
-    
-    # Display the last user message
-    last_messages = find_last_messages(chat)
-    if last_messages.get('user'):
-            print_message_with_bar(chat_color, "YOU", last_messages['user'].get('content', ''))
-    
-    # Display the last assistant message
-    last_messages = find_last_messages(chat)
-    if last_messages.get('assistant'):
-        print_message_with_bar(chat_color, "LLM", last_messages['assistant'].get('content', ''))
 
 def handle_twist_content(chat: HiOllamaChat, source_index: int) -> None:
     """Process and display twisted content from another chat."""
@@ -92,50 +71,50 @@ def save_all_configs(chats: List[HiOllamaChat]) -> None:
         except Exception as e:
             print(f"Error saving config: {e}")
 
-def main():
-    """Main application entry point."""
-    # Setup chat instances
-    chats = setup_chats()
-    active_index = 0
-
-    # Display welcome message and initial context
-    initialize_chat_context(chats, active_index)
-
-    try:
-        # Main application loop
-        run_application_loop(chats, active_index)
-    except KeyboardInterrupt:
-        save_all_configs(chats)
-
-
 def initialize_chat_context(chats: List[HiOllamaChat], active_index: int) -> None:
     """Initialize and display the context for the active chat."""
     chats[active_index].ui.clear_screen()
-    chat_color = print_chat_header(active_index)
-    display_chat_context(chats[active_index], chat_color)
-
+    chats[active_index].ui.display_chat_context("")  # Pass empty string since header is handled internally
 
 def run_application_loop(chats: List[HiOllamaChat], active_index: int) -> None:
     """Run the main application loop."""
     first_run = True
     while True:
+        # For first run, show context without clearing screen (preserve startup header)
+        if first_run:
+            chats[active_index].ui.display_chat_context("")  # Pass empty string since header is handled internally
+        
         # Run the active chat until a switch is requested
         chats[active_index].active_chat_index = active_index
-        chats[active_index].run(break_on_switch=True, skip_header=(not first_run))
+        chats[active_index].run(break_on_switch=True, skip_header=True)
         first_run = False
 
         # Switch to the other chat
         active_index = 1 - active_index
 
-        # Display the new active chat's context
+        # Display the new active chat's context (this will clear screen for subsequent switches)
         initialize_chat_context(chats, active_index)
 
         # Handle any twisted content
         handle_twist_if_present(chats, active_index)
-
 
 def handle_twist_if_present(chats: List[HiOllamaChat], active_index: int) -> None:
     """Check for and handle any twisted content."""
     twist_content = getattr(chats[active_index], 'twist_content', None)
     if twist_content:
         handle_twist_content(chats[active_index], 1 - active_index)
+
+def main():
+    """Main application entry point."""
+    # Display startup header
+    display_startup_header()
+    
+    # Setup chat instances
+    chats = setup_chats()
+    active_index = 0
+
+    try:
+        # Main application loop - first run will show initial context after header
+        run_application_loop(chats, active_index)
+    except KeyboardInterrupt:
+        save_all_configs(chats)

@@ -5,11 +5,12 @@ from rich.spinner import Spinner
 from rich.prompt import Prompt
 from rich import print
 from rich.table import Table
+from .utils import get_chat_color, print_message_with_bar, find_last_messages
+from .constants import APP_VERSION, MAX_PREVIEW_LENGTH
+from typing import Dict, Any
 import threading
 import time
 import os
-from .utils import get_chat_color
-from .constants import APP_VERSION
 
 class UIManager:
     def __init__(self, app):
@@ -48,14 +49,14 @@ class UIManager:
             f"\n"
             f"[bold {chat_color}]|[/bold {chat_color}] [italic][bold {chat_color}]CH:[/bold {chat_color}]"
             f"[grey70]{current_history_len}/{self.app.MAX_HISTORY}[/grey70][/italic]"
-            f"[grey50] (Type /help for help.)[/grey50]\n"
+            f"[grey50] (/help for help)[/grey50]\n"
             f"{you_text}"
         )
         
     def help_menu(self):
         """Display the help menu with available commands."""
         # Define the command color as a variable
-        command_color = "dark_orange3"
+        command_color = "grey70"
 
         # Create a table for the help menu
         table = Table(show_header=False, box=None, padding=(0, 1))
@@ -146,3 +147,47 @@ class UIManager:
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Config Path:':<20} [grey70]{config_path}[/grey70]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Log Directory:':<20} [grey70]{log_dir}[/grey70]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'System Prompt:':<20} [grey70]{system_prompt}[/grey70]\n")
+    
+    def display_active_chats_overview(self):
+        """Display overview of all configured chats."""
+        print("[bold white]ACTIVE CHATS:[/bold white] [grey50](/switch to change)[/grey50]")
+        
+        for i, chat in enumerate(self.app.chat_instances):
+            chat_color_for_chat = get_chat_color(i)
+            
+            # Get system prompt and truncate if needed
+            sys_prompt = chat.system_prompt.get('content', '[No system prompt set]')
+            if len(sys_prompt) > MAX_PREVIEW_LENGTH:
+                sys_prompt = sys_prompt[:MAX_PREVIEW_LENGTH] + "..."
+            
+            # Mark active chat with arrow
+            prefix = "►" if i == self.app.active_chat_index else " "
+            
+            print(f"{prefix} [bold {chat_color_for_chat}]{i + 1}:[/bold {chat_color_for_chat}] [grey70]{sys_prompt}[/grey70]")
+        
+        print()  # Add spacing after overview
+
+    def display_chat_context(self, chat_color: str) -> None:
+        """Display the current chat context with active chats overview first."""
+        # Show active chats overview at the top
+        self.display_active_chats_overview()
+        
+        # Find last messages using utility function
+        last_messages = find_last_messages(self.app.chat_history)
+        
+        # Only show chat header and context if there are messages
+        if last_messages:
+            # Show the current chat's detailed context
+            from .utils import print_chat_header
+            print_chat_header(self.app.active_chat_index)
+            
+            # Get the current chat's color for the bars
+            current_chat_color = get_chat_color(self.app.active_chat_index)
+            
+            # Display the last user message
+            if last_messages.get('user'):
+                print_message_with_bar(current_chat_color, "YOU", last_messages['user'].get('content', ''))
+            
+            # Display the last assistant message
+            if last_messages.get('assistant'):
+                print_message_with_bar(current_chat_color, "LLM", last_messages['assistant'].get('content', ''))

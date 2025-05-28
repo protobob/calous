@@ -98,10 +98,6 @@ class HiOllamaChat:
         
     def run(self, break_on_switch=False, skip_header=False):
         """Main application loop."""
-        # Display header if needed
-        if not skip_header:
-            self._display_header()
-
         try:            
             while True:
                 # Get user input
@@ -123,13 +119,6 @@ class HiOllamaChat:
             raise  # Re-raise to let main handle the exit
         finally:
             self.save_config()
-
-    def _display_header(self):
-        """Display the application header."""
-        self.ui.clear_screen()
-        print_rainbow_header()
-        print(f"\nLoaded config from: {ConfigManager.get_config_path(self.instance_index)}\n")
-        print(f"Model: {self.selected_model}")
 
     def _get_user_input(self):
         """Get user input with prompt."""
