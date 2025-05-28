@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.2.0.dev] - 2025-05-28
+
+### Major Refactor: Event-Driven Architecture
+
+- **Complete Architecture Overhaul**: Replaced state-flag system with event-driven command processing.
+- **Centralized Session Management**: New `ChatSessionManager` class coordinates all multi-chat operations.
+- **Enhanced Multi-Chat Support**: Commands now accept optional chat numbers (`/switch 3`, `/twist 2`).
+- **Backward Compatibility**: Existing 2-chat behavior preserved when no arguments provided.
+- **Scalable Design**: Ready for N-chat expansion beyond default 2-chat setup.
+
+### Enhanced
+
+- **Advanced Switch/Twist Commands**: 
+  - `/switch` cycles to next chat or `/switch NUMBER` jumps to specific chat
+  - `/twist` copies to next chat or `/twist NUMBER` copies to specific chat
+  - Automatic cycling behavior when no target specified
+- **Event-Driven Command Processing**: Commands return `CommandResult` objects with structured action intentions.
+- **Simplified Chat Instances**: Removed all switching state flags and coordination logic from individual chats.
+- **Rainbow Header Display**: Startup shows colorful HIOLLAMA! header with version.
+
+### Technical
+
+- **New `ChatSessionManager` Class**: Centralized orchestration of multi-chat functionality and main application loop.
+- **`CommandResult` System**: Structured command responses with `ActionType` enum (CONTINUE, SWITCH, TWIST, QUIT).
+- **Eliminated State Flags**: Removed `switch_requested`, `twist_content`, and related state management functions.
+- **Clean Event Processing**: Single `process_command_result()` method handles all command outcomes.
+- **Enhanced Multi-Chat Coordination**: Centralized switch/twist logic with proper context display management.
+- **Future-Ready Architecture**: Event system easily extensible for new inter-chat features.
+
+### Removed
+
+- **Deprecated State Management**: Eliminated boolean flags and manual state reset functions.
+- **Distributed Switch Logic**: Consolidated all switching logic into `ChatSessionManager`.
+- **Complex Main Loop**: Replaced flag-checking loops with clean event processing.
+
 ## [0.1.11.dev] - 2025-05-28
 
 ### Fixed

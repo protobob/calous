@@ -7,8 +7,6 @@ from .commands import CommandHandler
 from .ui import UIManager
 from .chat_history import ChatHistory
 from .model_interaction import ModelInteraction
-from .utils import reset_switch_flags
-from .utils import print_rainbow_header
 from .constants import DEFAULT_MODEL, DEFAULT_MAX_HISTORY, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS
 
 class HiOllamaChat:
@@ -35,11 +33,10 @@ class HiOllamaChat:
         self.logging_enabled = self.config.get("logging_enabled", True)
         self.prompts = self.config.get("prompts", {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)})
           
-        # For multi-instance support
+        # For multi-instance support (simplified - no switch state)
         self.active_chat_index = instance_index
         self.chat_instances = []
-        self.twist_content = None
-        self.switch_requested = False
+        self.session_manager = None  # Will be set by SessionManager
         
         # Initialize components
         self.ui = UIManager(self)
@@ -83,6 +80,18 @@ class HiOllamaChat:
             HiOllamaChat._global_config["selected_model"] = self.selected_model
             ConfigManager.save_global_config(HiOllamaChat._global_config)
     
+    def process_input(self, user_input: str):
+        """Process user input and return a CommandResult."""
+        from .session_manager import CommandResult, ActionType
+        
+        # Handle commands
+        if user_input.startswith('/'):
+            return self.commands.parse_and_execute(user_input)
+        
+        # Handle regular input
+        self.handle_regular_input(user_input)
+        return CommandResult(ActionType.CONTINUE)
+    
     def handle_regular_input(self, user_input):
         """Process regular user input (non-commands)."""
         # Add the user message to history BEFORE sending to the model
@@ -91,72 +100,5 @@ class HiOllamaChat:
         try:
             response = self.ui.run_with_spinner(self.model.talk_to_model, user_input)
             self.model.process_response(user_input, response)
-        except ollama.APIError as e:
-            print(f"Ollama API Error: {e}")
         except Exception as e:
             print(f"Model Error: {e}")
-    
-    def run(self, break_on_switch=False, skip_header=False):
-        """Main application loop."""
-        try:            
-            while True:
-                # Get user input
-                user_input = self._get_user_input()
-                
-                # Handle chat switching
-                if self._should_switch(user_input, break_on_switch):
-                    return
-                    
-                # Handle commands
-                if self._handle_commands(user_input, break_on_switch):
-                    continue
-                    
-                # Process regular input
-                self.handle_regular_input(user_input)
-
-        except KeyboardInterrupt:
-            print("\nInterrupted. Saving config and exiting.")
-            raise  # Re-raise to let main handle the exit
-        finally:
-            self.save_config()
-
-    def _get_user_input(self):
-        """Get user input with prompt."""
-        prompt_text = self.ui.generate_prompt_text()
-        return Prompt.ask(prompt_text).strip()
-
-    def _should_switch(self, user_input, break_on_switch):
-        """Check if we should switch chats."""
-        if not break_on_switch:
-            return False
-            
-        # Check if switch requested programmatically
-        if getattr(self, 'switch_requested', False):
-            reset_switch_flags(self)
-            return True
-            
-        # Check for direct switch command
-        if user_input.strip().lower() == "/switch":
-            return True
-            
-        # Check for twist command
-        if user_input.strip().lower() == "/twist":
-            self.commands.cmd_twist()
-            return True
-            
-        return False
-
-    def _handle_commands(self, user_input, break_on_switch):
-        """Handle command processing."""
-        # Special check for quit command
-        if user_input.strip().lower() == "/quit":
-            self.commands.cmd_quit()
-            return True
-        
-        # Process other commands
-        if self.commands.parse_and_execute(user_input):
-            if break_on_switch and getattr(self, 'switch_requested', False):
-                return True
-            return True
-            
-        return False

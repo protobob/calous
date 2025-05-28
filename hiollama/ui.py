@@ -33,6 +33,11 @@ class UIManager:
         stop_flag.set()
         spinner_thread.join()
         return result
+    
+    def get_user_input(self):
+        """Get user input with formatted prompt."""
+        prompt_text = self.generate_prompt_text()
+        return Prompt.ask(prompt_text).strip()
         
     def generate_prompt_text(self):
         """Generate the formatted prompt text shown before user input."""
@@ -68,8 +73,15 @@ class UIManager:
         table.add_row(f"[bold {command_color}]/help[/bold {command_color}]", "Show this help menu.")
         table.add_row(f"[bold {command_color}]/quit[/bold {command_color}]", "Exit the program and save the configuration.")
         table.add_row(f"[bold {command_color}]/showvars[/bold {command_color}]", "Display current system variables.")
-        table.add_row(f"[bold {command_color}]/switch[/bold {command_color}]", f"Switch between [bold green]CHAT1[/bold green] and [bold blue]CHAT2[/bold blue].")
-        table.add_row(f"[bold {command_color}]/twist[/bold {command_color}]", "Copy AI's last response, switch chats, and use it as a prompt.")
+        
+        # Enhanced switch/twist help text for multi-chat support
+        num_chats = len(self.app.chat_instances) if self.app.chat_instances else 2
+        if num_chats == 2:
+            table.add_row(f"[bold {command_color}]/switch[/bold {command_color}]", f"Switch between chats (or /switch NUMBER).")
+            table.add_row(f"[bold {command_color}]/twist[/bold {command_color}]", "Copy AI's last response, switch chats, and use it as a prompt (or /twist NUMBER).")
+        else:
+            table.add_row(f"[bold {command_color}]/switch NUMBER[/bold {command_color}]", f"Switch to chat NUMBER (1-{num_chats}).")
+            table.add_row(f"[bold {command_color}]/twist NUMBER[/bold {command_color}]", f"Copy AI's last response to chat NUMBER (1-{num_chats}).")
 
         # Add a header for Model Commands
         table.add_row("", "")  # Empty row for spacing
@@ -150,7 +162,14 @@ class UIManager:
     
     def display_active_chats_overview(self):
         """Display overview of all configured chats."""
-        print("[bold white]ACTIVE CHATS:[/bold white] [grey50](/switch to change)[/grey50]")
+        num_chats = len(self.app.chat_instances) if self.app.chat_instances else 2
+        
+        if num_chats == 2:
+            switch_hint = "/switch to change"
+        else:
+            switch_hint = f"/switch NUMBER (1-{num_chats}) to change"
+            
+        print(f"[bold white]ACTIVE CHATS:[/bold white] [grey50]({switch_hint})[/grey50]")
         
         for i, chat in enumerate(self.app.chat_instances):
             chat_color_for_chat = get_chat_color(i)

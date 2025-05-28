@@ -2,7 +2,7 @@
 from pathlib import Path
 from rich.prompt import Prompt
 from rich import print
-from .utils import get_chat_color, format_message_preview, reset_twist_content
+from .utils import get_chat_color, format_message_preview
 from .constants import MAX_PROMPTS
 from .config import ConfigManager
 
@@ -10,78 +10,83 @@ class CommandHandler:
     def __init__(self, app):
         self.app = app
         # Commands without arguments
-        self.commands = {
+        self.simple_commands = {
             "/help": self.cmd_help,
-            "/quit": self.cmd_quit,
             "/model": self.cmd_model,
             "/toggle_think": self.cmd_toggle_think,
             "/clear": self.cmd_clear,
             "/history": self.cmd_history,
             "/toggle_eval": self.cmd_toggle_eval,
             "/toggle_log": self.cmd_toggle_log,
-            "/showvars": self.cmd_showvars,  # Updated command name
-            "/twist": self.cmd_twist
+            "/showvars": self.cmd_showvars,
         }
     
     def parse_and_execute(self, user_input):
-        """Parse and execute commands."""
+        """Parse and execute commands, returning CommandResult."""
+        from .session_manager import CommandResult, ActionType
+        
         if not user_input.startswith('/'):
-            return False
+            return CommandResult(ActionType.CONTINUE)
+
+        # Handle quit command specially
+        if user_input.lower() == "/quit":
+            return CommandResult(ActionType.QUIT)
+        
+        # Handle switch command with optional arguments
+        if user_input.lower().startswith("/switch"):
+            return self._handle_switch_command(user_input)
+        
+        # Handle twist command with optional arguments
+        if user_input.lower().startswith("/twist"):
+            return self._handle_twist_command(user_input)
 
         # Handle commands with arguments
         if user_input.lower().startswith("/system "):
-            parts = user_input.split(" ", 1)  # Split into command and arguments
+            parts = user_input.split(" ", 1)
             if len(parts) > 1:
                 self.cmd_system(parts[1])
             else:
                 print("[bold red]Error:[/bold red] No system prompt provided.")
-            return True
+            return CommandResult(ActionType.CONTINUE)
 
-        # Handle commands with arguments that need special parsing
+        # Handle other complex commands
         user_input_lower = user_input.lower()
         
-        # Handle /setmax command
         if user_input_lower.startswith("/setmax "):
             parts = user_input.split(" ", 1)
             if len(parts) > 1:
                 self.cmd_setmax(parts[1])
             else:
                 print("[bold red]Error:[/bold red] No maximum value provided.")
-            return True
+            return CommandResult(ActionType.CONTINUE)
         
-        # Handle /setprompt command
         if user_input_lower.startswith("/setprompt "):
             parts = user_input.split(" ", 2)
             if len(parts) >= 3:
                 self.cmd_setprompt(parts[1], *parts[2:])
             else:
                 print("[bold red]Error:[/bold red] Usage: /setprompt NUMBER PROMPT_TEXT")
-            return True
+            return CommandResult(ActionType.CONTINUE)
         
-        # Handle /prompt command
         if user_input_lower.startswith("/prompt "):
             parts = user_input.split(" ", 1)
             if len(parts) > 1:
                 self.cmd_prompt(parts[1])
             else:
                 print("[bold red]Error:[/bold red] Usage: /prompt NUMBER")
-            return True
+            return CommandResult(ActionType.CONTINUE)
         
-        # Handle /showprompt command
         if user_input_lower.startswith("/showprompt"):
             if user_input_lower == "/showprompt":
-                # No arguments provided, default to all
                 self.cmd_showprompt("all")
             else:
-                # Arguments provided
                 parts = user_input.split(" ", 1)
                 if len(parts) > 1:
                     self.cmd_showprompt(parts[1])
                 else:
                     self.cmd_showprompt("all")
-            return True
+            return CommandResult(ActionType.CONTINUE)
         
-        # Handle /load command
         if user_input_lower.startswith("/load "):
             parts = user_input.split(" ", 2)
             if len(parts) >= 2:
@@ -90,18 +95,68 @@ class CommandHandler:
                 self.cmd_load(filepath, instructions)
             else:
                 print("[bold red]Error:[/bold red] Usage: /load FILENAME [INSTRUCTIONS]")
-            return True
+            return CommandResult(ActionType.CONTINUE)
 
-        # Execute the command if it matches (no arguments)
-        for command, handler in self.commands.items():
+        # Execute simple commands
+        for command, handler in self.simple_commands.items():
             if user_input.lower() == command:
                 handler()
-                return True
+                return CommandResult(ActionType.CONTINUE)
 
-        # If we get here, it's an invalid command starting with /
+        # Invalid command
         print(f"\n[bold red]Invalid command:[/bold red] {user_input}")
         print("[grey50]Type /help to see available commands.[/grey50]")
-        return True
+        return CommandResult(ActionType.CONTINUE)
+    
+    def _handle_switch_command(self, user_input):
+        """Handle switch command with optional chat number argument."""
+        from .session_manager import CommandResult, ActionType
+        
+        parts = user_input.split()
+        target_chat = None
+        
+        if len(parts) > 1:
+            try:
+                # Convert to 0-based index (user inputs 1-based)
+                target_chat = int(parts[1]) - 1
+            except ValueError:
+                print("[bold red]Error:[/bold red] Invalid chat number.")
+                return CommandResult(ActionType.CONTINUE)
+        
+        return CommandResult(ActionType.SWITCH, {"target_chat": target_chat})
+    
+    def _handle_twist_command(self, user_input):
+        """Handle twist command with optional chat number argument."""
+        from .session_manager import CommandResult, ActionType
+        
+        # Get the last response
+        last_response = self.app.last_response
+        if not last_response:
+            print("\n[bold red]Error:[/bold red] No previous response to twist.")
+            return CommandResult(ActionType.CONTINUE)
+
+        # Extract content
+        twist_content = last_response.get("message", {}).get("content", "")
+        if not twist_content:
+            print("[bold red]Error:[/bold red] Previous response is empty.")
+            return CommandResult(ActionType.CONTINUE)
+
+        # Parse target chat if provided
+        parts = user_input.split()
+        target_chat = None
+        
+        if len(parts) > 1:
+            try:
+                # Convert to 0-based index (user inputs 1-based)
+                target_chat = int(parts[1]) - 1
+            except ValueError:
+                print("[bold red]Error:[/bold red] Invalid chat number.")
+                return CommandResult(ActionType.CONTINUE)
+
+        return CommandResult(ActionType.TWIST, {
+            "content": twist_content,
+            "target_chat": target_chat
+        })
 
     def cmd_help(self):
         """Display the help menu."""
@@ -169,10 +224,7 @@ class CommandHandler:
     def cmd_setmax(self, new_limit_str=""):
         """Set the maximum chat history size."""
         try:
-            # Try to convert input to integer
             new_limit = int(new_limit_str)
-            
-            # Check if the value is valid
             if 2 <= new_limit <= 100 and new_limit % 2 == 0:
                 self.app.MAX_HISTORY = new_limit
                 self.app.config["MAX_HISTORY"] = self.app.MAX_HISTORY
@@ -197,12 +249,8 @@ class CommandHandler:
     def cmd_setprompt(self, prompt_number_str="", *prompt_parts):
         """Set a saved prompt."""
         try:
-            # Try to convert input to integer
             prompt_number = int(prompt_number_str)
-            
-            # Check if the value is valid
             if 1 <= prompt_number <= MAX_PROMPTS:
-                # Join all prompt parts to create the full prompt text
                 new_prompt = " ".join(prompt_parts).strip()
                 if not new_prompt:
                     print("Error: Prompt text cannot be empty.")
@@ -236,14 +284,12 @@ class CommandHandler:
         """Display saved prompts."""
         try:
             if prompt_selector.lower() == "all":
-                # Show all prompts
                 print("\n--- Saved Prompts ---")
                 for i in range(1, MAX_PROMPTS + 1):
                     prompt = self.app.prompts[f"prompt{i}"]
                     print(f"Prompt{i}: {prompt if prompt else '[Empty]'}")
                 print("---------------------\n")
             elif prompt_selector.isdigit():
-                # Show a specific prompt
                 prompt_number = int(prompt_selector)
                 if 1 <= prompt_number <= MAX_PROMPTS:
                     prompt = self.app.prompts[f"prompt{prompt_number}"]
@@ -262,7 +308,6 @@ class CommandHandler:
             return
             
         try:
-            # If no message was provided in the command, ask for it
             if not file_message:
                 file_message = Prompt.ask("[bold]Instructions[/bold]")
                 
@@ -286,53 +331,3 @@ class CommandHandler:
             log_dir=self.app.chat_history.log_dir,
             config_path=ConfigManager.get_config_path(self.app.instance_index)
         )
-
-    def cmd_twist(self):
-        """Copy the last AI response, switch chats, and send it as a prompt."""
-        # Get the last response dictionary
-        last_response = self.app.last_response
-        if not last_response:
-            return
-
-        # Extract the content from the last response
-        twist_content = last_response.get("message", {}).get("content", "")
-        if not twist_content:
-            return
-
-        # Show twist preview and store content
-        self._display_twist_preview(twist_content)
-        self._store_twist_content(twist_content)
-
-        # Request chat switch
-        self.app.switch_requested = True
-
-    def _find_last_assistant_message(self):
-        """Find the last assistant message in the chat history."""
-        for msg in reversed(self.app.chat_history.history):
-            if msg.get("role") == "assistant":
-                return msg
-        return None
-
-    def _display_twist_preview(self, content):
-        """Display a preview of the content being twisted."""
-        current_chat_color = get_chat_color(self.app.active_chat_index)
-        preview = format_message_preview(content, 50)
-        print(f"[bold {current_chat_color}]↪ Twisting this message: "
-              f"[/bold {current_chat_color}][italic {current_chat_color}]\"{preview}\"[/italic {current_chat_color}]")
-
-    def _store_twist_content(self, content):
-        """Store the twist content for the other chat instance."""
-        current_index = self.app.active_chat_index
-        other_index = 1 - current_index
-        
-        # Clear any existing twist content
-        reset_twist_content(self.app)
-        
-        # Store on target chat instance
-        target_chat = self.app.chat_instances[other_index]
-        target_chat.twist_content = content
-        
-        # Show confirmation
-        target_chat_color = get_chat_color(other_index)
-        print(f"[bold {target_chat_color}]Twisting response to Chat {other_index + 1}..."
-              f"[/bold {target_chat_color}]")

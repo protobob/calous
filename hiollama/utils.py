@@ -48,24 +48,6 @@ def print_message_with_bar(chat_color: str, role: str, content: Any) -> None:
     prefix = f"{role}: " if role else ""
     print(f"[bold {chat_color}]|[/bold {chat_color}] [grey42]{prefix}{preview}[/grey42]")
 
-def reset_switch_flags(app_instance) -> None:
-    """Reset switch flags on all chat instances."""
-    app_instance.switch_requested = False
-    
-    if hasattr(app_instance, 'chat_instances') and app_instance.chat_instances:
-        for chat in app_instance.chat_instances:
-            if hasattr(chat, 'switch_requested'):
-                chat.switch_requested = False
-                
-def reset_twist_content(app_instance) -> None:
-    """Reset twist content on all chat instances."""
-    app_instance.twist_content = None
-    
-    if hasattr(app_instance, 'chat_instances') and app_instance.chat_instances:
-        for chat in app_instance.chat_instances:
-            if hasattr(chat, 'twist_content'):
-                chat.twist_content = None
-
 def find_last_messages(chat_history) -> Dict[str, Any]:
     """Find the last user and assistant messages in chat history."""
     last_messages = {}

@@ -1,6 +1,6 @@
 # Hi, Ollama! - Technical Architecture
 
-This document provides a technical overview of the `hiollama` project - a dual-chat command-line interface for interacting with Ollama language models. It explains the package structure, component relationships, and how data flows through the system.
+This document provides a technical overview of the `hiollama` project - a command-line interface for interacting with Ollama language models. It explains the package structure, component relationships, and how data flows through the system.
 
 ## Project Structure
 
@@ -12,96 +12,147 @@ hiollama/
 ├── setup.py                # Package installation configuration
 ├── hiollama/               # Main package directory
 │   ├── __init__.py         # Package initialization
-│   ├── __main__.py         # Entry point and dual-chat orchestration
-│   ├── app.py              # Main HiOllamaChat class with global model management
+│   ├── __main__.py         # Entry point (creates ChatSessionManager)
+│   ├── session_manager.py  # Central session coordination and chat orchestration
+│   ├── app.py              # HiOllamaChat class with global model management
 │   ├── chat_history.py     # Instance-specific chat history management
-│   ├── commands.py         # Command handlers with chat-aware functionality
+│   ├── commands.py         # Command handlers with event-driven results
 │   ├── config.py           # Configuration management (global + per-instance)
 │   ├── constants.py        # Shared constants and defaults
 │   ├── model_interaction.py # Ollama API communication
-│   ├── ui.py               # Rich-based user interface with chat colors
+│   ├── ui.py               # Rich-based user interface with rainbow chat colors
 │   └── utils.py            # Utility functions for formatting and chat management
 └── hiollama.egg-info/      # Package metadata (generated)
 ```
 
 ## Component Relationships
 
-The application uses a modular design pattern with these key components:
+The application uses an event-driven architecture with centralized session management:
 
 ### Core Classes
 
-1. **`HiOllamaChat` (app.py)**: The central application class that coordinates all other components and manages chat state. Features:
-   - Class-level global model management
-   - Instance registration system for synchronized updates
-   - Dual-chat switching and twist functionality
-   - Configuration management per instance
+1. **`ChatSessionManager` (session_manager.py)**: Central coordinator for all chat operations:
+   - Manages multiple chat instances (configurable, defaults to 2)
+   - Handles chat switching and twist functionality
+   - Processes command results through event system
+   - Orchestrates the main application loop
+   - Manages startup and shutdown procedures
 
-2. **`ConfigManager` (config.py)**: Handles both global and instance-specific configuration:
+2. **`HiOllamaChat` (app.py)**: Individual chat instance:
+   - Class-level global model management
+   - Instance-specific configuration and state
+   - Processes user input and returns structured command results
+   - Coordinates with other components (UI, history, model, commands)
+
+3. **`CommandHandler` (commands.py)**: Event-driven command processing:
+   - Returns `CommandResult` objects with action intentions
+   - Supports optional chat number arguments for `/switch` and `/twist`
+   - Handles argument parsing and validation
+   - Provides structured command responses
+
+4. **`ConfigManager` (config.py)**: Dual-layer configuration system:
    - **Global Config**: `~/.hiollama_config_global.json` (shared model selection)
-   - **Instance Configs**: `~/.hiollama_config_0.json`, `~/.hiollama_config_1.json`
+   - **Instance Configs**: `~/.hiollama_config_0.json`, `~/.hiollama_config_1.json`, etc.
    - Automatic separation of global vs instance-specific settings
 
-3. **`UIManager` (ui.py)**: Rich-based interface management:
-   - Color-coded chat instances (green/blue)
+5. **`UIManager` (ui.py)**: Rich-based interface with rainbow theming:
+   - Rainbow color progression for chat instances (red, orange1, yellow1, green, blue, purple, magenta)
+   - Multi-chat overview displays
+   - Chat context visualization
    - Interactive prompts and spinners
-   - Formatted help menus and variable displays
-   - Chat-aware prompt generation
 
-4. **`ChatHistory` (chat_history.py)**: Instance-specific conversation management:
+6. **`ChatHistory` (chat_history.py)**: Instance-specific conversation management:
    - Per-chat message storage with configurable limits
    - Automatic logging to separate directories
    - Thought filtering for reasoning models
    - History display and clearing functionality
 
-5. **`ModelInteraction` (model_interaction.py)**: Ollama API communication:
+7. **`ModelInteraction` (model_interaction.py)**: Ollama API communication:
    - Native `ollama.chat()` and `ollama.list()` integration
    - Response processing with evaluation data
    - Model selection interface
    - Error handling for API failures
 
-6. **`CommandHandler` (commands.py)**: Comprehensive command system:
-   - Global model changes affecting both chats
-   - Chat switching and twist functionality
-   - Prompt management (save/load/use)
-   - Configuration toggles and file loading
+### Event System Components
 
-### Utility Components
+8. **`ActionType` (session_manager.py)**: Enumeration of possible command intentions:
+   - `CONTINUE`: Normal operation, no special action
+   - `SWITCH`: Request to switch to a different chat
+   - `TWIST`: Request to copy content to another chat
+   - `QUIT`: Request to exit the application
 
-7. **`Utils` (utils.py)**: Shared utility functions:
-   - Chat color management
-   - Message formatting and previews
-   - Rainbow header display
-   - Switch/twist state management
-
-8. **`Constants` (constants.py)**: Centralized configuration:
-   - UI colors and formatting
-   - Default settings and limits
-   - File paths and API endpoints
-   - Version management
+9. **`CommandResult` (session_manager.py)**: Structured command response:
+   - Contains action type and optional data payload
+   - Enables clean separation between command logic and session coordination
+   - Provides extensible framework for new command types
 
 ## Data Flow and Architecture Patterns
 
 ### Initialization Process
 
-1. **Dual-Chat Setup**: `__main__.py` creates two `HiOllamaChat` instances
-2. **Global Registration**: Each instance registers for global model updates
-3. **Configuration Loading**: 
-   - Global config loaded once at class level
-   - Instance configs loaded separately for each chat
-4. **Component Initialization**: UI, history, model interaction, and commands initialized per instance
+```
+ChatSessionManager
+├── Creates N chat instances (default 2)
+├── Configures cross-references between chats
+├── Displays startup header
+└── Enters main event loop
+```
+
+### Event-Driven Command Flow
+
+```
+User Input → HiOllamaChat.process_input() → CommandHandler.parse_and_execute()
+                                                      ↓
+CommandResult ← ChatSessionManager.process_command_result() ← Returns CommandResult
+     ↓
+Action Taken (switch, twist, continue, or quit)
+```
+
+### Multi-Chat Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│     Chat 1      │    │     Chat 2      │    │     Chat N      │
+│    (red)        │    │   (orange1)     │    │   (rainbow)     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 ▼
+                    ┌─────────────────────────┐
+                    │   ChatSessionManager   │
+                    │  - Active chat index   │
+                    │  - Command processing  │
+                    │  - Switch coordination │
+                    │  - Twist management    │
+                    └─────────────────────────┘
+```
+
+### Enhanced Switch and Twist Flow
+
+**Switch Command:**
+```
+/switch [N] → CommandResult(SWITCH, {target_chat: N-1}) → switch_to_chat() → Display context
+```
+
+**Twist Command:**
+```
+/twist [N] → Extract last response → CommandResult(TWIST, {content, target_chat}) 
+          → twist_to_chat() → Switch + Display + Send as prompt
+```
 
 ### Global Model Management
 
 ```
-┌─────────────────┐    ┌─────────────────┐
-│   Chat 1        │    │   Chat 2        │
-│                 │    │                 │
-│ ┌─────────────┐ │    │ ┌─────────────┐ │
-│ │ /model cmd  │ │───▶│ │ Auto-update │ │
-│ └─────────────┘ │    │ └─────────────┘ │
-└─────────────────┘    └─────────────────┘
-         │                       ▲
-         ▼                       │
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Chat 1        │    │   Chat 2        │    │   Chat N        │
+│                 │    │                 │    │                 │
+│ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────┐ │
+│ │ /model cmd  │ │───▶│ │ Auto-update │ │───▶│ │ Auto-update │ │
+│ └─────────────┘ │    │ └─────────────┘ │    │ └─────────────┘ │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 ▼
 ┌─────────────────────────────────────────┐
 │        Global Config                    │
 │  ~/.hiollama_config_global.json        │
@@ -109,26 +160,82 @@ The application uses a modular design pattern with these key components:
 └─────────────────────────────────────────┘
 ```
 
-### Chat Switching and Twist Flow
+## Key Features Implementation
 
+### Event-Driven Architecture
+
+**Command Processing:**
+- Commands return `CommandResult` objects with action intentions
+- Session manager processes results and coordinates responses
+- Clean separation between command logic and session coordination
+
+**State Management:**
+- Centralized in `ChatSessionManager`
+- No inter-chat dependencies or state flags
+- Each chat instance focuses solely on its conversation
+- Event system handles all coordination
+
+### Multi-Chat System
+
+**Scalable Chat Support:**
+- Configurable number of chats (defaults to 2)
+- Rainbow color progression for visual distinction
+- `/switch` and `/twist` commands accept optional chat numbers
+- Automatic cycling behavior when no target specified
+
+**Advanced Command Syntax:**
+```bash
+/switch          # Cycle to next chat
+/switch 3        # Switch to chat 3
+/twist           # Twist to next chat
+/twist 2         # Twist to chat 2
 ```
-Chat 1 ──/switch──▶ Chat 2
-   │                   ▲
-   │                   │
-   ▼                   │
-/twist ────────────────┘
-   │
-   ▼
-Last Response → Twist Content → Chat 2 Prompt
+
+### Rich Terminal Interface
+
+**Rainbow Color System:**
+- Progressive color assignment: red → orange1 → yellow1 → green → blue → purple → magenta
+- Consistent theming across all UI elements
+- Visual chat distinction with colored bars and indicators
+- Active chat highlighting with arrow indicators (►)
+
+## Technical Decisions and Patterns
+
+### Event-Driven Design
+
+```python
+@dataclass
+class CommandResult:
+    action: ActionType
+    data: Optional[Dict[str, Any]] = None
+
+# Commands return intentions, not side effects
+return CommandResult(ActionType.SWITCH, {"target_chat": 2})
 ```
 
-### Command Processing Architecture
+Benefits:
+- Clear command intentions
+- Testable command logic
+- Centralized coordination
+- Easy extension for new actions
 
-Commands follow a structured pattern:
-- **Input Parsing**: Commands identified by `/` prefix
-- **Argument Handling**: Complex commands parse arguments
-- **Global Updates**: Model changes propagate to all instances
-- **State Management**: Switch/twist requests handled via flags
+### Centralized Session Management
+
+```python
+class ChatSessionManager:
+    def process_command_result(self, result: CommandResult) -> bool:
+        if result.action == ActionType.SWITCH:
+            # Handle switching logic
+        elif result.action == ActionType.TWIST:
+            # Handle twist logic
+        # etc.
+```
+
+Benefits:
+- Single source of truth for multi-chat coordination
+- Clear control flow
+- Easy debugging and maintenance
+- Scalable to N chats
 
 ### Configuration Hierarchy
 
@@ -146,68 +253,6 @@ Instance Settings (Per-Chat)
 └── logging_enabled
 ```
 
-## Key Features Implementation
-
-### Dual-Chat System
-
-- **Independent State**: Each chat maintains separate history, logs, and settings
-- **Synchronized Updates**: Model changes apply globally via class-level management
-- **Seamless Switching**: `/switch` command with state preservation
-- **Twist Functionality**: Response copying between chats with preview
-
-### Advanced State Management
-
-- **Instance Registration**: New instances automatically register for global updates
-- **Flag-based Switching**: `switch_requested` and `twist_content` attributes coordinate chat changes
-- **Configuration Separation**: Global vs instance-specific settings properly isolated
-
-### Rich Terminal Interface
-
-- **Color Coding**: Green (Chat 1) and Blue (Chat 2) with consistent theming
-- **Dynamic Prompts**: Chat-aware prompt generation with history counters
-- **Interactive Elements**: Spinners, confirmations, and formatted displays
-- **Rainbow Header**: Version display with colorful branding
-
-### File and Prompt Management
-
-- **Saved Prompts**: 10 slots per chat instance with persistence
-- **File Loading**: Code and text file processing with instructions
-- **System Prompts**: Per-chat customization with defaults
-- **History Management**: Configurable limits with automatic trimming
-
-## Technical Decisions and Patterns
-
-### Class-Level Global State
-
-```python
-class HiOllamaChat:
-    _global_config = None  # Shared across all instances
-    _all_instances = []    # Instance registry for updates
-```
-
-Benefits:
-- Ensures model consistency across chats
-- Enables synchronized updates
-- Maintains separation of concerns
-
-### Command Pattern Implementation
-
-Commands use method mapping with argument parsing:
-```python
-self.commands = {
-    "/help": self.cmd_help,
-    "/model": self.cmd_model,
-    # ... more commands
-}
-```
-
-### Configuration Strategy
-
-- **JSON Storage**: Human-readable and editable
-- **Automatic Separation**: Global vs instance settings
-- **Default Fallbacks**: Graceful handling of missing configs
-- **Error Recovery**: Continues with defaults on load failures
-
 ### Modern Ollama Integration
 
 - **Native API**: Uses `ollama.chat()` and `ollama.list()`
@@ -217,47 +262,59 @@ self.commands = {
 
 ## Extending the Architecture
 
-### Adding New Commands
+### Adding New Command Actions
 
-1. Add method to `CommandHandler` class
-2. Register in `commands` dictionary
-3. Update help menu in `UIManager`
-4. Add any required configuration options
+1. Add new `ActionType` enum value
+2. Update `process_command_result()` in `ChatSessionManager`
+3. Create command handler that returns appropriate `CommandResult`
+4. Add help documentation
+
+### Adding More Chat Instances
+
+1. Update `DEFAULT_NUM_CHATS` in constants
+2. Ensure rainbow color cycling handles additional chats
+3. Update help text for multi-chat commands
+4. Test switch/twist functionality with N chats
+
+### Adding Inter-Chat Features
+
+The event system makes it easy to add features like:
+- Chat comparison views
+- Message forwarding between chats
+- Collaborative workflows
+- Chat forking and merging
 
 ### Adding Global Settings
 
 1. Extend `DEFAULT_GLOBAL_CONFIG` in `ConfigManager`
 2. Update `update_global_model` pattern for new setting
 3. Implement synchronization across instances
-
-### Adding Instance Features
-
-1. Add to `DEFAULT_CONFIG` in `ConfigManager`
-2. Initialize in `HiOllamaChat.__init__()`
-3. Implement save/load in configuration methods
-4. Add UI elements as needed
+4. Add UI controls for the setting
 
 ## Performance and Scalability
 
 ### Memory Management
 - History limits prevent unbounded growth
 - Configuration caching reduces I/O
-- Instance registration allows controlled updates
+- Event system reduces state complexity
+- Clean chat instance separation
 
-### File I/O Optimization
-- Lazy configuration loading
-- Separate global/instance file access
-- Error-tolerant save operations
+### Event Processing
+- O(1) command result processing
+- Direct action dispatch
+- Minimal coordination overhead
 
-### Threading Considerations
-- Spinner animations run in separate threads
-- UI updates synchronized through Rich library
-- Graceful shutdown with proper cleanup
+### Multi-Chat Scalability
+- Rainbow color cycling supports unlimited chats
+- Session manager handles N instances efficiently
+- Configuration system scales with instance count
+- UI adapts to any number of active chats
 
 ## Security and Error Handling
 
 ### Input Validation
 - Command argument parsing with type checking
+- Chat number bounds validation
 - File path validation for load operations
 - Configuration value bounds checking
 
@@ -265,10 +322,12 @@ self.commands = {
 - Default configuration fallbacks
 - Graceful API failure handling
 - User feedback for all error conditions
+- Automatic configuration saving on exit
 
 ### Data Persistence
 - Automatic configuration saving
 - Separate log directories per instance
 - Timestamp-based log file organization
+- Error-tolerant save operations
 
-This architecture provides a robust, extensible foundation for the dual-chat Ollama interface while maintaining clean separation of concerns and enabling future enhancements.
+This architecture provides a robust, scalable foundation for multi-chat Ollama interaction while maintaining clean separation of concerns and enabling future enhancements. The event-driven design provides excellent extensibility and maintainability for ongoing development.
