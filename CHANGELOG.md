@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.11.dev] - 2025-05-28
+
+### Fixed
+
+- **Chat History Order**: Fixed chronological order of messages in chat history.
+- User messages now appear before assistant responses in the in-memory history while maintaining correct API functionality.
+- Eliminated double-prompt issue by leveraging user input already added to history for API calls.
+- File logging continues to maintain correct conversational order as before.
+
+### Technical
+
+- Restructured message flow in `handle_regular_input()` to add user input to history before API call.
+- Modified `talk_to_model()` to use existing chat history (which now includes current user input) instead of appending user prompt separately.
+- Maintains API compatibility while fixing historical message ordering.
+
 ## [0.1.10.dev] - 2025-05-28
 
 ### Enhanced

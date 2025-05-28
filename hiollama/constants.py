@@ -26,7 +26,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "0.1.10.dev"  # Updated version
+APP_VERSION = "0.1.11.dev"  # Updated version
 
 # Chat colors - now using rainbow progression
 def get_rainbow_chat_color(chat_index):

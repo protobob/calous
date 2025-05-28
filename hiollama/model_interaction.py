@@ -12,9 +12,10 @@ class ModelInteraction:
         """Send a prompt to the selected model and return the response."""
         try:
             # Prepare the messages for the API call
+            # DON'T add the current user_prompt to the messages array
+            # since it's already in the history now
             messages = [self.app.system_prompt] + self.app.chat_history.history.copy()
-            messages.append({'role': 'user', 'content': user_prompt})
-
+            
             # Call the Ollama API
             response = ollama.chat(model=self.app.selected_model, messages=messages)
 
