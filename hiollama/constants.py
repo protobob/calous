@@ -1,13 +1,6 @@
 """Constants for the hiollama package."""
 from pathlib import Path
 
-# Chat colors
-CHAT_COLORS = {0: "green", 1: "blue"}
-
-# UI formatting
-MAX_PREVIEW_LENGTH = 100
-HEADER_SEPARATOR = ": SUMMARY"
-
 # Rainbow text colors for logo
 RAINBOW_COLORS = ["red", "orange1", "yellow1", "green", "blue", "purple", "magenta", "red", "orange1"]
 RAINBOW_TEXT = "HIOLLAMA!"
@@ -28,5 +21,20 @@ CONFIG_PATH = Path.home() / ".hiollama_config.json"
 # Prompt configuration
 MAX_PROMPTS = 10
 
+# UI configuration
+MAX_PREVIEW_LENGTH = 100
+HEADER_SEPARATOR = ": SUMMARY"
+
 # Application metadata
-APP_VERSION = "0.1.8.dev"  # Updated version
+APP_VERSION = "0.1.9.dev"  # Updated version
+
+# Chat colors - now using rainbow progression
+def get_rainbow_chat_color(chat_index):
+    """Get chat color from rainbow progression."""
+    return RAINBOW_COLORS[chat_index % len(RAINBOW_COLORS)]
+
+# Keep the old CHAT_COLORS for backward compatibility during transition
+CHAT_COLORS = {0: "green", 1: "blue"}  # Will be replaced by rainbow function
+
+# Multi-chat configuration
+DEFAULT_NUM_CHATS = 2  # Keep current behavior as default

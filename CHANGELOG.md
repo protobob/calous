@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.9.dev] - 2025-05-28
+
+### Enhanced
+
+- **Rainbow Chat Colors**: Chat colors now use the rainbow progression from the HIOLLAMA logo.
+- Chat 1 displays in red, Chat 2 in orange1, with future expansion ready for yellow1, green, blue, purple, magenta.
+- Improved visual consistency between app branding and chat color scheme.
+
+### Technical
+
+- Updated `get_chat_color()` function to use `RAINBOW_COLORS` array with modulo cycling.
+- Added `DEFAULT_NUM_CHATS` constant and enhanced `setup_chats()` for future multi-chat expansion.
+- Maintained backward compatibility with existing 2-chat system and switch/twist functionality.
+
 ## [0.1.8.dev] - 2025-05-27
 
 ### Changed

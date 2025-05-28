@@ -7,11 +7,11 @@ from .utils import (
     reset_twist_content, reset_switch_flags, format_message_preview
 )
 
-def setup_chats() -> List[HiOllamaChat]:
+def setup_chats(num_chats: int = 2) -> List[HiOllamaChat]:
     """Initialize and configure chat instances."""
-    chats = [HiOllamaChat(0), HiOllamaChat(1)]
+    chats = [HiOllamaChat(i) for i in range(num_chats)]
     
-    # Configure chat instances - no need for separate registration
+    # Configure chat instances
     for i, chat in enumerate(chats):
         chat.active_chat_index = i
         chat.chat_instances = chats

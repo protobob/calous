@@ -5,8 +5,8 @@ from .constants import CHAT_COLORS, MAX_PREVIEW_LENGTH, RAINBOW_COLORS, RAINBOW_
 from pathlib import Path
 
 def get_chat_color(chat_index: int) -> str:
-    """Return the color for a specific chat index."""
-    return CHAT_COLORS.get(chat_index, "white")
+    """Return the color for a specific chat index using rainbow progression."""
+    return RAINBOW_COLORS[chat_index % len(RAINBOW_COLORS)]
 
 def format_message_preview(content: Any, max_length: int = MAX_PREVIEW_LENGTH) -> str:
     """Format a message for preview display."""
