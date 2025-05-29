@@ -1,7 +1,7 @@
 """Utility functions for the hiollama package."""
 from rich import print
 from typing import Optional, Dict, Any
-from .constants import CHAT_COLORS, MAX_PREVIEW_LENGTH, RAINBOW_COLORS, RAINBOW_TEXT, HEADER_SEPARATOR, APP_VERSION
+from .constants import MAX_PREVIEW_LENGTH, RAINBOW_COLORS, RAINBOW_TEXT, HEADER_SEPARATOR, APP_VERSION
 from pathlib import Path
 
 def get_chat_color(chat_index: int) -> str:
@@ -72,7 +72,7 @@ class Utils:
         """Load a file and format it as a prompt with instructions."""
         path = Path(filepath)
         if not path.exists():
-            raise FileNotFoundError(f"File not found: {filepath}")
+            raise FileNotFoundError(f"\nFile not found: {filepath}")
             
         content = path.read_text(errors='replace')
         if instructions:

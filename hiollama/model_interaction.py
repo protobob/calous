@@ -29,19 +29,19 @@ class ModelInteraction:
             return response
 
         except requests.exceptions.HTTPError as http_err:
-            print(f"[bold red]HTTP Error:[/bold red] {http_err}")
+            print(f"\n[bold red]HTTP Error:[/bold red] {http_err}")
             return {"message": {"content": "[Error: HTTP error occurred.]"}}
 
         except requests.exceptions.ConnectionError as conn_err:
-            print(f"[bold red]Connection Error:[/bold red] {conn_err}")
+            print(f"\n[bold red]Connection Error:[/bold red] {conn_err}")
             return {"message": {"content": "[Error: Failed to connect to the API server.]"}}
 
         except requests.exceptions.Timeout as timeout_err:
-            print(f"[bold red]Timeout Error:[/bold red] {timeout_err}")
+            print(f"\n[bold red]Timeout Error:[/bold red] {timeout_err}")
             return {"message": {"content": "[Error: API request timed out.]"}}
 
         except Exception as err:
-            print(f"[bold red]Unexpected Error:[/bold red] {err}")
+            print(f"\n[bold red]Unexpected Error:[/bold red] {err}")
             return {"message": {"content": "[Error: An unexpected error occurred.]"}}
 
     def list_ollama_models(self):
@@ -50,14 +50,14 @@ class ModelInteraction:
             response = ollama.list()
             return [model.model for model in response.models]
         except Exception as e:
-            print(f"[bold red]Error fetching models:[/bold red] {e}")
+            print(f"\n[bold red]Error fetching models:[/bold red] {e}")
             return []
 
     def select_model(self):
         """Display available models and let the user select one."""
         models = self.list_ollama_models()
         if not models:
-            print("[bold red]No models installed.[/bold red]")
+            print("\n[bold red]No models installed.[/bold red]")
             return None
 
         print("\nAvailable Ollama models:")
@@ -70,7 +70,7 @@ class ModelInteraction:
                 index = int(choice) - 1
                 if 0 <= index < len(models):
                     return models[index]
-            print("[bold red]Invalid selection, try again.[/bold red]")
+            print("\n[bold red]Invalid selection, try again.[/bold red]")
 
     def process_response(self, user_input, response):
         """Process the response from the model, handles logging, and updates chat history."""
@@ -102,7 +102,7 @@ class ModelInteraction:
         if isinstance(clean_response, str):
             self.app.chat_history.log_file(user_input, clean_response)
         else:
-            print("[bold red]Error:[/bold red] Response is not a valid string and will not be logged.")
+            print("\n[bold red]Error:[/bold red] Response is not a valid string and will not be logged.")
 
         self.app.chat_history.add_message("assistant", clean_response)
 

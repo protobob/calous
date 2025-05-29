@@ -50,7 +50,7 @@ class ChatSessionManager:
             self.active_chat_index = target_index
             return True
         
-        print(f"[bold red]Error:[/bold red] Invalid chat number. Available chats: 1-{self.num_chats}")
+        print(f"\n[bold red]Error:[/bold red] Invalid chat number. Available chats: 1-{self.num_chats}")
         return False
     
     def twist_to_chat(self, content: str, target_index: Optional[int] = None) -> bool:
@@ -60,7 +60,7 @@ class ChatSessionManager:
             target_index = (self.active_chat_index + 1) % self.num_chats
 
         if not (0 <= target_index < self.num_chats):
-            print(f"[bold red]Error:[/bold red] Invalid chat number. Available chats: 1-{self.num_chats}")
+            print(f"\n[bold red]Error:[/bold red] Invalid chat number. Available chats: 1-{self.num_chats}")
             return False
 
         # Display twist preview from source chat
@@ -138,7 +138,7 @@ class ChatSessionManager:
             try:
                 chat.save_config()
             except Exception as e:
-                print(f"Error saving config: {e}")
+                print(f"\nError saving config: {e}")
     
     def run(self):
         """Run the main application loop."""

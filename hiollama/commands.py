@@ -57,7 +57,7 @@ class CommandHandler:
             if len(parts) > 1:
                 self.cmd_setmax(parts[1])
             else:
-                print("[bold red]Error:[/bold red] No maximum value provided.")
+                print("\n[bold red]Error:[/bold red] No maximum value provided.")
             return CommandResult(ActionType.CONTINUE)
         
         if user_input_lower.startswith("/setprompt "):
@@ -65,7 +65,7 @@ class CommandHandler:
             if len(parts) >= 3:
                 self.cmd_setprompt(parts[1], *parts[2:])
             else:
-                print("[bold red]Error:[/bold red] Usage: /setprompt NUMBER PROMPT_TEXT")
+                print("\n[bold red]Error:[/bold red] Usage: /setprompt NUMBER PROMPT_TEXT")
             return CommandResult(ActionType.CONTINUE)
         
         if user_input_lower.startswith("/prompt "):
@@ -73,7 +73,7 @@ class CommandHandler:
             if len(parts) > 1:
                 self.cmd_prompt(parts[1])
             else:
-                print("[bold red]Error:[/bold red] Usage: /prompt NUMBER")
+                print("\n[bold red]Error:[/bold red] Usage: /prompt NUMBER")
             return CommandResult(ActionType.CONTINUE)
         
         if user_input_lower.startswith("/showprompt"):
@@ -94,7 +94,7 @@ class CommandHandler:
                 instructions = parts[2] if len(parts) > 2 else ""
                 self.cmd_load(filepath, instructions)
             else:
-                print("[bold red]Error:[/bold red] Usage: /load FILENAME [INSTRUCTIONS]")
+                print("\n[bold red]Error:[/bold red] Usage: /load FILENAME [INSTRUCTIONS]")
             return CommandResult(ActionType.CONTINUE)
 
         # Execute simple commands
@@ -120,7 +120,7 @@ class CommandHandler:
                 # Convert to 0-based index (user inputs 1-based)
                 target_chat = int(parts[1]) - 1
             except ValueError:
-                print("[bold red]Error:[/bold red] Invalid chat number.")
+                print("\n[bold red]Error:[/bold red] Invalid chat number.")
                 return CommandResult(ActionType.CONTINUE)
         
         return CommandResult(ActionType.SWITCH, {"target_chat": target_chat})
@@ -150,7 +150,7 @@ class CommandHandler:
                 # Convert to 0-based index (user inputs 1-based)
                 target_chat = int(parts[1]) - 1
             except ValueError:
-                print("[bold red]Error:[/bold red] Invalid chat number.")
+                print("\n[bold red]Error:[/bold red] Invalid chat number.")
                 return CommandResult(ActionType.CONTINUE)
 
         return CommandResult(ActionType.TWIST, {
@@ -213,7 +213,7 @@ class CommandHandler:
         """Change the system prompt."""
         new_prompt = " ".join(args).strip()
         if not new_prompt:
-            print("[bold red]Error:[/bold red] System prompt cannot be empty.")
+            print("\n[bold red]Error:[/bold red] System prompt cannot be empty.")
             return
 
         print(f"\nPrevious System Prompt: [grey50]{self.app.system_prompt['content']}[/grey50]")
@@ -304,7 +304,7 @@ class CommandHandler:
     def cmd_load(self, filepath, file_message=""):
         """Load a file and send it to the model with user instructions."""
         if not Path(filepath).exists():
-            print(f"Error: File '{filepath}' does not exist.")
+            print(f"\nError: File '{filepath}' does not exist.")
             return
             
         try:
@@ -316,7 +316,7 @@ class CommandHandler:
             print(f"\n[grey50]Sent [italic]{filepath}[/italic] -- hold on, this might take awhile...[/grey50]")
             self.app.handle_regular_input(file_prompt)
         except Exception as e:
-            print(f"Failed to load file: {e}")
+            print(f"\nFailed to load file: {e}")
             
     def cmd_showvars(self):
         """Display application variables, including log and config paths."""

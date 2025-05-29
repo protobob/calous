@@ -2,7 +2,7 @@
 from pathlib import Path
 
 # Rainbow text colors for logo
-RAINBOW_COLORS = ["red", "orange1", "yellow1", "green", "blue", "purple", "magenta", "red", "orange1"]
+RAINBOW_COLORS = ["red", "orange1", "yellow1", "green", "blue", "purple", "magenta"]
 RAINBOW_TEXT = "HIOLLAMA!"
 
 # Default configuration
@@ -26,15 +26,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "0.2.0.dev"  # Updated version
-
-# Chat colors - now using rainbow progression
-def get_rainbow_chat_color(chat_index):
-    """Get chat color from rainbow progression."""
-    return RAINBOW_COLORS[chat_index % len(RAINBOW_COLORS)]
-
-# Keep the old CHAT_COLORS for backward compatibility during transition
-CHAT_COLORS = {0: "green", 1: "blue"}  # Will be replaced by rainbow function
+APP_VERSION = "0.2.1.dev"  # Updated for error formatting improvements
 
 # Multi-chat configuration
 DEFAULT_NUM_CHATS = 2  # Keep current behavior as default

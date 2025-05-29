@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.2.1.dev] - 2025-05-28
+
+### Enhanced
+
+- **Improved Error Formatting**: All error messages now start with a newline (`\n`) for better visual separation.
+- Enhanced readability of error output across all modules including model interaction, configuration, and commands.
+
+### Fixed
+
+- **Code Cleanup**: Removed dead code including unused `get_rainbow_chat_color()` function and `CHAT_COLORS` constant.
+- **RAINBOW_COLORS**: Fixed duplicate colors at the end of the array for cleaner 7-color cycling.
+- **Version Consistency**: Updated `__version__` in `__init__.py` to properly import from `APP_VERSION` constant.
+
+### Technical
+
+- Updated error message formatting in `model_interaction.py`, `config.py`, `commands.py`, `utils.py`, and `session_manager.py`.
+- Cleaned up constants.py by removing redundant color definitions and functions.
+- Centralized version management through constants.py import in __init__.py.
+- Consistent error display formatting throughout the application for improved user experience.
+
 ## [0.2.0.dev] - 2025-05-28
 
 ### Major Refactor: Event-Driven Architecture

@@ -37,7 +37,8 @@ class ConfigManager:
                     config.pop("selected_model", None)
                     return config
             except Exception as e:
-                print(f"Failed to load config for instance {instance_index}: {e}")
+                print(f"\n[red]Error loading config: {e}[/red]")
+                return ConfigManager.DEFAULT_CONFIG.copy()
         
         # Remove selected_model from default config for instances
         instance_config = ConfigManager.DEFAULT_CONFIG.copy()
@@ -55,7 +56,7 @@ class ConfigManager:
             with open(config_path, "w", encoding="utf-8") as f:
                 json.dump(instance_config, f, indent=2)
         except Exception as e:
-            print(f"Failed to save config for instance {instance_index}: {e}")
+            print(f"\n[red]Error saving config: {e}[/red]")
     
     @staticmethod
     def load_global_config():
@@ -65,7 +66,8 @@ class ConfigManager:
                 with open(ConfigManager.GLOBAL_CONFIG_PATH, "r", encoding="utf-8") as f:
                     return json.load(f)
             except Exception as e:
-                print(f"Failed to load global config: {e}")
+                print(f"\n[red]Error loading global config: {e}[/red]")
+                return ConfigManager.DEFAULT_GLOBAL_CONFIG.copy()
         return ConfigManager.DEFAULT_GLOBAL_CONFIG.copy()
     
     @staticmethod
@@ -75,4 +77,4 @@ class ConfigManager:
             with open(ConfigManager.GLOBAL_CONFIG_PATH, "w", encoding="utf-8") as f:
                 json.dump(global_config, f, indent=2)
         except Exception as e:
-            print(f"Failed to save global config: {e}")
+            print(f"\n[red]Error saving global config: {e}[/red]")
