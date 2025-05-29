@@ -1,6 +1,5 @@
 """Model interaction for Hi, Ollama!"""
 import ollama
-import requests
 from rich import print
 from .utils import get_chat_color
 
@@ -12,15 +11,10 @@ class ModelInteraction:
         """Send a prompt to the selected model and return the response."""
         try:
             # Prepare the messages for the API call
-            # DON'T add the current user_prompt to the messages array
-            # since it's already in the history now
             messages = [self.app.system_prompt] + self.app.chat_history.history.copy()
             
             # Call the Ollama API
             response = ollama.chat(model=self.app.selected_model, messages=messages)
-
-            # Debug: Log the raw response
-            # print(f"[bold yellow]Debug: Raw API Response:[/bold yellow] {response}")
 
             # Validate the response structure
             if not hasattr(response, 'message') or not hasattr(response.message, 'content'):
@@ -28,29 +22,51 @@ class ModelInteraction:
 
             return response
 
-        except requests.exceptions.HTTPError as http_err:
-            print(f"\n[bold red]HTTP Error:[/bold red] {http_err}")
-            return {"message": {"content": "[Error: HTTP error occurred.]"}}
+        except ollama.ResponseError as e:
+            if "model not found" in str(e).lower() or "model" in str(e).lower() and "not found" in str(e).lower():
+                print(f"\n[bold red]Model Error:[/bold red] Model '{self.app.selected_model}' not found.")
+                print(f"[grey50]Try: /model to select an available model[/grey50]")
+                available_models = self.list_ollama_models()
+                if available_models:
+                    print(f"[grey50]Available models: {', '.join(available_models[:3])}{'...' if len(available_models) > 3 else ''}[/grey50]")
+            else:
+                print(f"\n[bold red]Ollama API Error:[/bold red] {e}")
+            return {"message": {"content": "[Error: Model response failed.]"}}
 
-        except requests.exceptions.ConnectionError as conn_err:
-            print(f"\n[bold red]Connection Error:[/bold red] {conn_err}")
-            return {"message": {"content": "[Error: Failed to connect to the API server.]"}}
+        except ConnectionError as e:
+            print(f"\n[bold red]Connection Error:[/bold red] Cannot connect to Ollama server.")
+            print(f"[grey50]Try: 'ollama serve' in another terminal or check if port 11434 is accessible[/grey50]")
+            return {"message": {"content": "[Error: Cannot connect to Ollama server.]"}}
 
-        except requests.exceptions.Timeout as timeout_err:
-            print(f"\n[bold red]Timeout Error:[/bold red] {timeout_err}")
-            return {"message": {"content": "[Error: API request timed out.]"}}
+        except TimeoutError as e:
+            print(f"\n[bold red]Timeout Error:[/bold red] Request timed out.")
+            print(f"[grey50]The model may be processing a complex request. Try again or use a smaller model.[/grey50]")
+            return {"message": {"content": "[Error: Request timed out.]"}}
 
-        except Exception as err:
-            print(f"\n[bold red]Unexpected Error:[/bold red] {err}")
+        except Exception as e:
+            print(f"\n[bold red]Unexpected Error:[/bold red] {e}")
+            print(f"[grey50]If this persists, try restarting Ollama with 'ollama serve'[/grey50]")
             return {"message": {"content": "[Error: An unexpected error occurred.]"}}
 
     def list_ollama_models(self):
-        """Get a list of available Ollama models."""
+        """Get a list of available Ollama models with better error handling."""
         try:
             response = ollama.list()
+            if not response or not hasattr(response, 'models'):
+                print(f"\n[yellow]Warning:[/yellow] Unexpected response format from Ollama")
+                return []
             return [model.model for model in response.models]
+        except ollama.ResponseError as e:
+            print(f"\n[bold red]Ollama API Error:[/bold red] {e}")
+            print(f"[grey50]Check if Ollama is running properly[/grey50]")
+            return []
+        except ConnectionError:
+            print(f"\n[bold red]Connection Error:[/bold red] Cannot connect to Ollama server.")
+            print(f"[grey50]Make sure Ollama is running: 'ollama serve'[/grey50]")
+            return []
         except Exception as e:
             print(f"\n[bold red]Error fetching models:[/bold red] {e}")
+            print(f"[grey50]Check if Ollama is installed and running properly[/grey50]")
             return []
 
     def select_model(self):
@@ -58,6 +74,7 @@ class ModelInteraction:
         models = self.list_ollama_models()
         if not models:
             print("\n[bold red]No models installed.[/bold red]")
+            print("[grey50]Install a model with: 'ollama pull model-name'[/grey50]")
             return None
 
         print("\nAvailable Ollama models:")
@@ -65,12 +82,21 @@ class ModelInteraction:
             print(f"{i}. {model}")
 
         while True:
-            choice = input("\nSelect a model by number: ").strip()
-            if choice.isdigit():
-                index = int(choice) - 1
-                if 0 <= index < len(models):
-                    return models[index]
-            print("\n[bold red]Invalid selection, try again.[/bold red]")
+            try:
+                choice = input("\nSelect a model by number (or 'q' to cancel): ").strip()
+                if choice.lower() == 'q':
+                    return None
+                if choice.isdigit():
+                    index = int(choice) - 1
+                    if 0 <= index < len(models):
+                        return models[index]
+                    else:
+                        print(f"\n[bold red]Invalid selection.[/bold red] Please choose 1-{len(models)}")
+                else:
+                    print("\n[bold red]Invalid input.[/bold red] Please enter a number or 'q' to cancel")
+            except KeyboardInterrupt:
+                print("\n[grey50]Model selection cancelled.[/grey50]")
+                return None
 
     def process_response(self, user_input, response):
         """Process the response from the model, handles logging, and updates chat history."""

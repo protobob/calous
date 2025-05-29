@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.2.dev] - 2025-05-28
+
+### Enhanced
+
+- **Improved Ollama Error Handling**: Enhanced error handling specifically for Ollama library interactions.
+- Better error messages for model-not-found scenarios with suggested available models.
+- Improved connection error handling with specific guidance for Ollama server issues.
+- Enhanced model selection validation with better user feedback and cancellation support.
+
+### Technical
+
+- Added proper `ollama.ResponseError` exception handling in `model_interaction.py`.
+- Improved `list_ollama_models()` with comprehensive error handling for API failures.
+- Enhanced `select_model()` with input validation and graceful cancellation support.
+- Better timeout and connection error messaging with actionable recovery suggestions.
+
 ## [0.2.1.dev] - 2025-05-28
 
 ### Enhanced

@@ -26,7 +26,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "0.2.1.dev"  # Updated for error formatting improvements
+APP_VERSION = "0.2.2.dev"
 
 # Multi-chat configuration
 DEFAULT_NUM_CHATS = 2  # Keep current behavior as default
