@@ -329,5 +329,5 @@ class CommandHandler:
             system_prompt=self.app.system_prompt['content'],
             logging_enabled=self.app.logging_enabled,
             log_dir=self.app.chat_history.log_dir,
-            config_path=ConfigManager.get_config_path(self.app.instance_index)
+            config_path=ConfigManager.UNIFIED_CONFIG_PATH  # Updated to show unified config path
         )

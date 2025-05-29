@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.2.3.dev] - 2025-05-29
+
+### Enhanced
+
+- **Unified Configuration System**: Replaced individual chat config files with a single unified configuration file.
+- All chat instances now store their configurations in `~/.hiollama_config_unified.json` with clear global and per-chat sections.
+- Global settings (like selected model) are now shared across all chat instances while maintaining per-chat customization.
+- Simplified configuration management with atomic saves and better organization.
+
+### Technical
+
+- Complete refactor of `ConfigManager` class to use unified JSON structure with global and per-chat sections.
+- Updated `HiOllamaChat` initialization to load from unified config system.
+- Enhanced configuration API with methods like `get_chat_config()`, `update_chat_config()`, and `update_global_config()`.
+- Improved config file structure enables future features like chat templates and presets.
+- Number of chat instances is now configurable through the global config section.
+
+### Breaking Changes
+
+- Configuration file format has changed from separate `~/.hiollama_config_N.json` files to unified `~/.hiollama_config_unified.json`.
+- Previous configuration files will need to be manually recreated (automatic migration not implemented).
+
 ## [0.2.2.dev] - 2025-05-28
 
 ### Enhanced

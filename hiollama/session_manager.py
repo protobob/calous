@@ -6,7 +6,7 @@ from rich import print
 import os
 from .app import HiOllamaChat
 from .utils import get_chat_color, print_rainbow_header, format_message_preview
-from .constants import DEFAULT_NUM_CHATS
+from .config import ConfigManager
 
 class ActionType(Enum):
     CONTINUE = "continue"
@@ -20,10 +20,11 @@ class CommandResult:
     data: Optional[Dict[str, Any]] = None
 
 class ChatSessionManager:
-    def __init__(self, num_chats: int = DEFAULT_NUM_CHATS):
+    def __init__(self, num_chats: Optional[int] = None):
         self.chats: List[HiOllamaChat] = []
         self.active_chat_index = 0
-        self.num_chats = num_chats
+        # Use config value if num_chats not explicitly provided
+        self.num_chats = num_chats if num_chats is not None else ConfigManager.get_num_chats()
         self._initialize_chats()
         
     def _initialize_chats(self):
