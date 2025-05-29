@@ -7,30 +7,49 @@ class ConfigManager:
     # Unified config file path
     UNIFIED_CONFIG_PATH = CONFIG_PATH.with_name(f"{CONFIG_PATH.stem}_unified{CONFIG_PATH.suffix}")
     
-    DEFAULT_UNIFIED_CONFIG = {
-        "global": {
-            "selected_model": DEFAULT_MODEL,
-            "num_chats": DEFAULT_NUM_CHATS
-        },
-        "chats": {
-            "0": {
-                "verbosity": True,
-                "think_filtering": True,
-                "MAX_HISTORY": DEFAULT_MAX_HISTORY,
-                "system_prompt": DEFAULT_SYSTEM_PROMPT,
-                "prompts": {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)},
-                "logging_enabled": True
-            },
-            "1": {
-                "verbosity": True,
-                "think_filtering": True,
-                "MAX_HISTORY": DEFAULT_MAX_HISTORY,
-                "system_prompt": "You are a creative writing assistant who helps with storytelling and narrative development.",
-                "prompts": {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)},
-                "logging_enabled": True
-            }
+    @staticmethod
+    def _generate_default_chat_config():
+        """Generate default configuration for a chat instance."""
+        return {
+            "verbosity": True,
+            "think_filtering": True,
+            "MAX_HISTORY": DEFAULT_MAX_HISTORY,
+            "system_prompt": DEFAULT_SYSTEM_PROMPT,
+            "prompts": {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)},
+            "logging_enabled": True
         }
-    }
+    
+    @staticmethod
+    def _generate_default_unified_config(num_chats=None):
+        """Generate default unified configuration for any number of chats."""
+        if num_chats is None:
+            num_chats = DEFAULT_NUM_CHATS
+            
+        config = {
+            "global": {
+                "selected_model": DEFAULT_MODEL,
+                "num_chats": num_chats
+            },
+            "chats": {}
+        }
+        
+        # Generate chat configs dynamically
+        for i in range(num_chats):
+            if i == 0:
+                # Chat 0 gets the default technical prompt
+                config["chats"][str(i)] = ConfigManager._generate_default_chat_config()
+            elif i == 1:
+                # Chat 1 gets the creative writing prompt (preserve existing behavior)
+                chat_config = ConfigManager._generate_default_chat_config()
+                chat_config["system_prompt"] = "You are a creative writing assistant who helps with storytelling and narrative development."
+                config["chats"][str(i)] = chat_config
+            else:
+                # Additional chats get generic prompts
+                chat_config = ConfigManager._generate_default_chat_config()
+                chat_config["system_prompt"] = f"You are a helpful assistant for Chat {i + 1}. Provide clear, concise responses."
+                config["chats"][str(i)] = chat_config
+        
+        return config
     
     @staticmethod
     def load_unified_config():
@@ -38,11 +57,40 @@ class ConfigManager:
         if ConfigManager.UNIFIED_CONFIG_PATH.exists():
             try:
                 with open(ConfigManager.UNIFIED_CONFIG_PATH, "r", encoding="utf-8") as f:
-                    return json.load(f)
+                    config = json.load(f)
+                
+                # Ensure we have the minimum required structure
+                if "global" not in config:
+                    config["global"] = {"selected_model": DEFAULT_MODEL, "num_chats": DEFAULT_NUM_CHATS}
+                if "chats" not in config:
+                    config["chats"] = {}
+                
+                # Get current num_chats from config
+                current_num_chats = config["global"].get("num_chats", DEFAULT_NUM_CHATS)
+                
+                # Ensure we have configs for all required chats
+                for i in range(current_num_chats):
+                    chat_key = str(i)
+                    if chat_key not in config["chats"]:
+                        # Generate missing chat config
+                        if i == 0:
+                            config["chats"][chat_key] = ConfigManager._generate_default_chat_config()
+                        elif i == 1:
+                            chat_config = ConfigManager._generate_default_chat_config()
+                            chat_config["system_prompt"] = "You are a creative writing assistant who helps with storytelling and narrative development."
+                            config["chats"][chat_key] = chat_config
+                        else:
+                            chat_config = ConfigManager._generate_default_chat_config()
+                            chat_config["system_prompt"] = f"You are a helpful assistant for Chat {i + 1}. Provide clear, concise responses."
+                            config["chats"][chat_key] = chat_config
+                
+                return config
+                
             except Exception as e:
                 print(f"\n[red]Error loading unified config: {e}[/red]")
-                return ConfigManager.DEFAULT_UNIFIED_CONFIG.copy()
-        return ConfigManager.DEFAULT_UNIFIED_CONFIG.copy()
+                return ConfigManager._generate_default_unified_config()
+        
+        return ConfigManager._generate_default_unified_config()
     
     @staticmethod
     def save_unified_config(config):
@@ -62,15 +110,17 @@ class ConfigManager:
         if chat_key in unified_config.get("chats", {}):
             return unified_config["chats"][chat_key]
         
-        # Return default config for new chat instances
-        return {
-            "verbosity": True,
-            "think_filtering": True,
-            "MAX_HISTORY": DEFAULT_MAX_HISTORY,
-            "system_prompt": DEFAULT_SYSTEM_PROMPT,
-            "prompts": {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)},
-            "logging_enabled": True
-        }
+        # Generate default config for new chat instances
+        if instance_index == 0:
+            return ConfigManager._generate_default_chat_config()
+        elif instance_index == 1:
+            chat_config = ConfigManager._generate_default_chat_config()
+            chat_config["system_prompt"] = "You are a creative writing assistant who helps with storytelling and narrative development."
+            return chat_config
+        else:
+            chat_config = ConfigManager._generate_default_chat_config()
+            chat_config["system_prompt"] = f"You are a helpful assistant for Chat {instance_index + 1}. Provide clear, concise responses."
+            return chat_config
     
     @staticmethod
     def update_chat_config(instance_index, chat_config):
@@ -98,13 +148,31 @@ class ConfigManager:
         # Update global settings
         unified_config["global"].update(global_updates)
         
+        # If num_chats changed, ensure we have configs for all chats
+        if "num_chats" in global_updates:
+            new_num_chats = global_updates["num_chats"]
+            for i in range(new_num_chats):
+                chat_key = str(i)
+                if chat_key not in unified_config.get("chats", {}):
+                    # Generate missing chat config
+                    if i == 0:
+                        unified_config["chats"][chat_key] = ConfigManager._generate_default_chat_config()
+                    elif i == 1:
+                        chat_config = ConfigManager._generate_default_chat_config()
+                        chat_config["system_prompt"] = "You are a creative writing assistant who helps with storytelling and narrative development."
+                        unified_config["chats"][chat_key] = chat_config
+                    else:
+                        chat_config = ConfigManager._generate_default_chat_config()
+                        chat_config["system_prompt"] = f"You are a helpful assistant for Chat {i + 1}. Provide clear, concise responses."
+                        unified_config["chats"][chat_key] = chat_config
+        
         ConfigManager.save_unified_config(unified_config)
     
     @staticmethod
     def get_global_config():
         """Get global configuration settings."""
         unified_config = ConfigManager.load_unified_config()
-        return unified_config.get("global", ConfigManager.DEFAULT_UNIFIED_CONFIG["global"])
+        return unified_config.get("global", {"selected_model": DEFAULT_MODEL, "num_chats": DEFAULT_NUM_CHATS})
     
     @staticmethod
     def get_num_chats():

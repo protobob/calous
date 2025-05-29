@@ -7,15 +7,103 @@ from rich import print
 from rich.table import Table
 from .utils import get_chat_color, print_message_with_bar, find_last_messages
 from .constants import APP_VERSION, MAX_PREVIEW_LENGTH
+from .config import ConfigManager
 from typing import Dict, Any
 import threading
 import time
 import os
 
+
 class UIManager:
     def __init__(self, app):
         self.app = app
         self.console = Console()
+    
+    def help_menu(self):
+        """Display the help menu with available commands."""
+        # Define the command color as a variable
+        command_color = "grey70"
+
+        # Create a table for the help menu
+        table = Table(show_header=False, box=None, padding=(0, 1))
+        table.add_column("Command", style=f"bold {command_color}", no_wrap=True)
+        table.add_column("Description", style="grey70")
+
+        # Add a header for General Commands
+        table.add_row("[bold white]General Commands:[/bold white]", "")
+        table.add_row(f"[bold {command_color}]/help[/bold {command_color}]", "Show this help menu.")
+        table.add_row(f"[bold {command_color}]/quit[/bold {command_color}]", "Exit the program and save the configuration.")
+        table.add_row(f"[bold {command_color}]/showvars[/bold {command_color}]", "Display current system variables.")
+        
+        # Get num_chats dynamically from session manager
+        num_chats = self.app.session_manager.num_chats if hasattr(self.app, 'session_manager') and self.app.session_manager else ConfigManager.get_num_chats()
+        
+        # Always show the dynamic version
+        table.add_row(f"/switch [NUMBER]", f"Switch between chats (1-{num_chats}). Default switches to next chat.")
+        table.add_row(f"/twist [NUMBER]", f"Copy AI's last response to target chat (1-{num_chats}). Default uses next chat.")
+
+        # Add a header for Model Commands
+        table.add_row("", "")  # Empty row for spacing
+        table.add_row("[bold white]Model Commands:[/bold white]", "")
+        table.add_row(f"[bold {command_color}]/model[/bold {command_color}]", "Select a different model.")
+        table.add_row(f"[bold {command_color}]/toggle_eval[/bold {command_color}]", "Toggle evaluation data display after responses.")
+        table.add_row(f"[bold {command_color}]/toggle_think[/bold {command_color}]", "Toggle filtering of LLM 'thoughts'.")
+
+        # Add a header for Prompt Commands
+        table.add_row("", "")  # Empty row for spacing
+        table.add_row("[bold white]Prompt Commands:[/bold white]", "")
+        table.add_row(f"[bold {command_color}]/setprompt[/bold {command_color}]", f"Set a saved prompt. Usage: [bold {command_color}]/setprompt NUMBER PROMPT_TEXT[/bold {command_color}].")
+        table.add_row(f"[bold {command_color}]/prompt[/bold {command_color}]", f"Use a saved prompt. Usage: [bold {command_color}]/prompt NUMBER[/bold {command_color}].")
+        table.add_row(f"[bold {command_color}]/showprompt[/bold {command_color}]", f"Display saved prompts. Usage: [bold {command_color}]/showprompt NUMBER[/bold {command_color}] or [bold {command_color}]/showprompt all[/bold {command_color}].")
+        table.add_row(f"[bold {command_color}]/system[/bold {command_color}]", "Change the system prompt.")
+
+        # Add a header for Chat History Commands
+        table.add_row("", "")  # Empty row for spacing
+        table.add_row("[bold white]Chat History Commands:[/bold white]", "")
+        table.add_row(f"[bold {command_color}]/history[/bold {command_color}]", "Display the current chat history.")
+        table.add_row(f"[bold {command_color}]/clear[/bold {command_color}]", "Clear the current chat history.")
+        table.add_row(f"[bold {command_color}]/setmax[/bold {command_color}]", f"Set maximum chat history. Usage: [bold {command_color}]/setmax NUMBER[/bold {command_color}].")
+        table.add_row(f"[bold {command_color}]/toggle_log[/bold {command_color}]", "Toggle logging of chat history.")
+
+        # Add a header for File Commands
+        table.add_row("", "")  # Empty row for spacing
+        table.add_row("[bold white]File Commands:[/bold white]", "")
+        table.add_row(f"[bold {command_color}]/load[/bold {command_color}]", f"Load a file as a prompt. Usage: [bold {command_color}]/load FILENAME PROMPT[/bold {command_color}].")
+
+        # Print the table
+        print(f"\n[bold grey70]| GLOBAL HELP MENU[/bold grey70]\n")
+        print(table)
+    
+    def display_active_chats_overview(self):
+        """Display overview of all configured chats."""
+        # Get num_chats and chat instances via session manager
+        if hasattr(self.app, 'session_manager') and self.app.session_manager:
+            num_chats = self.app.session_manager.num_chats
+            chat_instances = self.app.session_manager.get_all_chats()
+        else:
+            # Fallback for standalone operation
+            num_chats = ConfigManager.get_num_chats()
+            chat_instances = [self.app]  # Just show current app
+        
+        # Always use the dynamic version
+        switch_hint = f"/switch [1-{num_chats}] to change" if num_chats > 1 else ""
+        
+        print(f"[bold white]ACTIVE CHATS:[/bold white] [grey50]({switch_hint})[/grey50]")
+        
+        for i, chat in enumerate(chat_instances):
+            chat_color_for_chat = get_chat_color(i)
+            
+            # Get system prompt and truncate if needed
+            sys_prompt = chat.system_prompt.get('content', '[No system prompt set]')
+            if len(sys_prompt) > MAX_PREVIEW_LENGTH:
+                sys_prompt = sys_prompt[:MAX_PREVIEW_LENGTH] + "..."
+            
+            # Mark active chat with arrow
+            prefix = "►" if i == self.app.active_chat_index else " "
+            
+            print(f"{prefix} [bold {chat_color_for_chat}]{i + 1}:[/bold {chat_color_for_chat}] [grey70]{sys_prompt}[/grey70]")
+        
+        print()  # Add spacing after overview
     
     def spinner(self, stop_flag):
         """Display a spinner while waiting for a task to complete."""
@@ -57,63 +145,6 @@ class UIManager:
             f"[grey50] (/help for help)[/grey50]\n"
             f"{you_text}"
         )
-        
-    def help_menu(self):
-        """Display the help menu with available commands."""
-        # Define the command color as a variable
-        command_color = "grey70"
-
-        # Create a table for the help menu
-        table = Table(show_header=False, box=None, padding=(0, 1))
-        table.add_column("Command", style=f"bold {command_color}", no_wrap=True)
-        table.add_column("Description", style="grey70")
-
-        # Add a header for General Commands
-        table.add_row("[bold white]General Commands:[/bold white]", "")
-        table.add_row(f"[bold {command_color}]/help[/bold {command_color}]", "Show this help menu.")
-        table.add_row(f"[bold {command_color}]/quit[/bold {command_color}]", "Exit the program and save the configuration.")
-        table.add_row(f"[bold {command_color}]/showvars[/bold {command_color}]", "Display current system variables.")
-        
-        # Enhanced switch/twist help text for multi-chat support
-        num_chats = len(self.app.chat_instances) if self.app.chat_instances else 2
-        if num_chats == 2:
-            table.add_row(f"[bold {command_color}]/switch[/bold {command_color}]", f"Switch between chats (or /switch NUMBER).")
-            table.add_row(f"[bold {command_color}]/twist[/bold {command_color}]", "Copy AI's last response, switch chats, and use it as a prompt (or /twist NUMBER).")
-        else:
-            table.add_row(f"[bold {command_color}]/switch NUMBER[/bold {command_color}]", f"Switch to chat NUMBER (1-{num_chats}).")
-            table.add_row(f"[bold {command_color}]/twist NUMBER[/bold {command_color}]", f"Copy AI's last response to chat NUMBER (1-{num_chats}).")
-
-        # Add a header for Model Commands
-        table.add_row("", "")  # Empty row for spacing
-        table.add_row("[bold white]Model Commands:[/bold white]", "")
-        table.add_row(f"[bold {command_color}]/model[/bold {command_color}]", "Select a different model.")
-        table.add_row(f"[bold {command_color}]/toggle_eval[/bold {command_color}]", "Toggle evaluation data display after responses.")
-        table.add_row(f"[bold {command_color}]/toggle_think[/bold {command_color}]", "Toggle filtering of LLM 'thoughts'.")
-
-        # Add a header for Prompt Commands
-        table.add_row("", "")  # Empty row for spacing
-        table.add_row("[bold white]Prompt Commands:[/bold white]", "")
-        table.add_row(f"[bold {command_color}]/setprompt[/bold {command_color}]", f"Set a saved prompt. Usage: [bold {command_color}]/setprompt NUMBER PROMPT_TEXT[/bold {command_color}].")
-        table.add_row(f"[bold {command_color}]/prompt[/bold {command_color}]", f"Use a saved prompt. Usage: [bold {command_color}]/prompt NUMBER[/bold {command_color}].")
-        table.add_row(f"[bold {command_color}]/showprompt[/bold {command_color}]", f"Display saved prompts. Usage: [bold {command_color}]/showprompt NUMBER[/bold {command_color}] or [bold {command_color}]/showprompt all[/bold {command_color}].")
-        table.add_row(f"[bold {command_color}]/system[/bold {command_color}]", "Change the system prompt.")
-
-        # Add a header for Chat History Commands
-        table.add_row("", "")  # Empty row for spacing
-        table.add_row("[bold white]Chat History Commands:[/bold white]", "")
-        table.add_row(f"[bold {command_color}]/history[/bold {command_color}]", "Display the current chat history.")
-        table.add_row(f"[bold {command_color}]/clear[/bold {command_color}]", "Clear the current chat history.")
-        table.add_row(f"[bold {command_color}]/setmax[/bold {command_color}]", f"Set maximum chat history. Usage: [bold {command_color}]/setmax NUMBER[/bold {command_color}].")
-        table.add_row(f"[bold {command_color}]/toggle_log[/bold {command_color}]", "Toggle logging of chat history.")
-
-        # Add a header for File Commands
-        table.add_row("", "")  # Empty row for spacing
-        table.add_row("[bold white]File Commands:[/bold white]", "")
-        table.add_row(f"[bold {command_color}]/load[/bold {command_color}]", f"Load a file as a prompt. Usage: [bold {command_color}]/load FILENAME PROMPT[/bold {command_color}].")
-
-        # Print the table
-        print(f"\n[bold grey70]| GLOBAL HELP MENU[/bold grey70]\n")
-        print(table)
         
     def clear_screen(self):
         """Clear the terminal screen."""
@@ -159,32 +190,6 @@ class UIManager:
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Config Path:':<20} [grey70]{config_path}[/grey70]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Log Directory:':<20} [grey70]{log_dir}[/grey70]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'System Prompt:':<20} [grey70]{system_prompt}[/grey70]\n")
-    
-    def display_active_chats_overview(self):
-        """Display overview of all configured chats."""
-        num_chats = len(self.app.chat_instances) if self.app.chat_instances else 2
-        
-        if num_chats == 2:
-            switch_hint = "/switch to change"
-        else:
-            switch_hint = f"/switch NUMBER (1-{num_chats}) to change"
-            
-        print(f"[bold white]ACTIVE CHATS:[/bold white] [grey50]({switch_hint})[/grey50]")
-        
-        for i, chat in enumerate(self.app.chat_instances):
-            chat_color_for_chat = get_chat_color(i)
-            
-            # Get system prompt and truncate if needed
-            sys_prompt = chat.system_prompt.get('content', '[No system prompt set]')
-            if len(sys_prompt) > MAX_PREVIEW_LENGTH:
-                sys_prompt = sys_prompt[:MAX_PREVIEW_LENGTH] + "..."
-            
-            # Mark active chat with arrow
-            prefix = "►" if i == self.app.active_chat_index else " "
-            
-            print(f"{prefix} [bold {chat_color_for_chat}]{i + 1}:[/bold {chat_color_for_chat}] [grey70]{sys_prompt}[/grey70]")
-        
-        print()  # Add spacing after overview
 
     def display_chat_context(self, chat_color: str) -> None:
         """Display the current chat context with active chats overview first."""

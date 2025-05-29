@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.3.0.dev] - 2025-05-29
+
+### Added
+- **Full N-Chat Support**: Application now supports any number of concurrent chat sessions (configurable via `DEFAULT_NUM_CHATS`)
+- **Dynamic Chat Configuration**: Configuration system automatically generates configs for any number of chats
+- **Enhanced Chat Management**: Improved session manager with better chat instance handling
+- **Smart Default Prompts**: New chats get appropriate default system prompts (technical, creative, generic helper)
+
+### Changed
+- **BREAKING**: Increased default chat count from 2 to 4 for better testing and demonstration
+- **Architecture Overhaul**: Removed circular references between chat instances for better memory management
+- **Simplified Model Updates**: Streamlined global model update mechanism through session manager
+- **UI Improvements**: Chat overview and switching now properly handles variable chat counts
+- **Configuration Migration**: Enhanced config system to handle missing chat configurations gracefully
+
+### Fixed
+- **Circular Reference Memory Issues**: Eliminated chat instances holding references to all other chats
+- **Dynamic UI Elements**: Help menu and chat switching now show correct chat ranges (1-N instead of hardcoded 1-2)
+- **Configuration Scalability**: Chat configs are now generated on-demand for any chat index
+- **TWIST Content Coloring**: TWIST CONTENT now displays in source chat color instead of target chat color
+- **Session Manager Logic**: Cleaned up chat initialization and cross-chat communication
+
+### Technical
+- **Removed Dependencies**: Eliminated problematic circular references in session management
+- **Enhanced Fallback Handling**: Better error handling for missing configurations
+- **Improved Code Organization**: Better separation of concerns between UI, session management, and configuration
+
 ## [0.2.3.dev] - 2025-05-29
 
 ### Enhanced

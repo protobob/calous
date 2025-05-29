@@ -31,15 +31,19 @@ class ChatSessionManager:
         """Initialize all chat instances."""
         self.chats = [HiOllamaChat(i) for i in range(self.num_chats)]
         
-        # Configure chat instances
+        # Configure chat instances - REMOVED CIRCULAR REFERENCE
         for i, chat in enumerate(self.chats):
             chat.active_chat_index = i
-            chat.chat_instances = self.chats
-            chat.session_manager = self  # Give chats reference to session manager
+            # REMOVED: chat.chat_instances = self.chats  # This was the circular reference
+            chat.session_manager = self  # Give chats reference to session manager only
     
     def get_active_chat(self) -> HiOllamaChat:
         """Get the currently active chat instance."""
         return self.chats[self.active_chat_index]
+    
+    def get_all_chats(self) -> List[HiOllamaChat]:
+        """Get all chat instances - for use by other components."""
+        return self.chats
     
     def switch_to_chat(self, target_index: Optional[int] = None) -> bool:
         """Switch to specified chat or next chat if no index provided."""
@@ -82,19 +86,33 @@ class ChatSessionManager:
         # Use the full display_chat_context which includes both overview AND chat summary
         target_chat.ui.display_chat_context("")
 
-        # Display the twist content indicator with proper formatting
+        # Display the twist content indicator with SOURCE CHAT COLOR
         # Truncate content to 100 characters and make it single line
         twist_preview = content.replace('\n', ' ').strip()
         if len(twist_preview) > 100:
             twist_preview = twist_preview[:100] + "..."
 
-        print(f"\n[bold {target_color}]|[/bold {target_color}] [bold {target_color}]TWIST CONTENT:[/bold {target_color}]")
-        print(f"[bold {target_color}]|[/bold {target_color}] [grey70]{twist_preview}[/grey70]\n")
+        # Use SOURCE_COLOR instead of target_color for the TWIST CONTENT display
+        print(f"\n[bold {source_color}]|[/bold {source_color}] [bold {source_color}]TWIST CONTENT:[/bold {source_color}]")
+        print(f"[bold {source_color}]|[/bold {source_color}] [grey70]{twist_preview}[/grey70]\n")
 
         # Send the content as a prompt (which will trigger AI response)
         target_chat.handle_regular_input(content)
 
         return True
+    
+    def update_global_model(self, new_model):
+        """Update the selected model globally across all instances."""
+        # Update global config
+        ConfigManager.update_global_config({"selected_model": new_model})
+        
+        # Update all chat instances
+        updated_count = 0
+        for chat in self.chats:
+            chat.selected_model = new_model
+            updated_count += 1
+        
+        return updated_count
     
     def process_command_result(self, result: CommandResult) -> bool:
         """Process a command result and take appropriate action.

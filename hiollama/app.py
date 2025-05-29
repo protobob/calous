@@ -30,9 +30,8 @@ class HiOllamaChat:
         self.logging_enabled = self.config.get("logging_enabled", True)
         self.prompts = self.config.get("prompts", {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)})
           
-        # For multi-instance support (simplified - no switch state)
+        # For multi-instance support (simplified - no circular references)
         self.active_chat_index = instance_index
-        self.chat_instances = []
         self.session_manager = None  # Will be set by SessionManager
         
         # Initialize components
@@ -45,18 +44,15 @@ class HiOllamaChat:
         self.last_response = None
     
     def update_global_model(self, new_model):
-        """Update the selected model globally across all instances."""
-        # Update global config
-        ConfigManager.update_global_config({"selected_model": new_model})
-        
-        # Update all existing instances using chat_instances
-        updated_count = 0
-        for instance in self.chat_instances:
-            if instance is not None:
-                instance.selected_model = new_model
-                updated_count += 1
-        
-        return updated_count
+        """Update the selected model globally across all instances via session manager."""
+        # Delegate to session manager which has access to all chats
+        if self.session_manager:
+            return self.session_manager.update_global_model(new_model)
+        else:
+            # Fallback for standalone operation (shouldn't happen in normal use)
+            ConfigManager.update_global_config({"selected_model": new_model})
+            self.selected_model = new_model
+            return 1
         
     def save_config(self):
         """Save the current configuration."""
