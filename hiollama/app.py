@@ -8,7 +8,7 @@ from .ui import UIManager
 from .chat_history import ChatHistory
 from .model_interaction import ModelInteraction
 from .constants import DEFAULT_MODEL, DEFAULT_MAX_HISTORY, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS
-from .types import CommandResult
+from .types import CommandResult, ActionType
 from typing import Dict, Any, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -77,8 +77,6 @@ class HiOllamaChat:
     
     def process_input(self, user_input: str):
         """Process user input and return a CommandResult."""
-        from .types import CommandResult, ActionType  # Import from types
-        
         # Handle commands
         if user_input.startswith('/'):
             return self.commands.parse_and_execute(user_input)

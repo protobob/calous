@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.5.3.dev] - 2025-05-30
+
+### Added
+- Command line argument support for specifying number of chat channels
+  - Usage: `hiollama 5` for 5 chats, `hiollama` defaults to 4
+  - Added validation with configurable max chat limit (14)
+- Extended rainbow color palette for chat identification beyond 7 chats
+  - Added darker variants of original colors for chats 8-14
+- Centralized chat session constants (TWIST_PREVIEW_LENGTH, SWITCH_PREVIEW_LENGTH)
+
+### Changed
+- ChatSessionManager now accepts dynamic num_chats parameter instead of hardcoded value
+- Updated __main__.py entry point with argparse for better CLI experience
+- Moved hardcoded preview lengths to constants.py for maintainability
+
+### Technical
+- Enhanced get_chat_color() to use EXTENDED_RAINBOW_COLORS for better visual distinction
+- Improved separation of concerns by centralizing configuration defaults
+
 ## [0.5.2.dev] - 2025-05-30
 
 ### Fixed

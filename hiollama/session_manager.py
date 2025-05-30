@@ -5,24 +5,25 @@ import os
 from .types import ActionType, CommandResult  # Import from types instead
 from .utils import get_chat_color, print_rainbow_header, format_message_preview
 from .config import ConfigManager
+from .constants import DEFAULT_NUM_CHATS, TWIST_PREVIEW_LENGTH, SWITCH_PREVIEW_LENGTH
 
 # Use TYPE_CHECKING to avoid circular import
 if TYPE_CHECKING:
     from .app import HiOllamaChat
 
 class ChatSessionManager:
-    def __init__(self, num_chats: Optional[int] = None):
-        self.chats: List['HiOllamaChat'] = []  # Use string annotation
+    def __init__(self, num_chats: Optional[int] = None):  # Remove hardcoded default
+        self.chats: List['HiOllamaChat'] = []
         self.active_chat_index = 0
-        # Use config value if num_chats not explicitly provided
-        self.num_chats = num_chats if num_chats is not None else ConfigManager.get_num_chats()
+        # Use constant for default
+        self.num_chats = num_chats if num_chats is not None else DEFAULT_NUM_CHATS
         self._initialize_chats()
         
     def _initialize_chats(self):
         """Initialize all chat instances."""
         # Import here to avoid circular import
         from .app import HiOllamaChat
-        self.chats = [HiOllamaChat(i) for i in range(self.num_chats)]
+        self.chats = [HiOllamaChat(i) for i in range(self.num_chats)]  # Use parameter
         
         # Configure chat instances - REMOVED CIRCULAR REFERENCE
         for i, chat in enumerate(self.chats):
@@ -80,10 +81,10 @@ class ChatSessionManager:
         target_chat.ui.display_chat_context(target_chat_color)
 
         # Display the twist content indicator with SOURCE CHAT COLOR
-        # Truncate content to 100 characters and make it single line
+        # Truncate content and make it single line
         twist_preview = content.replace('\n', ' ').strip()
-        if len(twist_preview) > 100:
-            twist_preview = twist_preview[:100] + "..."
+        if len(twist_preview) > TWIST_PREVIEW_LENGTH:
+            twist_preview = twist_preview[:TWIST_PREVIEW_LENGTH] + "..."
 
         # Use SOURCE_COLOR instead of target_color for the TWIST CONTENT display
         print(f"\n[bold {source_color}]|[/bold {source_color}] [bold {source_color}]TWIST CONTENT:[/bold {source_color}]")

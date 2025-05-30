@@ -5,6 +5,14 @@ from pathlib import Path
 RAINBOW_COLORS = ["red", "orange1", "yellow1", "green", "blue", "purple", "magenta"]
 RAINBOW_TEXT = "HIOLLAMA!"
 
+# Extended rainbow colors for more chats (original + darker variants)
+EXTENDED_RAINBOW_COLORS = [
+    # Original bright colors (chats 1-7)
+    "red", "orange1", "yellow1", "green", "blue", "purple", "magenta",
+    # Darker variants (chats 8-14)
+    "dark_red", "orange3", "yellow3", "dark_green", "blue3", "purple3", "magenta3"
+]
+
 # Default configuration
 DEFAULT_MODEL = "qwen3:0.6B"
 DEFAULT_MAX_HISTORY = 20
@@ -26,7 +34,12 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "0.5.2.dev"
+APP_VERSION = "0.5.3.dev"
 
 # Multi-chat configuration
 DEFAULT_NUM_CHATS = 4  # Changed from 2 to 4 for testing N-chat support
+
+# Chat session defaults
+MAX_CHATS = 14
+TWIST_PREVIEW_LENGTH = 100
+SWITCH_PREVIEW_LENGTH = 50
