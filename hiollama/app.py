@@ -3,7 +3,7 @@ from rich.prompt import Prompt
 from rich import print
 
 from .config import ConfigManager
-from .command_system import AdvancedCommandHandler  # Direct import
+from .commands import AdvancedCommandHandler  # Updated import
 from .ui import UIManager
 from .chat_history import ChatHistory
 from .model_interaction import ModelInteraction

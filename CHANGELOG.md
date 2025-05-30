@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.5.0.dev] - 2025-05-30
+
+### Changed
+- **Major Refactor**: Split monolithic command_system.py into modular command structure
+  - Commands now organized by category: general.py, navigation.py, model.py, prompt.py, history.py, file.py
+  - Improved maintainability and easier testing of individual command groups
+  - Better separation of concerns between registry, handler, and commands
+
+### Fixed
+- Fixed `/system` command to properly parse multi-word prompts (e.g., `/system this is the prompt`)
+- Restored missing `setmax` command with history trimming functionality
+- Fixed `/history` command to use existing chat_history.print_history() method
+
+### Technical
+- Implemented decorator-based command registration system
+- Added argparse integration with nargs='+' for multi-word arguments
+- Maintained backward compatibility with existing command functionality
+
 ## [0.4.0.dev] - 2025-05-29
 
 ### Added

@@ -48,8 +48,15 @@ class CommandRegistry:
                 exit_on_error=False  # Don't exit on parse errors
             )
             
+            # Special handling for commands that need to capture remaining text
+            if name in ["system", "setprompt"]:
+                if name == "system":
+                    parser.add_argument("prompt", nargs='+', help="System prompt text (no quotes needed)")
+                elif name == "setprompt":
+                    parser.add_argument("slot", type=int, help="Prompt slot number")
+                    parser.add_argument("prompt", nargs='+', help="Prompt text (no quotes needed)")
             # Special handling for load command
-            if name == "load":
+            elif name == "load":
                 parser.add_argument("filepath", type=str, help="File path to load")
                 parser.add_argument("prompt", nargs='+', help="Prompt text (no quotes needed)")
             else:
@@ -193,6 +200,12 @@ class AdvancedCommandHandler:
         try:
             # Convert parsed args to kwargs
             kwargs = vars(parsed_args)
+            
+            # Special handling for commands with nargs='+'
+            if cmd_def.name in ["system", "setprompt", "load"]:
+                if "prompt" in kwargs and isinstance(kwargs["prompt"], list):
+                    kwargs["prompt"] = " ".join(kwargs["prompt"])
+            
             return cmd_def.handler(self, **kwargs)
         except Exception as e:
             print(f"[bold red]Command execution error:[/bold red] {e}")
