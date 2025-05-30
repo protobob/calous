@@ -1,120 +1,232 @@
-# Hi, Ollama! 🌈
+# HiOllama 🌈
 
-A colorful, multi-chat command-line interface for interacting with Ollama language models. Experience seamless conversations across multiple chat instances with rainbow-themed visual distinction and powerful cross-chat features.
+A colorful, multi-chat CLI interface for interacting with Ollama AI models. Chat with multiple AI instances simultaneously, switch between conversations, and share responses across chats.
 
-## Features
+## What is HiOllama?
 
-### 🌈 Multi-Chat Architecture
-- **Configurable Chat Instances**: Run up to N concurrent chat sessions (default: 4)
-- **Rainbow Color Coding**: Each chat gets a unique color (red, orange, yellow, green, blue, purple, magenta)
-- **Smart Chat Switching**: Cycle through chats or jump to specific instances
-- **Twist Functionality**: Copy AI responses between chats for cross-pollination of ideas
+HiOllama lets you run multiple AI chat sessions at once, each with its own personality and conversation history. Think of it like having several AI assistants working on different tasks - you can switch between them instantly and even copy responses from one chat to another.
 
-### 🎯 Intelligent Chat Types
-- **Chat 1 (Red)**: Technical assistant for coding and debugging
-- **Chat 2 (Orange)**: Creative writing and storytelling assistant
-- **Chat 3+ (Rainbow)**: General-purpose helpers with customizable prompts
+## Features ✨
 
-### ⚡ Advanced Features
-- **Event-Driven Architecture**: Clean command processing with structured results
-- **Unified Configuration**: Single config file managing all chat instances
-- **Rich Terminal UI**: Spinners, colored output, and interactive prompts
-- **Thought Filtering**: Hide AI reasoning for cleaner responses
-- **Evaluation Metrics**: Optional performance data display
-- **Persistent History**: Configurable message limits per chat
-- **File Loading**: Import text files as prompts with syntax highlighting
+- **Multiple Chat Sessions**: Run 1-14 concurrent AI conversations
+- **Rainbow Color Coding**: Each chat has its own color for easy identification
+- **Smart Chat Switching**: Jump between conversations instantly
+- **Twist Operation**: Copy AI responses between chats
+- **Flexible Configuration**: Customize each chat's behavior independently
+- **Command System**: Rich set of commands for chat management
+- **Conversation History**: Full history tracking with optional logging
+- **System Prompts**: Give each chat its own personality or role
 
-### 🛠 Command System
-- **Dynamic Help**: Context-aware help menu showing available chat ranges
-- **Saved Prompts**: Store and reuse up to 10 custom prompts per chat
-- **System Prompt Management**: Customize AI behavior per chat instance
-- **Model Selection**: Easy switching between available Ollama models
-- **History Management**: View, clear, and manage conversation history
+## Prerequisites
+
+Before installing HiOllama, you need:
+
+1. **Python 3.8 or higher**
+   - Check if you have Python: Open terminal/command prompt and type `python --version`
+   - If not installed, download from [python.org](https://python.org/downloads/)
+
+2. **Ollama**
+   - Download and install from [ollama.ai](https://ollama.ai)
+   - Make sure it's running (you should see the Ollama icon in your system tray)
+   - Pull at least one model: `ollama pull qwen2.5:0.5b` (recommended for testing)
 
 ## Installation
 
-### Prerequisites
-- Python 3.7+
-- [Ollama](https://ollama.ai/) installed and running
-- At least one Ollama model pulled (e.g., `ollama pull qwen2.5:0.5b`)
-
-### Install Hi, Ollama!
-
+### Method 1: From PyPI (Recommended)
 ```bash
-# Clone the repository
+pip install hiollama
+```
+
+### Method 2: From Source
+```bash
 git clone https://github.com/yourusername/hiollama.git
 cd hiollama
-
-# Install in development mode
 pip install -e .
-
-# Or install directly
-pip install .
 ```
 
-### Quick Start
+## Quick Start
 
+### Basic Usage
 ```bash
-# Start the application
-python -m hiollama
-
-# Or if installed globally
+# Start with default 4 chats
 hiollama
+
+# Start with custom number of chats (max 14)
+hiollama 8
 ```
 
-## Usage
+### First Run Setup
+1. When you first run HiOllama, it will create a configuration file at `~/.hiollama_config_unified.json`
+2. If you don't have any Ollama models, run `/model` to select one
+3. Each chat starts with a default system prompt - you can customize these with `/system`
 
-### Basic Commands
+## Using HiOllama
+
+### The Interface
+
+When you start HiOllama, you'll see:
+- **HIOLLAMA!** header in rainbow colors
+- **ACTIVE CHATS** overview showing all your chat sessions
+- **Current chat summary** (if you have conversation history)
+- **Colored prompt** showing which chat you're in
+
+```
+HIOLLAMA!
+v.0.5.3.dev
+
+ACTIVE CHATS: (/switch [1-4] to change)
+► 1: You are a direct, technical assistant...
+  2: You are a direct, technical assistant...
+  3: You are a direct, technical assistant...
+  4: You are a direct, technical assistant...
+
+| CH:0/20 (/help for help)
+| YOU
+```
+
+### Essential Commands
+
+Type `/help` to see all commands. Here are the most important ones:
+
+#### Navigation
+- `/switch 2` - Switch to chat 2
+- `/switch` - Switch to next chat
+- `/twist 3` - Copy last AI response to chat 3
+- `/twist` - Copy to next chat
+
+#### Chat Management
+- `/system New personality here` - Change the current chat's personality
+- `/clear` - Clear current chat history
+- `/history` - View conversation history
+
+#### Model & Settings
+- `/model` - Choose a different AI model
+- `/showvars` - View current settings
+- `/quit` - Exit and save configuration
+
+### Example Workflow
+
+1. **Start HiOllama**:
+   ```bash
+   hiollama 3
+   ```
+
+2. **Set up different chat personalities**:
+   ```
+   Chat 1: /system You are a Python coding expert
+   Chat 2: /system You are a creative writing assistant  
+   Chat 3: /system You are a technical documentation writer
+   ```
+
+3. **Work on different tasks**:
+   - Chat with the coding expert about a bug
+   - Switch to the writer for some creative ideas
+   - Copy good explanations between chats with `/twist`
+
+4. **Switch between conversations**:
+   ```
+   /switch 2    # Go to creative writing chat
+   /switch      # Go to next chat (3)
+   /switch 1    # Back to coding chat
+   ```
+
+## Configuration
+
+HiOllama stores settings in `~/.hiollama_config_unified.json`. The configuration includes:
+
+- **Global settings**: Model selection, number of chats
+- **Per-chat settings**: System prompts, history limits, logging preferences
+
+### Example Configuration Structure
+```json
+{
+  "global": {
+    "selected_model": "qwen2.5:0.5b",
+    "num_chats": 4
+  },
+  "chats": {
+    "0": {
+      "system_prompt": "You are a Python expert...",
+      "MAX_HISTORY": 20,
+      "verbosity": true,
+      "think_filtering": true
+    }
+  }
+}
+```
+
+## Advanced Features
+
+### Twist Operation
+The "twist" feature copies the last AI response from your current chat to another chat as a new user message. This is useful for:
+- Getting a second opinion on an answer
+- Continuing a conversation in a different context
+- Cross-pollinating ideas between specialized chats
+
+### System Prompts
+Each chat can have its own personality through system prompts:
+- **Technical Assistant**: `You are a direct, technical assistant. No greetings, just facts.`
+- **Creative Helper**: `You are an enthusiastic creative writing assistant.`
+- **Code Reviewer**: `You are a senior developer reviewing code for bugs and improvements.`
+
+### History Management
+- Each chat maintains its own conversation history
+- Set custom history limits with `/setmax 50`
+- Clear history anytime with `/clear`
+- Optional file logging to `~/hiollama_logs/`
+
+## Troubleshooting
+
+### Common Issues
+
+**"No models found"**
+- Make sure Ollama is running
+- Pull a model: `ollama pull qwen2.5:0.5b`
+- Check available models: `ollama list`
+
+**"Connection refused"**
+- Ensure Ollama is started and running on port 11434
+- Try restarting Ollama
+
+**Commands not working**
+- Make sure commands start with `/`
+- Use `/help` to see correct syntax
+- Check for typos in command names
+
+**Colors not showing**
+- Your terminal might not support colors
+- Try a modern terminal like Windows Terminal, iTerm2, or GNOME Terminal
+
+### Getting Help
+
+- Type `/help` in HiOllama for command reference
+- Check the logs in `~/hiollama_logs/` for error details
+- Report issues on GitHub
+
+## Tips for New Users
+
+1. **Start small**: Begin with 2-3 chats to get familiar
+2. **Use different system prompts**: Give each chat a specific role
+3. **Experiment with `/twist`**: It's great for comparing responses
+4. **Save useful prompts**: Use `/setprompt` to save frequently used prompts
+5. **Check `/showvars`**: See your current settings anytime
+
+## Development
+
+Want to contribute or modify HiOllama?
 
 ```bash
-# General Commands
-/help           # Show complete help menu
-/quit           # Exit and save configuration
-/showvars       # Display current system variables
-
-# Chat Navigation
-/switch         # Cycle to next chat
-/switch 3       # Switch to chat 3
-/twist          # Copy last AI response to next chat
-/twist 2        # Copy last AI response to chat 2
-
-# Model Management
-/model          # Select a different Ollama model
-/toggle_eval    # Toggle evaluation data display
-/toggle_think   # Toggle AI thought filtering
-
-# Prompt Management
-/setprompt 1 Your prompt here    # Save prompt to slot 1
-/prompt 1                        # Use saved prompt 1
-/showprompt all                  # Show all saved prompts
-/system                          # Change system prompt
-
-# Chat History
-/clear          # Clear current chat history
-/history        # Display conversation history
-/toggle_log     # Toggle conversation logging
-
-# File Operations
-/load path/to/file.txt           # Load file as prompt
-/load code.py "Review this code" # Load with instructions
+git clone https://github.com/yourusername/hiollama.git
+cd hiollama
+pip install -e ".[dev]"
 ```
 
-### Multi-Chat Workflow Examples
+See ARCHITECTURE.md for detailed technical documentation.
 
-#### Collaborative Development
-```bash
-# Chat 1 (Technical): Get code structure
-> "Create a Python class for user authentication"
+## License
 
-# Copy response to Chat 2 (Creative)
-/twist 2
+MIT License - see LICENSE file for details.
 
-# Chat 2: Enhance with documentation
-> "Add comprehensive docstrings and examples to this code"
+---
 
-# Switch back to technical chat
-/switch 1
-
-# Continue technical discussion
-> "Now add unit tests for this class"
-```
+Made with 🌈 for the Ollama community
