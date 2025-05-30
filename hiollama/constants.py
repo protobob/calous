@@ -12,6 +12,9 @@ EXTENDED_RAINBOW_COLORS = [
     "dark_red", "orange3", "yellow3", "dark_green", "blue3", "purple3", "magenta3"
 ]
 
+# Rainbow text constant for logo display
+RAINBOW_TEXT = "HIOLLAMA!"
+
 # Default configuration
 DEFAULT_MODEL = "qwen3:0.6B"
 DEFAULT_MAX_HISTORY = 20
