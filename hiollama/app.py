@@ -3,11 +3,16 @@ from rich.prompt import Prompt
 from rich import print
 
 from .config import ConfigManager
-from .commands import AdvancedCommandHandler  # Updated import
+from .commands.handler import AdvancedCommandHandler  # Fixed import path
 from .ui import UIManager
 from .chat_history import ChatHistory
 from .model_interaction import ModelInteraction
 from .constants import DEFAULT_MODEL, DEFAULT_MAX_HISTORY, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS
+from .types import CommandResult
+from typing import Dict, Any, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .session_manager import ChatSessionManager
 
 class HiOllamaChat:
     

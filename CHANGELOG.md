@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.2.dev] - 2025-05-30
+
+### Fixed
+- Fixed command system import path from `.commands` to `.commands.handler`
+- Removed duplicate `get_chat_color` imports in session manager that caused UnboundLocalError
+- Fixed `display_chat_context` method to properly use passed chat_color parameter
+- Added error handling for path operations in `show_variables` method
+- Restored command module imports in `commands/__init__.py` to ensure decorator registration
+
+### Technical
+- Resolved circular import issues in session manager
+- Improved chat color consistency across UI components
+- Enhanced robustness of file path handling
+
 ## [0.5.1.dev] - 2025-05-30
 
 ### Fixed

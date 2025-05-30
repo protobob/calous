@@ -161,8 +161,16 @@ class UIManager:
         # Get the actual paths from constants and objects
         from .constants import CONFIG_PATH, LOG_DIR
         
-        config_path = str(CONFIG_PATH.relative_to(CONFIG_PATH.home())) if CONFIG_PATH.exists() else str(CONFIG_PATH.relative_to(CONFIG_PATH.home()))
-        log_dir = str(LOG_DIR.relative_to(LOG_DIR.home())) if LOG_DIR.exists() else str(LOG_DIR.relative_to(LOG_DIR.home()))
+        # Add error handling for path operations
+        try:
+            config_path = str(CONFIG_PATH.relative_to(CONFIG_PATH.home()))
+        except ValueError:
+            config_path = str(CONFIG_PATH)
+            
+        try:
+            log_dir = str(LOG_DIR.relative_to(LOG_DIR.home()))
+        except ValueError:
+            log_dir = str(LOG_DIR)
 
         # Variables with updated formatting
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Selected Model:':<20} {self.app.selected_model}")
@@ -179,4 +187,20 @@ class UIManager:
         # Show active chats overview at the top
         self.display_active_chats_overview()
         
-        # Find last messages using utility
+        # Find last messages using utility function
+        last_messages = find_last_messages(self.app.chat_history)
+        
+        # Only show chat header and context if there are messages
+        if last_messages:
+            # Show the current chat's detailed context
+            from .utils import print_chat_header
+            print_chat_header(self.app.active_chat_index)
+            
+            # Use the passed chat_color parameter instead of recalculating
+            # Display the last user message
+            if last_messages.get('user'):
+                print_message_with_bar(chat_color, "YOU", last_messages['user'].get('content', ''))
+            
+            # Display the last assistant message
+            if last_messages.get('assistant'):
+                print_message_with_bar(chat_color, "LLM", last_messages['assistant'].get('content', ''))

@@ -75,8 +75,9 @@ class ChatSessionManager:
         target_chat = self.chats[target_index]
         target_chat.ui.clear_screen()
         
-        # Use the full display_chat_context which includes both overview AND chat summary
-        target_chat.ui.display_chat_context("")
+        # Use module-level imported get_chat_color
+        target_chat_color = get_chat_color(target_index)
+        target_chat.ui.display_chat_context(target_chat_color)
 
         # Display the twist content indicator with SOURCE CHAT COLOR
         # Truncate content to 100 characters and make it single line
@@ -140,7 +141,10 @@ class ChatSessionManager:
         active_chat = self.get_active_chat()
         if clear_screen:
             active_chat.ui.clear_screen()
-        active_chat.ui.display_chat_context("")
+        
+        # Use module-level imported get_chat_color
+        chat_color = get_chat_color(self.active_chat_index)
+        active_chat.ui.display_chat_context(chat_color)
 
     def save_all_configs(self):
         """Save configurations for all chat instances."""
