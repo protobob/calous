@@ -152,66 +152,31 @@ class UIManager:
         
     def show_variables(self):
         """Display current system variables."""
-        print(
-            "\n[bold]System Variables:[/bold]"
-            f"\n  Model:          {self.app.selected_model}"
-            f"\n  Logging:        {self.app.logging_enabled}"
-            f"\n  Think Filtering:{self.app.think_filtering}"
-            f"\n  Verbosity:      {self.app.verbosity}"
-            f"\n  Max History:    {self.app.MAX_HISTORY}"
-            f"\n  System Prompt:  [italic]{self.app.system_prompt['content']}[/italic]"
-            "\n"
-        )
+        chat_color = get_chat_color(getattr(self.app, 'active_chat_index', 0))
+        active_chat_index = getattr(self.app, 'active_chat_index', 0)
         
-    def display_variables(
-        self,
-        active_chat_index,
-        selected_model,
-        verbosity,
-        think_filtering,
-        max_history,
-        system_prompt,
-        logging_enabled,
-        log_dir,
-        config_path
-    ):
-        """Display application variables in a clean, aligned format."""
-        chat_color = get_chat_color(active_chat_index)
-
         # Title with CHAT # in the chat color
         print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]CHAT {active_chat_index + 1} VARIABLES[/bold {chat_color}]\n")
 
+        # Get the actual paths from constants and objects
+        from .constants import CONFIG_PATH, LOG_DIR
+        
+        config_path = str(CONFIG_PATH.relative_to(CONFIG_PATH.home())) if CONFIG_PATH.exists() else str(CONFIG_PATH.relative_to(CONFIG_PATH.home()))
+        log_dir = str(LOG_DIR.relative_to(LOG_DIR.home())) if LOG_DIR.exists() else str(LOG_DIR.relative_to(LOG_DIR.home()))
+
         # Variables with updated formatting
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Selected Model:':<20} {selected_model}")
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Max History:':<20} [bold cyan]{max_history}[/bold cyan]")
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Verbosity:':<20} [bold][{'green' if verbosity else 'red'}]{verbosity}[/{'green' if verbosity else 'red'}][/bold]")
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Think Filtering:':<20} [bold][{'green' if think_filtering else 'red'}]{think_filtering}[/{'green' if think_filtering else 'red'}][/bold]")
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Logging Enabled:':<20} [bold][{'green' if logging_enabled else 'red'}]{logging_enabled}[/{'green' if logging_enabled else 'red'}][/bold]")
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Config Path:':<20} [grey70]{config_path}[/grey70]")
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Log Directory:':<20} [grey70]{log_dir}[/grey70]")
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'System Prompt:':<20} [grey70]{system_prompt}[/grey70]\n")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Selected Model:':<20} {self.app.selected_model}")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Max History:':<20} [bold cyan]{self.app.MAX_HISTORY}[/bold cyan]")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Verbosity:':<20} [bold][{'green' if self.app.verbosity else 'red'}]{self.app.verbosity}[/{'green' if self.app.verbosity else 'red'}][/bold]")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Think Filtering:':<20} [bold][{'green' if self.app.think_filtering else 'red'}]{self.app.think_filtering}[/{'green' if self.app.think_filtering else 'red'}][/bold]")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Logging Enabled:':<20} [bold][{'green' if self.app.logging_enabled else 'red'}]{self.app.logging_enabled}[/{'green' if self.app.logging_enabled else 'red'}][/bold]")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Config Path:':<20} [grey70]~/{config_path}[/grey70]")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Log Directory:':<20} [grey70]~/{log_dir}[/grey70]")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'System Prompt:':<20} [grey70]{self.app.system_prompt['content']}[/grey70]\n")
 
     def display_chat_context(self, chat_color: str) -> None:
         """Display the current chat context with active chats overview first."""
         # Show active chats overview at the top
         self.display_active_chats_overview()
         
-        # Find last messages using utility function
-        last_messages = find_last_messages(self.app.chat_history)
-        
-        # Only show chat header and context if there are messages
-        if last_messages:
-            # Show the current chat's detailed context
-            from .utils import print_chat_header
-            print_chat_header(self.app.active_chat_index)
-            
-            # Get the current chat's color for the bars
-            current_chat_color = get_chat_color(self.app.active_chat_index)
-            
-            # Display the last user message
-            if last_messages.get('user'):
-                print_message_with_bar(current_chat_color, "YOU", last_messages['user'].get('content', ''))
-            
-            # Display the last assistant message
-            if last_messages.get('assistant'):
-                print_message_with_bar(current_chat_color, "LLM", last_messages['assistant'].get('content', ''))
+        # Find last messages using utility

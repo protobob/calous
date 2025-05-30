@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.1.dev] - 2025-05-30
+
+### Fixed
+- Fixed `/showvars` command to properly display config and log directory paths using relative paths from home directory
+- Removed unused `display_variables()` method that was causing confusion with `/showvars` functionality
+
 ## [0.5.0.dev] - 2025-05-30
 
 ### Changed
