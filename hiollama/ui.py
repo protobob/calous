@@ -1,7 +1,5 @@
 """User interface elements for Hi, Ollama!"""
 from rich.console import Console
-from rich.live import Live
-from rich.spinner import Spinner
 from rich.prompt import Prompt
 from rich import print
 from rich.table import Table
@@ -9,8 +7,6 @@ from .utils import get_chat_color, print_message_with_bar, find_last_messages
 from .constants import APP_VERSION, MAX_PREVIEW_LENGTH
 from .config import ConfigManager
 from typing import Dict, Any
-import threading
-import time
 import os
 
 
@@ -103,23 +99,6 @@ class UIManager:
             print(f"{prefix} [bold {chat_color_for_chat}]{i + 1}:[/bold {chat_color_for_chat}] [grey70]{sys_prompt}[/grey70]")
         
         print()  # Add spacing after overview
-    
-    def spinner(self, stop_flag):
-        """Display a spinner while waiting for a task to complete."""
-        spinner_widget = Spinner("dots", text="Inference")
-        with Live(spinner_widget, refresh_per_second=10, console=self.console) as live:
-            while not stop_flag.is_set():
-                time.sleep(0.1)
-        
-    def run_with_spinner(self, target, *args):
-        """Run a function with a spinner animation."""
-        stop_flag = threading.Event()
-        spinner_thread = threading.Thread(target=self.spinner, args=(stop_flag,))
-        spinner_thread.start()
-        result = target(*args)
-        stop_flag.set()
-        spinner_thread.join()
-        return result
     
     def get_user_input(self):
         """Get user input with formatted prompt."""

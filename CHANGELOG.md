@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.2.dev] - 2025-05-30
+
+### Added
+- Streaming response support for real-time model output
+- Real-time token streaming for improved user experience
+
+### Changed
+- Replaced non-streaming model interactions with streaming-only implementation
+- Removed spinner functionality to prevent conflicts with streaming output
+
+### Removed
+- All spinner-related code and methods from UIManager
+- Non-streaming response handling paths
+- `run_with_spinner` method and related functionality
+
 ## [0.6.1.dev] - 2025-05-30
 
 ### Changed

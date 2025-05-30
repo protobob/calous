@@ -8,45 +8,106 @@ class ModelInteraction:
         self.app = app
 
     def talk_to_model(self, user_prompt):
-        """Send a prompt to the selected model and return the response."""
+        """Send a prompt to the selected model and return the streaming response."""
+        messages = [self.app.system_prompt] + self.app.chat_history.history.copy()
+        return self._handle_streaming(messages, user_prompt)
+
+    def _handle_streaming(self, messages, user_prompt):
+        """Handle streaming response from the model."""
+        full_response = ""
+        response_dict = None
+        
         try:
-            # Prepare the messages for the API call
-            messages = [self.app.system_prompt] + self.app.chat_history.history.copy()
+            # Print the header before streaming starts
+            chat_index = getattr(self.app, 'active_chat_index', 0)
+            chat_color = get_chat_color(chat_index)
+            print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]{chat_index + 1})[/bold {chat_color}][underline]{self.app.selected_model}[/underline]:\n")
             
-            # Call the Ollama API
-            response = ollama.chat(model=self.app.selected_model, messages=messages)
-
-            # Validate the response structure
-            if not hasattr(response, 'message') or not hasattr(response.message, 'content'):
-                raise ValueError("API response is missing 'message' or 'content' attributes.")
-
-            return response
+            for chunk in ollama.chat(model=self.app.selected_model, messages=messages, stream=True):
+                if hasattr(chunk, 'message') and hasattr(chunk.message, 'content'):
+                    content = chunk.message.content
+                    full_response += content
+                    print(content, end='', flush=True)
+                
+                # Store the last chunk to get eval data if available
+                response_dict = chunk
+            
+            print()  # newline after finishing
+            
+            # Create a complete response object for processing
+            final_response = {"message": {"content": full_response}}
+            
+            # Add eval data if available from the last chunk
+            if response_dict and hasattr(response_dict, 'eval_count'):
+                final_response['eval_count'] = response_dict.eval_count
+            if response_dict and hasattr(response_dict, 'eval_duration'):
+                final_response['eval_duration'] = response_dict.eval_duration
+            
+            # Process the complete response (this handles history, logging, etc.)
+            self._process_response(user_prompt, final_response)
+            return final_response
 
         except ollama.ResponseError as e:
-            if "model not found" in str(e).lower() or "model" in str(e).lower() and "not found" in str(e).lower():
-                print(f"\n[bold red]Model Error:[/bold red] Model '{self.app.selected_model}' not found.")
-                print(f"[grey50]Try: /model to select an available model[/grey50]")
-                available_models = self.list_ollama_models()
-                if available_models:
-                    print(f"[grey50]Available models: {', '.join(available_models[:3])}{'...' if len(available_models) > 3 else ''}[/grey50]")
-            else:
-                print(f"\n[bold red]Ollama API Error:[/bold red] {e}")
-            return {"message": {"content": "[Error: Model response failed.]"}}
-
+            return self._handle_response_error(e)
         except ConnectionError as e:
-            print(f"\n[bold red]Connection Error:[/bold red] Cannot connect to Ollama server.")
-            print(f"[grey50]Try: 'ollama serve' in another terminal or check if port 11434 is accessible[/grey50]")
-            return {"message": {"content": "[Error: Cannot connect to Ollama server.]"}}
-
+            return self._handle_connection_error(e)
         except TimeoutError as e:
-            print(f"\n[bold red]Timeout Error:[/bold red] Request timed out.")
-            print(f"[grey50]The model may be processing a complex request. Try again or use a smaller model.[/grey50]")
-            return {"message": {"content": "[Error: Request timed out.]"}}
-
+            return self._handle_timeout_error(e)
         except Exception as e:
-            print(f"\n[bold red]Unexpected Error:[/bold red] {e}")
-            print(f"[grey50]If this persists, try restarting Ollama with 'ollama serve'[/grey50]")
-            return {"message": {"content": "[Error: An unexpected error occurred.]"}}
+            return self._handle_unexpected_error(e)
+
+    def _handle_response_error(self, e):
+        """Handle ResponseError with detailed messaging."""
+        if "model not found" in str(e).lower() or "model" in str(e).lower() and "not found" in str(e).lower():
+            print(f"\n[bold red]Model Error:[/bold red] Model '{self.app.selected_model}' not found.")
+            print(f"[grey50]Try: /model to select an available model[/grey50]")
+            available_models = self.list_ollama_models()
+            if available_models:
+                print(f"[grey50]Available models: {', '.join(available_models[:3])}{'...' if len(available_models) > 3 else ''}[/grey50]")
+        else:
+            print(f"\n[bold red]Ollama API Error:[/bold red] {e}")
+        return {"message": {"content": "[Error: Model response failed.]"}}
+
+    def _handle_connection_error(self, e):
+        """Handle ConnectionError with helpful messaging."""
+        print(f"\n[bold red]Connection Error:[/bold red] Cannot connect to Ollama server.")
+        print(f"[grey50]Try: 'ollama serve' in another terminal or check if port 11434 is accessible[/grey50]")
+        return {"message": {"content": "[Error: Cannot connect to Ollama server.]"}}
+
+    def _handle_timeout_error(self, e):
+        """Handle TimeoutError with helpful messaging."""
+        print(f"\n[bold red]Timeout Error:[/bold red] Request timed out.")
+        print(f"[grey50]The model may be processing a complex request. Try again or use a smaller model.[/grey50]")
+        return {"message": {"content": "[Error: Request timed out.]"}}
+
+    def _handle_unexpected_error(self, e):
+        """Handle unexpected errors with helpful messaging."""
+        print(f"\n[bold red]Unexpected Error:[/bold red] {e}")
+        print(f"[grey50]If this persists, try restarting Ollama with 'ollama serve'[/grey50]")
+        return {"message": {"content": "[Error: An unexpected error occurred.]"}}
+
+    def _process_response(self, user_input, response):
+        """Process response for history and logging (no output printing since streaming already printed)."""
+        raw_response = response.get('message', {}).get('content', '')
+        if not raw_response:
+            return
+
+        # Store the last response in the HiOllamaChat instance
+        self.app.last_response = response
+
+        clean_response = self.app.chat_history.strip_thoughts(raw_response) if self.app.think_filtering else raw_response
+        if not clean_response:
+            clean_response = "[No valid response received from the model.]"
+
+        # Show eval data if verbosity is enabled
+        if self.app.verbosity:
+            if 'eval_count' in response and 'eval_duration' in response:
+                print(self.pull_eval_data(response))
+            else:
+                print("[italic][grey50]Evaluation data missing in response.[/grey50][/italic]")
+
+        # Add to chat history
+        self.app.chat_history.add_message("assistant", clean_response)
 
     def list_ollama_models(self):
         """Get a list of available Ollama models with better error handling."""
@@ -97,39 +158,6 @@ class ModelInteraction:
             except KeyboardInterrupt:
                 print("\n[grey50]Model selection cancelled.[/grey50]")
                 return None
-
-    def process_response(self, user_input, response):
-        """Process the response from the model, handles logging, and updates chat history."""
-        raw_response = response.get('message', {}).get('content', '')
-        if not raw_response:
-            return
-
-        # Store the last response in the HiOllamaChat instance
-        self.app.last_response = response  # Store the entire response dictionary
-
-        clean_response = self.app.chat_history.strip_thoughts(raw_response) if self.app.think_filtering else raw_response
-        if not clean_response:
-            clean_response = "[No valid response received from the model.]"
-
-        # Determine color based on chat index
-        chat_index = getattr(self.app, 'active_chat_index', 0)
-        chat_color = get_chat_color(chat_index)        # Print with colored bar, colored chat number and underlined model name, response on a new line
-        print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]{chat_index + 1})[/bold {chat_color}][underline]{self.app.selected_model}[/underline]:\n")
-        print(f"{clean_response}")
-        
-        if self.app.verbosity:
-            if 'eval_count' in response and 'eval_duration' in response:
-                print(self.pull_eval_data(response))
-            else:
-                print("[italic][grey50]Evaluation data missing in response.[/grey50][/italic]")
-
-        if isinstance(clean_response, str):
-            # Old per-chat logging removed - now using unified logger
-            pass
-        else:
-            print("\n[bold red]Error:[/bold red] Response is not a valid string and will not be logged.")
-
-        self.app.chat_history.add_message("assistant", clean_response)
 
     def pull_eval_data(self, response):
         """Extract and format evaluation data from the response."""

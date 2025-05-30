@@ -3,7 +3,6 @@ from pathlib import Path
 
 # Rainbow text colors for logo
 RAINBOW_COLORS = ["red", "orange1", "yellow1", "green", "blue", "purple", "magenta"]
-RAINBOW_TEXT = "HIOLLAMA!"
 
 # Extended rainbow colors for more chats (original + darker variants)
 EXTENDED_RAINBOW_COLORS = [
@@ -34,7 +33,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "0.6.1.dev"
+APP_VERSION = "0.6.2.dev"
 
 # Multi-chat configuration
 DEFAULT_NUM_CHATS = 4  # Changed from 2 to 4 for testing N-chat support

@@ -90,7 +90,7 @@ class HiOllamaChat:
         self.chat_history.add_message("user", user_input)
     
         try:
-            response = self.ui.run_with_spinner(self.model.talk_to_model, user_input)
-            self.model.process_response(user_input, response)
+            response = self.model.talk_to_model(user_input)
+            # Streaming handles its own processing including history and logging
         except Exception as e:
             print(f"[bold red]Error processing input:[/bold red] {e}")
