@@ -97,9 +97,8 @@ class UIManager:
             sys_prompt = chat.system_prompt.get('content', '[No system prompt set]')
             if len(sys_prompt) > MAX_PREVIEW_LENGTH:
                 sys_prompt = sys_prompt[:MAX_PREVIEW_LENGTH] + "..."
-            
-            # Mark active chat with arrow
-            prefix = "►" if i == self.app.active_chat_index else " "
+              # Mark active chat with arrow (using ASCII character for Windows compatibility)
+            prefix = ">" if i == self.app.active_chat_index else " "
             
             print(f"{prefix} [bold {chat_color_for_chat}]{i + 1}:[/bold {chat_color_for_chat}] [grey70]{sys_prompt}[/grey70]")
         

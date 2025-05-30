@@ -221,6 +221,41 @@ cd hiollama
 pip install -e ".[dev]"
 ```
 
+### Testing
+
+HiOllama includes a comprehensive test suite to ensure reliability:
+
+```bash
+# Run all tests
+python test_runner.py
+
+# Run only quick tests (validation and CLI)
+python test_runner.py --quick
+
+# Run specific test suites
+python test_runner.py cli      # Command-line interface tests
+python test_runner.py commands # User command functionality tests
+python test_runner.py full     # Full integration tests
+
+# Alternative: Run tests from the tests directory
+cd tests
+python run_tests.py
+```
+
+**Test Coverage:**
+- ✅ Command-line argument validation
+- ✅ User command functionality (`/help`, `/showvars`, `/model`, etc.)
+- ✅ Multi-chat configuration (1-14 chats)
+- ✅ UI elements and formatting
+- ✅ Integration with Ollama backend
+- ✅ Error handling and edge cases
+
+**Before submitting changes:**
+1. Run the full test suite: `python test_runner.py`
+2. Ensure all tests pass
+3. Test manually with different chat configurations
+4. Check that Unicode characters display correctly on your platform
+
 See ARCHITECTURE.md for detailed technical documentation.
 
 ## License

@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.5.4.dev] - 2025-05-30
+
+### Added
+- Comprehensive test suite with automated CLI testing
+  - Added `tests/test_cli.py` with full command-line argument validation
+  - Created organized test infrastructure with `tests/run_tests.py`
+  - Manual testing checklist for interactive commands in `tests/MANUAL_TESTING.md`
+
+### Fixed
+- Fixed critical Unicode compatibility issue for Windows
+  - Replaced problematic `►` character with ASCII `>` in chat indicators
+  - Ensures application starts correctly on all Windows systems
+
+### Enhanced
+- Updated README.md with comprehensive testing documentation
+- Created structured test directory with proper module organization
+- Added test runner supporting multiple execution modes (`--quick`, specific suites)
+
+### Technical
+- Enhanced error handling and validation in test infrastructure
+- Improved cross-platform compatibility through ASCII character usage
+- Established foundation for future automated testing expansion
+
 ## [0.5.3.dev] - 2025-05-30
 
 ### Added
