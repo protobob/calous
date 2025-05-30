@@ -34,7 +34,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "0.6.0.dev"
+APP_VERSION = "0.6.1.dev"
 
 # Multi-chat configuration
 DEFAULT_NUM_CHATS = 4  # Changed from 2 to 4 for testing N-chat support

@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.6.1.dev] - 2025-05-30
+
+### Changed
+- Updated `/showprompt` command UI to match `/showvar` styling
+  - Added chat color coordination with colored `|` prefix
+  - Consistent formatting with 20-character left-aligned labels
+  - Grey text for prompt content display
+  - Styled headers showing "CHAT X SAVED PROMPTS" and "CHAT X PROMPT Y"
+  - Shows all prompt slots including "(not set)" for empty slots
+- Improved `/prompt` command output formatting
+  - Added chat color styling to "Using Prompt X:" messages
+  - Consistent `|` prefix formatting
+  - Added proper newline spacing before messages
+
+### Technical
+- Enhanced prompt command UI consistency across the application
+- Improved visual hierarchy and readability of prompt-related output
+
 ## [0.6.0.dev] - 2025-05-30
 
 ### Added

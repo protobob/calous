@@ -47,17 +47,21 @@ def cmd_setprompt(handler, slot: int, prompt: str) -> CommandResult:
 def cmd_prompt(handler, slot: int) -> CommandResult:
     """Use a saved prompt."""
     from ..constants import MAX_PROMPTS
+    from ..utils import get_chat_color
     
     if not (1 <= slot <= MAX_PROMPTS):
-        print(f"[bold red]Error:[/bold red] Slot must be between 1 and {MAX_PROMPTS}.")
+        print(f"\n[bold red]Error:[/bold red] Slot must be between 1 and {MAX_PROMPTS}.")
         return CommandResult(ActionType.CONTINUE)
     
     selected_prompt = handler.app.prompts[f"prompt{slot}"]
     if not selected_prompt:
-        print(f"[bold red]Error:[/bold red] Prompt{slot} is not set.")
+        print(f"\n[bold red]Error:[/bold red] Prompt{slot} is not set.")
         return CommandResult(ActionType.CONTINUE)
     
-    print(f"Using Prompt{slot}: {selected_prompt}")
+    # Get chat color for consistent styling
+    chat_color = get_chat_color(getattr(handler.app, 'active_chat_index', 0))
+    
+    print(f"\n[bold {chat_color}]|[/bold {chat_color}] Using Prompt {slot}: [grey70]{selected_prompt}[/grey70]")
     handler.app.handle_regular_input(selected_prompt)
     return CommandResult(ActionType.CONTINUE)
 
@@ -66,28 +70,35 @@ def cmd_prompt(handler, slot: int) -> CommandResult:
 def cmd_showprompt(handler, slot: Optional[int] = None) -> CommandResult:
     """Display saved prompts."""
     from ..constants import MAX_PROMPTS
+    from ..utils import get_chat_color
+    
+    # Get chat color for consistent styling
+    chat_color = get_chat_color(getattr(handler.app, 'active_chat_index', 0))
+    active_chat_index = getattr(handler.app, 'active_chat_index', 0)
     
     if slot is not None:
         if not (1 <= slot <= MAX_PROMPTS):
-            print(f"[bold red]Error:[/bold red] Slot must be between 1 and {MAX_PROMPTS}.")
+            print(f"\n[bold red]Error:[/bold red] Slot must be between 1 and {MAX_PROMPTS}.")
             return CommandResult(ActionType.CONTINUE)
         
         prompt_content = handler.app.prompts.get(f"prompt{slot}", "")
         if prompt_content:
-            print(f"Prompt{slot}: {prompt_content}")
+            # Title with CHAT # in the chat color
+            print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]CHAT {active_chat_index + 1} PROMPT {slot}[/bold {chat_color}]\n")
+            print(f"[bold {chat_color}]|[/bold {chat_color}] {'Prompt Content:':<20} [grey70]{prompt_content}[/grey70]\n")
         else:
-            print(f"Prompt{slot} is not set.")
+            print(f"\n[bold red]Error:[/bold red] Prompt{slot} is not set.")
     else:
-        # Show all prompts
-        print("\n[bold]Saved Prompts:[/bold]")
-        found_any = False
+        # Show all prompts with styled header
+        print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]CHAT {active_chat_index + 1} SAVED PROMPTS[/bold {chat_color}]\n")
+        
         for i in range(1, MAX_PROMPTS + 1):
             prompt_content = handler.app.prompts.get(f"prompt{i}", "")
             if prompt_content:
-                print(f"  Prompt{i}: {prompt_content}")
-                found_any = True
+                print(f"[bold {chat_color}]|[/bold {chat_color}] {'Prompt' + str(i) + ':':<20} [grey70]{prompt_content}[/grey70]")
+            else:
+                print(f"[bold {chat_color}]|[/bold {chat_color}] {'Prompt' + str(i) + ':':<20} [grey70](not set)[/grey70]")
         
-        if not found_any:
-            print("  No prompts saved.")
+        print()  # Add spacing after output
     
     return CommandResult(ActionType.CONTINUE)
