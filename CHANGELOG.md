@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.1.dev] - 2025-05-29
+
+### Fixed
+- **Configuration System**: Fixed missing JSON import in config.py that caused runtime errors
+- **Unified Config Path**: Removed redundant UNIFIED_CONFIG_PATH causing double "unified" in filenames
+- **Command Handler**: Fixed showvars command attempting to access non-existent ConfigManager.UNIFIED_CONFIG_PATH
+- **Import Consistency**: Ensured all modules properly import required dependencies
+
+### Technical
+- **Simplified Config Management**: ConfigManager now uses CONFIG_PATH directly from constants
+- **Cleaner Architecture**: Eliminated redundant path constants and improved code consistency
+
 ## [0.3.0.dev] - 2025-05-29
 
 ### Added

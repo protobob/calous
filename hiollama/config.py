@@ -4,8 +4,6 @@ from rich import print
 from .constants import CONFIG_PATH, DEFAULT_MODEL, DEFAULT_MAX_HISTORY, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS, DEFAULT_NUM_CHATS
 
 class ConfigManager:
-    # Unified config file path
-    UNIFIED_CONFIG_PATH = CONFIG_PATH.with_name(f"{CONFIG_PATH.stem}_unified{CONFIG_PATH.suffix}")
     
     @staticmethod
     def _generate_default_chat_config():
@@ -54,52 +52,26 @@ class ConfigManager:
     @staticmethod
     def load_unified_config():
         """Load the unified configuration file."""
-        if ConfigManager.UNIFIED_CONFIG_PATH.exists():
-            try:
-                with open(ConfigManager.UNIFIED_CONFIG_PATH, "r", encoding="utf-8") as f:
-                    config = json.load(f)
-                
-                # Ensure we have the minimum required structure
-                if "global" not in config:
-                    config["global"] = {"selected_model": DEFAULT_MODEL, "num_chats": DEFAULT_NUM_CHATS}
-                if "chats" not in config:
-                    config["chats"] = {}
-                
-                # Get current num_chats from config
-                current_num_chats = config["global"].get("num_chats", DEFAULT_NUM_CHATS)
-                
-                # Ensure we have configs for all required chats
-                for i in range(current_num_chats):
-                    chat_key = str(i)
-                    if chat_key not in config["chats"]:
-                        # Generate missing chat config
-                        if i == 0:
-                            config["chats"][chat_key] = ConfigManager._generate_default_chat_config()
-                        elif i == 1:
-                            chat_config = ConfigManager._generate_default_chat_config()
-                            chat_config["system_prompt"] = "You are a creative writing assistant who helps with storytelling and narrative development."
-                            config["chats"][chat_key] = chat_config
-                        else:
-                            chat_config = ConfigManager._generate_default_chat_config()
-                            chat_config["system_prompt"] = f"You are a helpful assistant for Chat {i + 1}. Provide clear, concise responses."
-                            config["chats"][chat_key] = chat_config
-                
-                return config
-                
-            except Exception as e:
-                print(f"\n[red]Error loading unified config: {e}[/red]")
-                return ConfigManager._generate_default_unified_config()
+        if not CONFIG_PATH.exists():
+            return ConfigManager._generate_default_unified_config()
         
-        return ConfigManager._generate_default_unified_config()
+        try:
+            with open(CONFIG_PATH, 'r') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, FileNotFoundError) as e:
+            print(f"\nError loading config: {e}")
+            print("Creating new default configuration...")
+            return ConfigManager._generate_default_unified_config()
     
     @staticmethod
     def save_unified_config(config):
         """Save the unified configuration file."""
         try:
-            with open(ConfigManager.UNIFIED_CONFIG_PATH, "w", encoding="utf-8") as f:
+            CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+            with open(CONFIG_PATH, 'w') as f:
                 json.dump(config, f, indent=2)
         except Exception as e:
-            print(f"\n[red]Error saving unified config: {e}[/red]")
+            print(f"\nError saving config: {e}")
     
     @staticmethod
     def get_chat_config(instance_index):

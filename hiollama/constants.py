@@ -16,7 +16,7 @@ API_TIMEOUT = 5
 
 # File paths
 LOG_DIR = Path.home() / "hiollama_logs"
-CONFIG_PATH = Path.home() / ".hiollama_config.json"
+CONFIG_PATH = Path.home() / ".hiollama_config_unified.json"
 
 # Prompt configuration
 MAX_PROMPTS = 10
@@ -26,7 +26,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "0.3.0.dev"
+APP_VERSION = "0.3.1.dev"
 
 # Multi-chat configuration
 DEFAULT_NUM_CHATS = 4  # Changed from 2 to 4 for testing N-chat support

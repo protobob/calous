@@ -3,7 +3,7 @@ from pathlib import Path
 from rich.prompt import Prompt
 from rich import print
 from .utils import get_chat_color, format_message_preview
-from .constants import MAX_PROMPTS
+from .constants import MAX_PROMPTS, CONFIG_PATH
 from .config import ConfigManager
 
 class CommandHandler:
@@ -329,5 +329,5 @@ class CommandHandler:
             system_prompt=self.app.system_prompt['content'],
             logging_enabled=self.app.logging_enabled,
             log_dir=self.app.chat_history.log_dir,
-            config_path=ConfigManager.UNIFIED_CONFIG_PATH  # Updated to show unified config path
+            config_path=CONFIG_PATH  # Use CONFIG_PATH from constants instead
         )
