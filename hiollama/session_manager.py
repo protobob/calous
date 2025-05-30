@@ -6,18 +6,23 @@ from .types import ActionType, CommandResult  # Import from types instead
 from .utils import get_chat_color, print_rainbow_header, format_message_preview
 from .config import ConfigManager
 from .constants import DEFAULT_NUM_CHATS, TWIST_PREVIEW_LENGTH, SWITCH_PREVIEW_LENGTH
+from .unified_logger import unified_logger
 
 # Use TYPE_CHECKING to avoid circular import
 if TYPE_CHECKING:
     from .app import HiOllamaChat
 
-class ChatSessionManager:
+class ChatSessionManager:    
     def __init__(self, num_chats: Optional[int] = None):  # Remove hardcoded default
         self.chats: List['HiOllamaChat'] = []
         self.active_chat_index = 0
         # Use constant for default
         self.num_chats = num_chats if num_chats is not None else DEFAULT_NUM_CHATS
         self._initialize_chats()
+        
+        # Log session start
+        model = ConfigManager.get_global_config().get("selected_model", "unknown")
+        unified_logger.log_session_start(self.num_chats, model)
         
     def _initialize_chats(self):
         """Initialize all chat instances."""
@@ -37,22 +42,27 @@ class ChatSessionManager:
     def get_all_chats(self) -> List['HiOllamaChat']:
         """Get all chat instances - for use by other components."""
         return self.chats
-    
     def switch_to_chat(self, target_index: Optional[int] = None) -> bool:
         """Switch to specified chat or next chat if no index provided."""
+        previous_chat_index = self.active_chat_index
+        
         if target_index is None:
             # Default behavior: switch to next chat (cycling)
             target_index = (self.active_chat_index + 1) % self.num_chats
         
         if 0 <= target_index < self.num_chats:
+            if target_index != previous_chat_index:
+                # Log the channel switch
+                unified_logger.log_channel_switch(previous_chat_index, target_index, "manual")
             self.active_chat_index = target_index
             return True
         
         print(f"\n[bold red]Error:[/bold red] Invalid chat number. Available chats: 1-{self.num_chats}")
         return False
-    
     def twist_to_chat(self, content: str, target_index: Optional[int] = None) -> bool:
         """Twist content to specified chat or next chat if no index provided."""
+        source_chat_index = self.active_chat_index
+        
         if target_index is None:
             # Default behavior: twist to next chat
             target_index = (self.active_chat_index + 1) % self.num_chats
@@ -60,6 +70,9 @@ class ChatSessionManager:
         if not (0 <= target_index < self.num_chats):
             print(f"\n[bold red]Error:[/bold red] Invalid chat number. Available chats: 1-{self.num_chats}")
             return False
+
+        # Log the twist action
+        unified_logger.log_twist_action(source_chat_index, target_index, content)
 
         # Display twist preview from source chat
         source_color = get_chat_color(self.active_chat_index)
@@ -94,7 +107,6 @@ class ChatSessionManager:
         target_chat.handle_regular_input(content)
 
         return True
-    
     def update_global_model(self, new_model):
         """Update the selected model globally across all instances."""
         # Update global config
@@ -105,6 +117,9 @@ class ChatSessionManager:
         for chat in self.chats:
             chat.selected_model = new_model
             updated_count += 1
+        
+        # Log the model change
+        unified_logger.log_model_change(new_model, updated_count)
         
         return updated_count
     
@@ -145,11 +160,15 @@ class ChatSessionManager:
         
         # Use module-level imported get_chat_color
         chat_color = get_chat_color(self.active_chat_index)
-        active_chat.ui.display_chat_context(chat_color)
-
+        active_chat.ui.display_chat_context(chat_color)    
+    
     def save_all_configs(self):
         """Save configurations for all chat instances."""
         print("\n[bold]Exiting and saving configurations.[/bold]")
+        
+        # Log session end
+        unified_logger.log_session_end()
+        
         for chat in self.chats:
             try:
                 chat.save_config()

@@ -58,7 +58,6 @@ class HiOllamaChat:
             ConfigManager.update_global_config({"selected_model": new_model})
             self.selected_model = new_model
             return 1
-        
     def save_config(self):
         """Save the current configuration."""
         # Update instance-specific config

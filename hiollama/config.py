@@ -13,8 +13,7 @@ class ConfigManager:
             "think_filtering": True,
             "MAX_HISTORY": DEFAULT_MAX_HISTORY,
             "system_prompt": DEFAULT_SYSTEM_PROMPT,
-            "prompts": {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)},
-            "logging_enabled": True
+            "prompts": {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)}
         }
     
     @staticmethod

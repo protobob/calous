@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.6.0.dev] - 2025-05-30
+
+### Added
+- **Unified logging system** for comprehensive activity tracking
+  - Single log file captures all chat activities, switches, and system events
+  - Logs saved to `~/hiollama_logs/YYYY-MM-DD.txt`
+  - Includes session start/end, channel switches, conversations, commands, and system changes
+  - Added `/viewlog` command to display today's unified log
+  - Thread-safe logging with automatic log file creation
+
+### Enhanced
+- Updated `/toggle_log` command to control unified logging (replaces per-chat logging control)
+- Integrated unified logging into chat history, navigation, prompt, and model commands
+- Added comprehensive event tracking across all chat operations
+
+### Technical
+- Added `UnifiedLogger` class with formatted log entry system
+- Integrated unified logging throughout session manager and command handlers
+- Maintained structured log format with timestamps and chat context information
+
 ## [0.5.4.dev] - 2025-05-30
 
 ### Added

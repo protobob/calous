@@ -3,22 +3,24 @@ import re
 from datetime import datetime
 from pathlib import Path
 from rich import print
-from .constants import LOG_DIR
 from .utils import get_chat_color
+from .unified_logger import unified_logger
 
 class ChatHistory:
     def __init__(self, app, instance_index):
         self.app = app
         self.instance_index = instance_index
         self.history = []
-        self.log_dir = LOG_DIR / f"chat_{instance_index}"
-        self.log_dir.mkdir(parents=True, exist_ok=True)
         
     def add_message(self, role, content):
         """Add a message to the chat history, respecting the maximum history limit."""
         self.history.append({"role": role, "content": content})
         if len(self.history) > self.app.MAX_HISTORY:
             self.history.pop(0)
+        
+        # Log to unified logger
+        model = getattr(self.app, 'selected_model', None)
+        unified_logger.log_conversation(self.instance_index, role, content, model)
 
     def strip_thoughts(self, text):
         """Remove <think>...</think> sections from text."""
@@ -48,23 +50,12 @@ class ChatHistory:
                 
                 # Display message with consistent formatting
                 print(f"[bold {chat_color}]|[/bold {chat_color}] [{role_color}]{role}[/{role_color}]: [grey70]{content}[/grey70]")
-        
-        # End header with CHAT # in the chat color
+          # End header with CHAT # in the chat color
         print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]END CHAT {self.app.active_chat_index + 1} HISTORY[/bold {chat_color}]\n")
-
-    def log_file(self, prompt, response):
-        """Log the conversation to a file if logging is enabled."""
-        if not self.app.logging_enabled:
-            return
-        try:
-            timestamp = datetime.now()
-            log_filename = self.log_dir / f"{timestamp.strftime('%Y-%m-%d')}.txt"
-            with open(log_filename, "a", encoding="utf-8") as f:
-                f.write(f"[{timestamp.strftime('%H:%M:%S')}] You: {prompt}\n")
-                f.write(f"[{timestamp.strftime('%H:%M:%S')}] {self.app.selected_model}: {response}\n\n")
-        except Exception as e:
-            print(f"Failed to write chat log: {e}")
 
     def clear(self):
         """Clear the chat history."""
         self.history = []
+        
+        # Log the clear action
+        unified_logger.log_chat_history_clear(self.instance_index)

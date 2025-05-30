@@ -3,6 +3,7 @@ import shlex
 from rich import print
 from ..types import CommandResult, ActionType
 from .registry import registry
+from ..unified_logger import unified_logger
 
 
 class AdvancedCommandHandler:
@@ -50,8 +51,7 @@ class AdvancedCommandHandler:
             print(f"[bold red]Error:[/bold red] {e}")
             print(f"[grey50]Usage: {cmd_def.parser.format_usage().strip()}[/grey50]")
             return CommandResult(ActionType.CONTINUE)
-        
-        # Execute command
+          # Execute command
         try:
             # Convert parsed args to kwargs
             kwargs = vars(parsed_args)
@@ -60,6 +60,12 @@ class AdvancedCommandHandler:
             if cmd_def.name in ["system", "setprompt", "load"]:
                 if "prompt" in kwargs and isinstance(kwargs["prompt"], list):
                     kwargs["prompt"] = " ".join(kwargs["prompt"])
+            
+            # Log command execution
+            unified_logger.log_command_execution(
+                self.app.instance_index, 
+                f"/{command_name} {' '.join(args)}" if args else f"/{command_name}"
+            )
             
             return cmd_def.handler(self, **kwargs)
         except Exception as e:

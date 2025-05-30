@@ -113,12 +113,10 @@ class ModelInteraction:
 
         # Determine color based on chat index
         chat_index = getattr(self.app, 'active_chat_index', 0)
-        chat_color = get_chat_color(chat_index)
-
-        # Print with colored bar, colored chat number and underlined model name, response on a new line
+        chat_color = get_chat_color(chat_index)        # Print with colored bar, colored chat number and underlined model name, response on a new line
         print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]{chat_index + 1})[/bold {chat_color}][underline]{self.app.selected_model}[/underline]:\n")
         print(f"{clean_response}")
-
+        
         if self.app.verbosity:
             if 'eval_count' in response and 'eval_duration' in response:
                 print(self.pull_eval_data(response))
@@ -126,7 +124,8 @@ class ModelInteraction:
                 print("[italic][grey50]Evaluation data missing in response.[/grey50][/italic]")
 
         if isinstance(clean_response, str):
-            self.app.chat_history.log_file(user_input, clean_response)
+            # Old per-chat logging removed - now using unified logger
+            pass
         else:
             print("\n[bold red]Error:[/bold red] Response is not a valid string and will not be logged.")
 
