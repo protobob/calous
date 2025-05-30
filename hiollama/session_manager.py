@@ -1,27 +1,18 @@
 """Chat session management for Hi, Ollama!"""
-from typing import List, Optional, Dict, Any
-from dataclasses import dataclass
-from enum import Enum
+from typing import List, Optional, Dict, Any, TYPE_CHECKING
 from rich import print
 import os
-from .app import HiOllamaChat
+from .types import ActionType, CommandResult  # Import from types instead
 from .utils import get_chat_color, print_rainbow_header, format_message_preview
 from .config import ConfigManager
 
-class ActionType(Enum):
-    CONTINUE = "continue"
-    SWITCH = "switch"
-    TWIST = "twist"
-    QUIT = "quit"
-
-@dataclass
-class CommandResult:
-    action: ActionType
-    data: Optional[Dict[str, Any]] = None
+# Use TYPE_CHECKING to avoid circular import
+if TYPE_CHECKING:
+    from .app import HiOllamaChat
 
 class ChatSessionManager:
     def __init__(self, num_chats: Optional[int] = None):
-        self.chats: List[HiOllamaChat] = []
+        self.chats: List['HiOllamaChat'] = []  # Use string annotation
         self.active_chat_index = 0
         # Use config value if num_chats not explicitly provided
         self.num_chats = num_chats if num_chats is not None else ConfigManager.get_num_chats()
@@ -29,19 +20,20 @@ class ChatSessionManager:
         
     def _initialize_chats(self):
         """Initialize all chat instances."""
+        # Import here to avoid circular import
+        from .app import HiOllamaChat
         self.chats = [HiOllamaChat(i) for i in range(self.num_chats)]
         
         # Configure chat instances - REMOVED CIRCULAR REFERENCE
         for i, chat in enumerate(self.chats):
             chat.active_chat_index = i
-            # REMOVED: chat.chat_instances = self.chats  # This was the circular reference
             chat.session_manager = self  # Give chats reference to session manager only
     
-    def get_active_chat(self) -> HiOllamaChat:
+    def get_active_chat(self) -> 'HiOllamaChat':
         """Get the currently active chat instance."""
         return self.chats[self.active_chat_index]
     
-    def get_all_chats(self) -> List[HiOllamaChat]:
+    def get_all_chats(self) -> List['HiOllamaChat']:
         """Get all chat instances - for use by other components."""
         return self.chats
     

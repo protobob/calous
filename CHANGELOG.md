@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.4.0.dev] - 2025-05-29
+
+### Added
+- **New Command System**: Complete rewrite of command handling with argparse integration
+- **Decorator-Based Registration**: Commands now use `@registry.register()` for clean registration
+- **Advanced Argument Parsing**: Full argparse support with type checking and validation
+- **Improved /load Command**: No quotes needed for prompts (`/load file.py review this code`)
+- **Type Safety**: Created `types.py` with shared `ActionType` and `CommandResult` classes
+- **Command Categories**: Organized commands into logical categories (General, Navigation, Model, etc.)
+
+### Changed
+- **Command Architecture**: Moved from manual parsing to argparse-based system
+- **Import Structure**: Eliminated unnecessary `commands.py` wrapper, direct imports from `command_system.py`
+- **Help System**: Preserved existing beautiful help menu while integrating with new command registry
+
+### Fixed
+- **Circular Import Issues**: Resolved circular dependencies between app, command_system, and session_manager
+- **Duplicate Config Saving**: Fixed multiple config save messages on `/quit` command
+- **Command Validation**: Proper error handling and usage display for invalid command syntax
+
+### Technical
+- **Removed**: `commands.py` file (redundant wrapper)
+- **Enhanced**: Command handler with robust argument parsing and error handling
+- **Improved**: Type annotations and error messages throughout command system
+
 ## [0.3.1.dev] - 2025-05-29
 
 ### Fixed

@@ -3,7 +3,7 @@ from rich.prompt import Prompt
 from rich import print
 
 from .config import ConfigManager
-from .commands import CommandHandler
+from .command_system import AdvancedCommandHandler  # Direct import
 from .ui import UIManager
 from .chat_history import ChatHistory
 from .model_interaction import ModelInteraction
@@ -38,7 +38,7 @@ class HiOllamaChat:
         self.ui = UIManager(self)
         self.chat_history = ChatHistory(self, instance_index)
         self.model = ModelInteraction(self)
-        self.commands = CommandHandler(self)
+        self.commands = AdvancedCommandHandler(self)  # Direct instantiation
         
         # Initialize last response attribute
         self.last_response = None
@@ -72,7 +72,7 @@ class HiOllamaChat:
     
     def process_input(self, user_input: str):
         """Process user input and return a CommandResult."""
-        from .session_manager import CommandResult, ActionType
+        from .types import CommandResult, ActionType  # Import from types
         
         # Handle commands
         if user_input.startswith('/'):
@@ -91,4 +91,4 @@ class HiOllamaChat:
             response = self.ui.run_with_spinner(self.model.talk_to_model, user_input)
             self.model.process_response(user_input, response)
         except Exception as e:
-            print(f"Model Error: {e}")
+            print(f"[bold red]Error processing input:[/bold red] {e}")
