@@ -3,16 +3,16 @@ import json
 from rich import print
 from .constants import CONFIG_PATH, DEFAULT_MODEL, DEFAULT_MAX_HISTORY, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS, DEFAULT_NUM_CHATS
 
-class ConfigManager:
+class ConfigManager:    
     
     @staticmethod
     def _generate_default_chat_config():
         """Generate default configuration for a chat instance."""
         return {
             "verbosity": True,
-            "think_filtering": True,
             "MAX_HISTORY": DEFAULT_MAX_HISTORY,
             "system_prompt": DEFAULT_SYSTEM_PROMPT,
+            "logging_enabled": True,
             "prompts": {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)}
         }
     

@@ -72,9 +72,7 @@ HiOllamaChat
 │   ├── chat_history     # ChatHistory instance
 │   ├── model            # ModelInteraction instance
 │   └── commands         # AdvancedCommandHandler instance
-└── Configuration:
-    ├── verbosity
-    ├── think_filtering
+└── Configuration:    ├── verbosity
     ├── MAX_HISTORY
     └── prompts{}
 ```
@@ -119,9 +117,7 @@ HiOllama uses a single JSON configuration file with global and per-chat sections
     "num_chats": 4
   },
   "chats": {
-    "0": {
-      "verbosity": true,
-      "think_filtering": true,
+    "0": {      "verbosity": true,
       "MAX_HISTORY": 20,
       "system_prompt": "...",
       "logging_enabled": true,
@@ -157,10 +153,9 @@ commands/
 ├── registry.py          # @registry.register decorator
 ├── handler.py           # AdvancedCommandHandler
 ├── types.py             # CommandCategory enum
-└── Command Modules:
-    ├── general.py       # /help, /quit, /showvars
+└── Command Modules:    ├── general.py       # /help, /quit, /showvars
     ├── navigation.py    # /switch, /twist
-    ├── model.py         # /model, /toggle_eval, /toggle_think
+    ├── model.py         # /model, /toggle_eval
     ├── prompt.py        # /prompt, /setprompt, /system
     ├── history.py       # /history, /clear, /setmax
     └── file.py          # /load

@@ -22,11 +22,9 @@ class HiOllamaChat:
         # Load configs from unified system
         self.config = ConfigManager.get_chat_config(instance_index)
         global_config = ConfigManager.get_global_config()
-        
-        # Initialize attributes from config
+          # Initialize attributes from config
         self.selected_model = global_config.get("selected_model", DEFAULT_MODEL)
         self.verbosity = self.config.get("verbosity", True)
-        self.think_filtering = self.config.get("think_filtering", True)
         self.MAX_HISTORY = self.config.get("MAX_HISTORY", DEFAULT_MAX_HISTORY)
         self.system_prompt = {
             "role": "system",
@@ -59,11 +57,9 @@ class HiOllamaChat:
             self.selected_model = new_model
             return 1
     def save_config(self):
-        """Save the current configuration."""
-        # Update instance-specific config
+        """Save the current configuration."""        # Update instance-specific config
         chat_config = {
             "verbosity": self.verbosity,
-            "think_filtering": self.think_filtering,
             "MAX_HISTORY": self.MAX_HISTORY,
             "system_prompt": self.system_prompt["content"],
             "logging_enabled": self.logging_enabled,

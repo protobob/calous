@@ -26,23 +26,25 @@ def cmd_twist(handler, target_chat: Optional[int] = None) -> CommandResult:
     last_response = handler.app.last_response
     if not last_response:
         print("\n[bold red]Error:[/bold red] No previous response to twist.")
-        return CommandResult(ActionType.CONTINUE)
-
-    # Extract content
+        return CommandResult(ActionType.CONTINUE)    # Extract content
     twist_content = last_response.get("message", {}).get("content", "")
     if not twist_content:
         print("[bold red]Error:[/bold red] Previous response is empty.")
         return CommandResult(ActionType.CONTINUE)
 
-    # Process target chat
+    # CRITICAL: Strip thoughts from twist content to prevent sending them to target chat
+    clean_twist_content = handler.app.chat_history.strip_thoughts(twist_content)
+    if not clean_twist_content:
+        print("[bold red]Error:[/bold red] No valid content to twist after filtering.")
+        return CommandResult(ActionType.CONTINUE)    # Process target chat
     target_index = None
     if target_chat is not None:
         if target_chat < 1:
             print("[bold red]Error:[/bold red] Target chat number must be 1 or greater.")
             return CommandResult(ActionType.CONTINUE)
         target_index = target_chat - 1  # Convert to 0-based index
-
+    
     return CommandResult(ActionType.TWIST, {
-        "content": twist_content,
+        "content": clean_twist_content,
         "target_chat": target_index
     })

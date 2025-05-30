@@ -22,11 +22,3 @@ def cmd_toggle_eval(handler) -> CommandResult:
     handler.app.verbosity = not handler.app.verbosity
     print(f"\nVerbosity is now: {handler.app.verbosity}")
     return CommandResult(ActionType.CONTINUE)
-
-
-@registry.register("toggle_think", "Toggle AI thought filtering", aliases=["think"], category=CommandCategory.MODEL)
-def cmd_toggle_think(handler) -> CommandResult:
-    """Toggle filtering of AI thoughts."""
-    handler.app.think_filtering = not handler.app.think_filtering
-    print(f"\nThink filtering is now: {handler.app.think_filtering}")
-    return CommandResult(ActionType.CONTINUE)

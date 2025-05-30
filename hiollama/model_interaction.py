@@ -22,20 +22,23 @@ class ModelInteraction:
             chat_index = getattr(self.app, 'active_chat_index', 0)
             chat_color = get_chat_color(chat_index)
             print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]{chat_index + 1})[/bold {chat_color}][underline]{self.app.selected_model}[/underline]:\n")
-            
             for chunk in ollama.chat(model=self.app.selected_model, messages=messages, stream=True):
-                if hasattr(chunk, 'message') and hasattr(chunk.message, 'content'):
-                    content = chunk.message.content
-                    full_response += content
-                    print(content, end='', flush=True)
+                content = getattr(chunk.message, 'content', '') if hasattr(chunk, 'message') else ''
+                full_response += content
+                print(content, end='', flush=True)
                 
                 # Store the last chunk to get eval data if available
                 response_dict = chunk
             
-            print()  # newline after finishing
+            print()  # newline after stream
             
-            # Create a complete response object for processing
-            final_response = {"message": {"content": full_response}}
+            # Apply think filtering for history (but keep full response for logging)
+            clean_response = self.app.chat_history.strip_thoughts(full_response)
+            if not clean_response:
+                clean_response = "[No valid response received from the model.]"
+            
+            # Create response object with cleaned content for history
+            final_response = {"message": {"content": clean_response}}
             
             # Add eval data if available from the last chunk
             if response_dict and hasattr(response_dict, 'eval_count'):
@@ -44,7 +47,7 @@ class ModelInteraction:
                 final_response['eval_duration'] = response_dict.eval_duration
             
             # Process the complete response (this handles history, logging, etc.)
-            self._process_response(user_prompt, final_response)
+            self._process_response(user_prompt, final_response, full_response)
             return final_response
 
         except ollama.ResponseError as e:
@@ -84,20 +87,25 @@ class ModelInteraction:
         """Handle unexpected errors with helpful messaging."""
         print(f"\n[bold red]Unexpected Error:[/bold red] {e}")
         print(f"[grey50]If this persists, try restarting Ollama with 'ollama serve'[/grey50]")
-        return {"message": {"content": "[Error: An unexpected error occurred.]"}}
-
-    def _process_response(self, user_input, response):
+        return {"message": {"content": "[Error: An unexpected error occurred.]"}}    
+    
+    def _process_response(self, user_input, response, full_response_for_logging=None):
         """Process response for history and logging (no output printing since streaming already printed)."""
         raw_response = response.get('message', {}).get('content', '')
         if not raw_response:
             return
 
-        # Store the last response in the HiOllamaChat instance
-        self.app.last_response = response
+        # Store the last response in the HiOllamaChat instance (use full response for logging if provided)
+        if full_response_for_logging:
+            # Create a copy of response with full content for logging
+            full_response_obj = response.copy()
+            full_response_obj['message'] = {'content': full_response_for_logging}
+            self.app.last_response = full_response_obj
+        else:
+            self.app.last_response = response
 
-        clean_response = self.app.chat_history.strip_thoughts(raw_response) if self.app.think_filtering else raw_response
-        if not clean_response:
-            clean_response = "[No valid response received from the model.]"
+        # The response already contains cleaned content (thoughts stripped)
+        clean_response = raw_response
 
         # Show eval data if verbosity is enabled
         if self.app.verbosity:
@@ -106,7 +114,7 @@ class ModelInteraction:
             else:
                 print("[italic][grey50]Evaluation data missing in response.[/grey50][/italic]")
 
-        # Add to chat history
+        # Add to chat history (clean response without thoughts)
         self.app.chat_history.add_message("assistant", clean_response)
 
     def list_ollama_models(self):

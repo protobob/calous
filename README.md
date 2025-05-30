@@ -142,14 +142,12 @@ HiOllama stores settings in `~/.hiollama_config_unified.json`. The configuration
 {
   "global": {
     "selected_model": "qwen2.5:0.5b",
-    "num_chats": 4
-  },
+    "num_chats": 4  },
   "chats": {
     "0": {
       "system_prompt": "You are a Python expert...",
       "MAX_HISTORY": 20,
-      "verbosity": true,
-      "think_filtering": true
+      "verbosity": true
     }
   }
 }

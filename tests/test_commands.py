@@ -57,10 +57,9 @@ def main():
             "command": "/help",
             "expected": [
                 "GLOBAL HELP MENU",
-                "General Commands:",
-                "/help", "/quit", "/showvars", "/switch",
+                "General Commands:",                "/help", "/quit", "/showvars", "/switch",
                 "Model Commands:",
-                "/model", "/toggle_eval", "/toggle_think",
+                "/model", "/toggle_eval",
                 "Prompt Commands:",
                 "/setprompt", "/prompt", "/showprompt", "/system",
                 "Chat History Commands:",

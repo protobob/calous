@@ -20,10 +20,8 @@ def test_default_config_generation():
     """Test generation of default chat configuration."""
     print("🔍 Testing default config generation...")
     
-    config = ConfigManager._generate_default_chat_config()
-    
-    # Verify all required fields are present
-    required_fields = ['verbosity', 'think_filtering', 'MAX_HISTORY', 'system_prompt', 'prompts', 'logging_enabled']
+    config = ConfigManager._generate_default_chat_config()    # Verify all required fields are present
+    required_fields = ['verbosity', 'MAX_HISTORY', 'system_prompt', 'prompts', 'logging_enabled']
     for field in required_fields:
         if field not in config:
             print(f"❌ Missing required field: {field}")

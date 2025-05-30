@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.6.3.dev] - 2025-05-30
+
+### Changed
+- **Simplified Think Filtering**: Removed user control over think filtering - it now always filters `<think></think>` blocks from chat history and twist operations while preserving them in streaming output
+- Streaming now shows full model output including thoughts for transparency
+- Chat history and `/twist` operations automatically strip thoughts for clean conversation flow
+
+### Removed
+- `/toggle_think` command - think filtering is now always enabled for history/twist but disabled for real-time display
+- `think_filtering` configuration option - behavior is now consistent across all instances
+
+### Fixed
+- **Critical**: `/twist` command now properly filters out `<think></think>` blocks to prevent sending model reasoning to target chats
+- Enhanced think filtering with robust regex pattern matching using `re.DOTALL` flag
+
+### Technical
+- Streamlined model interaction flow with automatic think filtering in `_handle_streaming`
+- Updated command system to remove think filtering controls
+- Improved user experience by showing model reasoning during streaming while keeping history clean
+- **Note**: Thoughts are currently filtered from logs as well (this preserves the clean logging approach)
+
 ## [0.6.2.dev] - 2025-05-30
 
 ### Added

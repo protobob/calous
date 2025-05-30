@@ -52,7 +52,6 @@ python -m hiollama 2
    ```
    /toggle_log
    /toggle_eval
-   /toggle_think
    ```
    ✅ Each should show confirmation message about the setting change
 
