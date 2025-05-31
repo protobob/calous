@@ -122,7 +122,73 @@ class ChatSessionManager:
         unified_logger.log_model_change(new_model, updated_count)
         
         return updated_count
-    
+
+    def add_chat(self) -> bool:
+        """Add a new chat session dynamically."""
+        from .app import HiOllamaChat
+        
+        # Create new chat instance
+        new_chat_index = self.num_chats
+        new_chat = HiOllamaChat(new_chat_index)
+        new_chat.session_manager = self
+        
+        # Add to chats list
+        self.chats.append(new_chat)
+        
+        # Update num_chats
+        self.num_chats += 1
+        
+        # Update global config
+        ConfigManager.update_global_config({"num_chats": self.num_chats})
+        
+        # Log the addition
+        unified_logger.log_channel_switch(-1, new_chat_index, "addchat")
+        
+        print(f"[bold green]✓[/bold green] Chat {new_chat_index + 1} added successfully!")
+        return True    
+        
+    def remove_chat(self, target_index: int) -> bool:
+        """Remove a chat session dynamically."""
+        if target_index < 0 or target_index >= self.num_chats:
+            return False
+        
+        # Save the chat's configuration before removing it
+        chat_to_remove = self.chats[target_index]
+        try:
+            chat_to_remove.save_config()
+            print(f"[grey70]Saved configuration for Chat {target_index + 1}[/grey70]")
+        except Exception as e:
+            print(f"[bold yellow]Warning:[/bold yellow] Could not save config for Chat {target_index + 1}: {e}")
+        
+        # Remove the chat from the list
+        removed_chat = self.chats.pop(target_index)
+        
+        # Update num_chats
+        self.num_chats -= 1
+        
+        # Update global config (preserves chat configs in unified file)
+        ConfigManager.update_global_config({"num_chats": self.num_chats})
+        
+        # Adjust active_chat_index if necessary
+        if self.active_chat_index >= self.num_chats:
+            # If we removed the last chat and it was active, switch to the new last chat
+            self.active_chat_index = self.num_chats - 1
+        elif self.active_chat_index > target_index:
+            # If we removed a chat before the active one, adjust the index
+            self.active_chat_index -= 1
+        
+        # Update instance indices for remaining chats
+        for i, chat in enumerate(self.chats):
+            chat.instance_index = i
+            chat.active_chat_index = i
+        
+        # Log the removal
+        unified_logger.log_channel_switch(target_index, -1, "removechat")
+        
+        print(f"[bold green]✓[/bold green] Chat {target_index + 1} removed successfully!")
+        print(f"[grey70]Configuration preserved in unified config file.[/grey70]")
+        return True
+
     def process_command_result(self, result: CommandResult) -> bool:
         """Process a command result and take appropriate action.
         
@@ -148,6 +214,19 @@ class ChatSessionManager:
                 self.twist_to_chat(content, target_index)
                 # Remove the duplicate _display_chat_context() call here
                 # twist_to_chat() already handles the display
+        
+        elif result.action == ActionType.ADDCHAT:
+            if self.add_chat():
+                # Switch to the new chat and display its context
+                self.active_chat_index = self.num_chats - 1
+                self._display_chat_context()
+        
+        elif result.action == ActionType.REMOVECHAT:
+            data = result.data or {}
+            target_index = data.get('target_index', self.num_chats - 1)
+            if self.remove_chat(target_index):
+                # Display context for the current active chat
+                self._display_chat_context()
     
         # CONTINUE action requires no special handling
         return True

@@ -7,6 +7,8 @@ class ActionType(Enum):
     CONTINUE = "continue"
     SWITCH = "switch"
     TWIST = "twist"
+    ADDCHAT = "addchat"
+    REMOVECHAT = "removechat"
     QUIT = "quit"
 
 @dataclass

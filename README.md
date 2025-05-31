@@ -58,7 +58,7 @@ hiollama 8
 ### First Run Setup
 1. When you first run HiOllama, it will create a configuration file at `~/.hiollama_config_unified.json`
 2. If you don't have any Ollama models, run `/model` to select one
-3. Each chat starts with a default system prompt - you can customize these with `/system`
+3. Each chat starts with a blank system prompt - customize them with `/system` to give each chat its own personality
 
 ## Using HiOllama
 
@@ -75,10 +75,10 @@ HIOLLAMA!
 v.0.5.3.dev
 
 ACTIVE CHATS: (/switch [1-4] to change)
-► 1: You are a direct, technical assistant...
-  2: You are a direct, technical assistant...
-  3: You are a direct, technical assistant...
-  4: You are a direct, technical assistant...
+► 1: [No system prompt set]
+  2: [No system prompt set]
+  3: [No system prompt set]
+  4: [No system prompt set]
 
 | CH:0/20 (/help for help)
 | YOU
@@ -142,10 +142,9 @@ HiOllama stores settings in `~/.hiollama_config_unified.json`. The configuration
 {
   "global": {
     "selected_model": "qwen2.5:0.5b",
-    "num_chats": 4  },
-  "chats": {
+    "num_chats": 4  },  "chats": {
     "0": {
-      "system_prompt": "You are a Python expert...",
+      "system_prompt": "",
       "MAX_HISTORY": 20,
       "verbosity": true
     }
@@ -163,9 +162,10 @@ The "twist" feature copies the last AI response from your current chat to anothe
 
 ### System Prompts
 Each chat can have its own personality through system prompts:
-- **Technical Assistant**: `You are a direct, technical assistant. No greetings, just facts.`
-- **Creative Helper**: `You are an enthusiastic creative writing assistant.`
-- **Code Reviewer**: `You are a senior developer reviewing code for bugs and improvements.`
+- **Start blank**: All chats begin with no system prompt - customize them with `/system`
+- **Technical Assistant**: `/system You are a direct, technical assistant. No greetings, just facts.`
+- **Creative Helper**: `/system You are an enthusiastic creative writing assistant.`
+- **Code Reviewer**: `/system You are a senior developer reviewing code for bugs and improvements.`
 
 ### History Management
 - Each chat maintains its own conversation history

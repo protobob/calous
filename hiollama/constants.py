@@ -18,7 +18,7 @@ RAINBOW_TEXT = "HIOLLAMA!"
 # Default configuration
 DEFAULT_MODEL = "qwen3:0.6B"
 DEFAULT_MAX_HISTORY = 20
-DEFAULT_SYSTEM_PROMPT = "You are a direct, technical assistant. Don't be enthusiastic. No greetings, no apologies. No emojis or other symbols! Answer like you're helping a peer debug code."
+DEFAULT_SYSTEM_PROMPT = ""
 
 # API configuration
 OLLAMA_API_URL = "http://localhost:11434/api/tags"
@@ -36,10 +36,10 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "0.6.3.dev"
+APP_VERSION = "0.6.5.dev"
 
 # Multi-chat configuration
-DEFAULT_NUM_CHATS = 4  # Changed from 2 to 4 for testing N-chat support
+DEFAULT_NUM_CHATS = 4  # default if no config
 
 # Chat session defaults
 MAX_CHATS = 14

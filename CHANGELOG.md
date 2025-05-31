@@ -1,6 +1,24 @@
 # Changelog
 
-## [0.6.4.dev] - 2025-01-31
+## [0.6.5.dev] - 2025-05-31
+
+### Changed
+- **Default System Prompts**: All chat instances now start with blank system prompts instead of predefined roles
+- Users have complete control over chat personalities from the start
+- Removed specialized prompts for technical, creative, and generic assistants
+
+### Added
+- `/addchat` command to dynamically add new chat sessions
+- `/removechat [NUMBER]` command to dynamically remove chat sessions
+- Chat configuration preservation when removing chats
+- Persistent chat count preference - application remembers number of chats between sessions
+
+### Enhanced
+- Application startup now uses saved chat count preference when no argument provided
+- Command line argument still overrides saved preference: `hiollama 6` always uses 6 chats
+- Improved chat management with dynamic session control
+
+## [0.6.4.dev] - 2025-05-31
 
 ### Added
 - Native Ollama thinking API integration with `think` parameter support

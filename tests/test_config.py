@@ -99,25 +99,14 @@ def test_chat_specific_configs():
     config = ConfigManager._generate_default_unified_config(4)
     chat_configs = config['chats']
     
-    # Chat 0 should have default technical prompt
-    chat0_prompt = chat_configs['0']['system_prompt']
-    if chat0_prompt != DEFAULT_SYSTEM_PROMPT:
-        print(f"❌ Chat 0 should have default technical prompt")
-        return False
+    # All chats should have blank system prompts now
+    for i in range(4):
+        chat_prompt = chat_configs[str(i)]['system_prompt']
+        if chat_prompt != "":
+            print(f"❌ Chat {i} should have blank system prompt, got: {chat_prompt}")
+            return False
     
-    # Chat 1 should have creative writing prompt
-    chat1_prompt = chat_configs['1']['system_prompt']
-    if "creative writing" not in chat1_prompt.lower():
-        print(f"❌ Chat 1 should have creative writing prompt")
-        return False
-    
-    # Chat 2+ should have generic helper prompts
-    chat2_prompt = chat_configs['2']['system_prompt']
-    if "Chat 3" not in chat2_prompt:  # Chat index 2 = Chat 3 for users
-        print(f"❌ Chat 2 should have generic prompt mentioning 'Chat 3'")
-        return False
-    
-    print("✅ Chat-specific configurations work correctly")
+    print("✅ Chat-specific configurations work correctly (all blank system prompts)")
     return True
 
 def test_config_file_operations():
@@ -178,16 +167,15 @@ def test_chat_config_retrieval():
         if config_0['system_prompt'] != "Technical assistant":
             print("❌ Failed to retrieve existing chat config")
             return False
-        
-        # Test missing chat config (should generate default)
+          # Test missing chat config (should generate default with blank prompt)
         config_2 = ConfigManager.get_chat_config(2)
         if 'system_prompt' not in config_2:
             print("❌ Failed to generate default config for missing chat")
             return False
         
-        # Verify chat 2 gets generic prompt
-        if "Chat 3" not in config_2['system_prompt']:
-            print("❌ Generated config doesn't have correct generic prompt")
+        # Verify chat 2 gets blank prompt
+        if config_2['system_prompt'] != "":
+            print("❌ Generated config doesn't have blank system prompt")
             return False
     
     print("✅ Chat config retrieval works correctly")

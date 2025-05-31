@@ -19,6 +19,45 @@ def cmd_switch(handler, chat_number: Optional[int] = None) -> CommandResult:
     return CommandResult(ActionType.SWITCH, {"target_chat": target_chat})
 
 
+@registry.register("addchat", "Add a new chat session", category=CommandCategory.NAVIGATION)
+def cmd_addchat(handler) -> CommandResult:
+    """Add a new chat session dynamically."""
+    # Validate maximum chat limit
+    from ..constants import MAX_CHATS
+    current_num_chats = handler.app.session_manager.num_chats
+    
+    if current_num_chats >= MAX_CHATS:
+        print(f"[bold red]Error:[/bold red] Maximum number of chats ({MAX_CHATS}) reached.")
+        return CommandResult(ActionType.CONTINUE)
+    
+    print(f"[bold green]Adding new chat session...[/bold green] Creating Chat {current_num_chats + 1}")
+    return CommandResult(ActionType.ADDCHAT)
+
+
+@registry.register("removechat", "Remove a chat session", category=CommandCategory.NAVIGATION)
+def cmd_removechat(handler, chat_number: Optional[int] = None) -> CommandResult:
+    """Remove a chat session dynamically."""
+    current_num_chats = handler.app.session_manager.num_chats
+    
+    # Must have at least 1 chat
+    if current_num_chats <= 1:
+        print("[bold red]Error:[/bold red] Cannot remove the last remaining chat.")
+        return CommandResult(ActionType.CONTINUE)
+    
+    # If no chat number specified, remove the last chat
+    if chat_number is None:
+        target_index = current_num_chats - 1  # Last chat (0-based)
+        chat_number = current_num_chats  # For display (1-based)
+    else:
+        if chat_number < 1 or chat_number > current_num_chats:
+            print(f"[bold red]Error:[/bold red] Chat number must be between 1 and {current_num_chats}.")
+            return CommandResult(ActionType.CONTINUE)
+        target_index = chat_number - 1  # Convert to 0-based index
+    
+    print(f"[bold yellow]Removing Chat {chat_number}...[/bold yellow] Configuration will be preserved.")
+    return CommandResult(ActionType.REMOVECHAT, {"target_index": target_index})
+
+
 @registry.register("twist", "Copy AI response to another chat", category=CommandCategory.NAVIGATION)
 def cmd_twist(handler, target_chat: Optional[int] = None) -> CommandResult:
     """Twist last AI response to target chat."""
