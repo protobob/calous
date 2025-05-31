@@ -5,12 +5,18 @@ from .utils import get_chat_color
 
 class ModelInteraction:
     def __init__(self, app):
-        self.app = app
-
+        self.app = app    
+    
     def talk_to_model(self, user_prompt):
         """Send a prompt to the selected model and return the streaming response."""
+        # Check if model is selected before making API call
+        if not self.app.selected_model or self.app.selected_model.strip() == "":
+            print(f"\n[bold red]No Model Selected:[/bold red] Please select a model first.")
+            print(f"[grey50]Use /model to choose an available model[/grey50]")
+            return {"message": {"content": "[Error: No model selected. Use /model to choose a model.]"}}
+        
         messages = [self.app.system_prompt] + self.app.chat_history.history.copy()
-        return self._handle_streaming(messages, user_prompt)    
+        return self._handle_streaming(messages, user_prompt)
     
     def _handle_streaming(self, messages, user_prompt):
         """Handle streaming response from the model."""

@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.6.6.dev] - 2025-05-31
+
+### Added
+- **Persistent Chat History**: Individual chat histories now automatically save to `~/hiollama/.history/` as JSONL files
+- Automatic history loading on application restart - conversations persist across sessions
+- History files survive chat reconfiguration (removing/adding chats preserves existing histories)
+
+### Changed
+- Reorganized data structure: moved from `~/hiollama_logs/` to `~/hiollama/logs/` and `~/hiollama/.history/`
+- Restored confirmation prompt for `/clear` command to prevent accidental history deletion
+
+### Fixed
+- Better error handling for empty model selection with user-friendly messages instead of Pydantic validation errors
+
+### Technical
+- Chat history saved as JSONL format for efficient append operations and future tokenizer integration
+- Each chat maintains independent history file (chat_001.jsonl, chat_002.jsonl, etc.)
+- Immediate save on every message to prevent data loss
+
 ## [0.6.5.dev] - 2025-05-31
 
 ### Changed

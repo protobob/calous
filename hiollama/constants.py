@@ -16,7 +16,7 @@ EXTENDED_RAINBOW_COLORS = [
 RAINBOW_TEXT = "HIOLLAMA!"
 
 # Default configuration
-DEFAULT_MODEL = "qwen3:0.6B"
+DEFAULT_MODEL = ""
 DEFAULT_MAX_HISTORY = 20
 DEFAULT_SYSTEM_PROMPT = ""
 
@@ -25,7 +25,9 @@ OLLAMA_API_URL = "http://localhost:11434/api/tags"
 API_TIMEOUT = 5
 
 # File paths
-LOG_DIR = Path.home() / "hiollama_logs"
+HIOLLAMA_DIR = Path.home() / "hiollama"
+LOG_DIR = HIOLLAMA_DIR / "logs"
+HISTORY_DIR = HIOLLAMA_DIR / ".history"
 CONFIG_PATH = Path.home() / ".hiollama_config_unified.json"
 
 # Prompt configuration
@@ -36,7 +38,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "0.6.5.dev"
+APP_VERSION = "0.6.6.dev"
 
 # Multi-chat configuration
 DEFAULT_NUM_CHATS = 4  # default if no config

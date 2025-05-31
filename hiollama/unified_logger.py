@@ -2,6 +2,7 @@
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any
+from .constants import LOG_DIR
 
 
 class UnifiedLogger:
@@ -9,13 +10,12 @@ class UnifiedLogger:
     
     def __init__(self):
         self.enabled = True
-        
+    
     def _get_log_file_path(self) -> Path:
         """Get the current log file path based on today's date."""
         timestamp = datetime.now()
-        log_dir = Path.home() / "hiollama_logs"
-        log_dir.mkdir(parents=True, exist_ok=True)
-        return log_dir / f"{timestamp.strftime('%Y-%m-%d')}.txt"
+        LOG_DIR.mkdir(parents=True, exist_ok=True)
+        return LOG_DIR / f"{timestamp.strftime('%Y-%m-%d')}.txt"
     
     def _write_log_entry(self, entry_type: str, content: str, chat_index: Optional[int] = None):
         """Write a formatted log entry to the unified log file."""

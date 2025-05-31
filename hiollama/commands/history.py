@@ -9,9 +9,17 @@ from ..unified_logger import unified_logger
 
 @registry.register("clear", "Clear chat history", category=CommandCategory.HISTORY)
 def cmd_clear(handler) -> CommandResult:
-    """Clear the current chat's history."""
-    handler.app.chat_history.clear()
-    print("Chat history cleared.")
+    """Clear the current chat's history with confirmation."""
+    try:
+        # Ask for confirmation
+        confirm = input("Are you sure you want to clear the chat history? (y/n): ").strip().lower()
+        if confirm in ['y', 'yes']:
+            handler.app.chat_history.clear()
+            print("Chat history cleared.")
+        else:
+            print("Clear operation cancelled.")
+    except KeyboardInterrupt:
+        print("\nClear operation cancelled.")
     return CommandResult(ActionType.CONTINUE)
 
 
@@ -92,9 +100,9 @@ def cmd_unified_log(handler) -> CommandResult:
     """View the unified log for today."""
     from pathlib import Path
     from datetime import datetime
+    from ..constants import LOG_DIR
     
-    log_dir = Path.home() / "hiollama_logs"
-    today_log = log_dir / f"{datetime.now().strftime('%Y-%m-%d')}.txt"
+    today_log = LOG_DIR / f"{datetime.now().strftime('%Y-%m-%d')}.txt"
     
     if not today_log.exists():
         print(f"\n[bold yellow]No unified log found for today.[/bold yellow]")
