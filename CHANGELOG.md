@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.6.7.dev] - 2025-05-31
+
+### Added
+- **`/resetchat` command**: Reset current chat to factory defaults with confirmation prompt
+- Improved confirmation dialogs for destructive operations using Rich prompts
+
+### Enhanced  
+- **`/clear` command**: Updated with colored chat identification and improved confirmation styling
+- Consistent chat identification in command messages (e.g., "CHAT 1" in proper chat colors)
+- All destructive commands now use Rich's `Prompt.ask()` for better UX and safety
+
 ## [0.6.6.dev] - 2025-05-31
 
 ### Added

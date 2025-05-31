@@ -1,21 +1,30 @@
 """Chat history management commands."""
 from typing import Optional
 from rich import print
+from rich.prompt import Prompt
 from ..types import CommandResult, ActionType
 from .registry import registry
 from .types import CommandCategory
 from ..unified_logger import unified_logger
+from ..utils import get_chat_color
 
 
 @registry.register("clear", "Clear chat history", category=CommandCategory.HISTORY)
 def cmd_clear(handler) -> CommandResult:
     """Clear the current chat's history with confirmation."""
     try:
-        # Ask for confirmation
-        confirm = input("Are you sure you want to clear the chat history? (y/n): ").strip().lower()
-        if confirm in ['y', 'yes']:
+        # Get chat info for colored display
+        chat_number = handler.app.instance_index + 1
+        chat_color = get_chat_color(handler.app.instance_index)
+        
+        # Ask for confirmation with colored text
+        print(f"\n[bold yellow]Warning:[/bold yellow] This will [bold red]CLEAR[/bold red] [bold {chat_color}]CHAT {chat_number}[/bold {chat_color}] history.")
+        print("All conversation history will be permanently deleted.")
+        
+        confirm = Prompt.ask("\nAre you sure you want to continue?", choices=["y", "n"], default="n")
+        if confirm == 'y':
             handler.app.chat_history.clear()
-            print("Chat history cleared.")
+            print(f"[bold {chat_color}]CHAT {chat_number}[/bold {chat_color}] history cleared successfully!")
         else:
             print("Clear operation cancelled.")
     except KeyboardInterrupt:
