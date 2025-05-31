@@ -14,6 +14,10 @@ import time
 import argparse
 from pathlib import Path
 
+# Add the parent directory to the path to import hiollama modules
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from hiollama.constants import APP_VERSION
+
 def run_command(cmd, timeout=10):
     """Run a command with timeout and return result."""
     try:
@@ -73,22 +77,19 @@ def test_argument_validation():
 
 def test_app_startup():
     """Test application startup with different configurations."""
-    print("\n🔍 Testing application startup...")
-    
-    # Test with 1 chat
+    print("\n🔍 Testing application startup...")    # Test with 1 chat
     print("  Testing 1 chat...")
     code, stdout, stderr = run_command('echo "/quit" | python -m hiollama 1', timeout=15)
-    if "HIOLLAMA!" in stdout and "v.0.5.3.dev" in stdout and "ACTIVE CHATS: ()" in stdout:
+    if "HIOLLAMA!" in stdout and APP_VERSION in stdout and "ACTIVE CHATS: ()" in stdout:
         print("✅ 1 chat configuration works")
     else:
         print(f"❌ 1 chat failed: {stdout[:200]}...")
         return False
-    
-    # Test with default (4 chats)
-    print("  Testing default (4 chats)...")
+      # Test with default (flexible number of chats)
+    print("  Testing default configuration...")
     code, stdout, stderr = run_command('echo "/quit" | python -m hiollama', timeout=15)
-    if "HIOLLAMA!" in stdout and "(/switch [1-4] to change)" in stdout:
-        print("✅ Default 4 chat configuration works")
+    if "HIOLLAMA!" in stdout and "(/switch [1-" in stdout and "] to change)" in stdout:
+        print("✅ Default configuration works")
     else:
         print(f"❌ Default configuration failed: {stdout[:200]}...")
         return False

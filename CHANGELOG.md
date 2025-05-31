@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.6.8.dev] - 2025-05-31
+
+### Fixed
+- **Test Version Mismatch**: Integration tests now dynamically import APP_VERSION instead of using hardcoded version strings
+- **Repository Cleanup**: Removed __pycache__ directories from working tree and enhanced .gitignore coverage
+
+### Enhanced
+- **Test Maintainability**: Tests are now more flexible and don't break when chat configuration changes
+- **Development Environment**: Comprehensive .gitignore now covers PyInstaller, testing artifacts, and OS-specific files
+
+### Technical
+- Integration tests use dynamic version detection to prevent future version mismatch issues
+- Improved test stability by making chat number expectations flexible rather than hardcoded
+
 ## [0.6.7.dev] - 2025-05-31
 
 ### Added
