@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.6.4.dev] - 2025-01-31
+
+### Added
+- Native Ollama thinking API integration with `think` parameter support
+- `/toggle_think` command to enable/disable model reasoning display
+- Thinking mode status display in `/showvars` with color coding
+- Persistent thinking mode configuration across sessions
+
+### Changed
+- Upgraded to ollama library 0.5.2.dev2 for native thinking support
+- Model responses now use Ollama's native thinking separation instead of regex
+- Thinking content displays in dim cyan during streaming when enabled
+- Default thinking mode is disabled for clean output
+
+### Removed
+- Legacy `strip_thoughts` regex-based method from chat history
+- Manual thought stripping from twist operations (now uses clean native API)
+- Unused `re` import from chat_history.py
+
+### Security
+- Twist operations guaranteed to never send thinking content to other chats
+- Last response always contains clean content regardless of thinking mode
+
 ## [0.6.3.dev] - 2025-05-30
 
 ### Changed

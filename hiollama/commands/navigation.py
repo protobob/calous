@@ -27,16 +27,17 @@ def cmd_twist(handler, target_chat: Optional[int] = None) -> CommandResult:
     if not last_response:
         print("\n[bold red]Error:[/bold red] No previous response to twist.")
         return CommandResult(ActionType.CONTINUE)    # Extract content
-    twist_content = last_response.get("message", {}).get("content", "")
+    twist_content = last_response.get("message", {}).get("content", "")    
     if not twist_content:
         print("[bold red]Error:[/bold red] Previous response is empty.")
         return CommandResult(ActionType.CONTINUE)
 
-    # CRITICAL: Strip thoughts from twist content to prevent sending them to target chat
-    clean_twist_content = handler.app.chat_history.strip_thoughts(twist_content)
+    # With native Ollama API, last_response already contains clean content (no thinking)
+    # No need to strip thoughts as the API handles this separation
+    clean_twist_content = twist_content
     if not clean_twist_content:
-        print("[bold red]Error:[/bold red] No valid content to twist after filtering.")
-        return CommandResult(ActionType.CONTINUE)    # Process target chat
+        print("[bold red]Error:[/bold red] No valid content to twist.")
+        return CommandResult(ActionType.CONTINUE)# Process target chat
     target_index = None
     if target_chat is not None:
         if target_chat < 1:

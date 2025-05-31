@@ -21,8 +21,7 @@ class HiOllamaChat:
         
         # Load configs from unified system
         self.config = ConfigManager.get_chat_config(instance_index)
-        global_config = ConfigManager.get_global_config()
-          # Initialize attributes from config
+        global_config = ConfigManager.get_global_config()        # Initialize attributes from config
         self.selected_model = global_config.get("selected_model", DEFAULT_MODEL)
         self.verbosity = self.config.get("verbosity", True)
         self.MAX_HISTORY = self.config.get("MAX_HISTORY", DEFAULT_MAX_HISTORY)
@@ -31,6 +30,7 @@ class HiOllamaChat:
             "content": self.config.get("system_prompt", DEFAULT_SYSTEM_PROMPT)
         }
         self.logging_enabled = self.config.get("logging_enabled", True)
+        self.thinking_enabled = self.config.get("thinking_enabled", False)  # Default to False for clean output
         self.prompts = self.config.get("prompts", {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)})
           
         # For multi-instance support (simplified - no circular references)
@@ -57,12 +57,14 @@ class HiOllamaChat:
             self.selected_model = new_model
             return 1
     def save_config(self):
-        """Save the current configuration."""        # Update instance-specific config
+        """Save the current configuration."""
+        # Update instance-specific config
         chat_config = {
             "verbosity": self.verbosity,
             "MAX_HISTORY": self.MAX_HISTORY,
             "system_prompt": self.system_prompt["content"],
             "logging_enabled": self.logging_enabled,
+            "thinking_enabled": self.thinking_enabled,
             "prompts": self.prompts
         }
         ConfigManager.update_chat_config(self.instance_index, chat_config)

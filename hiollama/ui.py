@@ -36,12 +36,11 @@ class UIManager:
         
         # Always show the dynamic version
         table.add_row(f"/switch [NUMBER]", f"Switch between chats (1-{num_chats}). Default switches to next chat.")
-        table.add_row(f"/twist [NUMBER]", f"Copy AI's last response to target chat (1-{num_chats}). Default uses next chat.")
-
-        # Add a header for Model Commands        table.add_row("", "")  # Empty row for spacing
+        table.add_row(f"/twist [NUMBER]", f"Copy AI's last response to target chat (1-{num_chats}). Default uses next chat.")        # Add a header for Model Commands        table.add_row("", "")  # Empty row for spacing
         table.add_row("[bold white]Model Commands:[/bold white]", "")
         table.add_row(f"[bold {command_color}]/model[/bold {command_color}]", "Select a different model.")
         table.add_row(f"[bold {command_color}]/toggle_eval[/bold {command_color}]", "Toggle evaluation data display after responses.")
+        table.add_row(f"[bold {command_color}]/toggle_think[/bold {command_color}]", "Toggle thinking mode (show/hide model reasoning).")
 
         # Add a header for Prompt Commands
         table.add_row("", "")  # Empty row for spacing
@@ -151,6 +150,7 @@ class UIManager:
         # Variables with updated formatting        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Selected Model:':<20} {self.app.selected_model}")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Max History:':<20} [bold cyan]{self.app.MAX_HISTORY}[/bold cyan]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Verbosity:':<20} [bold][{'green' if self.app.verbosity else 'red'}]{self.app.verbosity}[/{'green' if self.app.verbosity else 'red'}][/bold]")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Thinking Mode:':<20} [bold][{'green' if self.app.thinking_enabled else 'red'}]{self.app.thinking_enabled}[/{'green' if self.app.thinking_enabled else 'red'}][/bold]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Logging Enabled:':<20} [bold][{'green' if self.app.logging_enabled else 'red'}]{self.app.logging_enabled}[/{'green' if self.app.logging_enabled else 'red'}][/bold]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Config Path:':<20} [grey70]~/{config_path}[/grey70]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Log Directory:':<20} [grey70]~/{log_dir}[/grey70]")

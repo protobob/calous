@@ -1,5 +1,4 @@
 """Chat history management for Hi, Ollama!"""
-import re
 from datetime import datetime
 from pathlib import Path
 from rich import print
@@ -17,14 +16,9 @@ class ChatHistory:
         self.history.append({"role": role, "content": content})
         if len(self.history) > self.app.MAX_HISTORY:
             self.history.pop(0)
-        
-        # Log to unified logger
+          # Log to unified logger
         model = getattr(self.app, 'selected_model', None)
         unified_logger.log_conversation(self.instance_index, role, content, model)
-
-    def strip_thoughts(self, text):
-        """Remove <think>...</think> sections from text."""
-        return re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
 
     def print_history(self):
         """Display the current chat history with styled formatting."""

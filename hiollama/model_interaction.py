@@ -10,34 +10,55 @@ class ModelInteraction:
     def talk_to_model(self, user_prompt):
         """Send a prompt to the selected model and return the streaming response."""
         messages = [self.app.system_prompt] + self.app.chat_history.history.copy()
-        return self._handle_streaming(messages, user_prompt)
-
+        return self._handle_streaming(messages, user_prompt)    
+    
     def _handle_streaming(self, messages, user_prompt):
         """Handle streaming response from the model."""
         full_response = ""
+        thinking_content = ""
         response_dict = None
         
-        try:
-            # Print the header before streaming starts
+        try:            # Print the header before streaming starts
             chat_index = getattr(self.app, 'active_chat_index', 0)
             chat_color = get_chat_color(chat_index)
             print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]{chat_index + 1})[/bold {chat_color}][underline]{self.app.selected_model}[/underline]:\n")
-            for chunk in ollama.chat(model=self.app.selected_model, messages=messages, stream=True):
-                content = getattr(chunk.message, 'content', '') if hasattr(chunk, 'message') else ''
-                full_response += content
-                print(content, end='', flush=True)
+            
+            # Try to use native thinking API, fall back to without think parameter
+            try:
+                chunks = ollama.chat(model=self.app.selected_model, messages=messages, stream=True, think=self.app.thinking_enabled)
+            except TypeError:
+                # Fallback for older ollama client that doesn't support think parameter
+                chunks = ollama.chat(model=self.app.selected_model, messages=messages, stream=True)
+            
+            for chunk in chunks:
+                # Handle both content and thinking from the new API
+                if hasattr(chunk, 'message'):
+                    # Regular content (always clean with native API)
+                    content = getattr(chunk.message, 'content', '')
+                    if content:
+                        full_response += content
+                        print(content, end='', flush=True)
+                    
+                    # Thinking content (only displayed when thinking is enabled)
+                    if self.app.thinking_enabled and hasattr(chunk.message, 'thinking'):
+                        thinking = getattr(chunk.message, 'thinking', '')
+                        if thinking:
+                            thinking_content += thinking
+                            # Display thinking in a different style (dim cyan for reasoning)
+                            print(f"[dim cyan]{thinking}[/dim cyan]", end='', flush=True)
                 
                 # Store the last chunk to get eval data if available
-                response_dict = chunk
+                response_dict = chunk            
             
             print()  # newline after stream
             
-            # Apply think filtering for history (but keep full response for logging)
-            clean_response = self.app.chat_history.strip_thoughts(full_response)
+            # With native API, full_response is always clean (no manual stripping needed)
+            clean_response = full_response
+                
             if not clean_response:
                 clean_response = "[No valid response received from the model.]"
             
-            # Create response object with cleaned content for history
+            # Create response object with cleaned content for history and twist operations
             final_response = {"message": {"content": clean_response}}
             
             # Add eval data if available from the last chunk
@@ -81,28 +102,23 @@ class ModelInteraction:
         """Handle TimeoutError with helpful messaging."""
         print(f"\n[bold red]Timeout Error:[/bold red] Request timed out.")
         print(f"[grey50]The model may be processing a complex request. Try again or use a smaller model.[/grey50]")
-        return {"message": {"content": "[Error: Request timed out.]"}}
-
+        return {"message": {"content": "[Error: Request timed out.]"}}    
+    
     def _handle_unexpected_error(self, e):
         """Handle unexpected errors with helpful messaging."""
         print(f"\n[bold red]Unexpected Error:[/bold red] {e}")
         print(f"[grey50]If this persists, try restarting Ollama with 'ollama serve'[/grey50]")
-        return {"message": {"content": "[Error: An unexpected error occurred.]"}}    
-    
+        return {"message": {"content": "[Error: An unexpected error occurred.]"}}
+
     def _process_response(self, user_input, response, full_response_for_logging=None):
         """Process response for history and logging (no output printing since streaming already printed)."""
         raw_response = response.get('message', {}).get('content', '')
         if not raw_response:
             return
 
-        # Store the last response in the HiOllamaChat instance (use full response for logging if provided)
-        if full_response_for_logging:
-            # Create a copy of response with full content for logging
-            full_response_obj = response.copy()
-            full_response_obj['message'] = {'content': full_response_for_logging}
-            self.app.last_response = full_response_obj
-        else:
-            self.app.last_response = response
+        # CRITICAL: For twist operations, last_response must ALWAYS contain clean content (no thinking)
+        # This ensures twist never sends model reasoning to other chats
+        self.app.last_response = response  # This already contains clean content from _handle_streaming
 
         # The response already contains cleaned content (thoughts stripped)
         clean_response = raw_response

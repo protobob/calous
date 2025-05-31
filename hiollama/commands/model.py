@@ -22,3 +22,16 @@ def cmd_toggle_eval(handler) -> CommandResult:
     handler.app.verbosity = not handler.app.verbosity
     print(f"\nVerbosity is now: {handler.app.verbosity}")
     return CommandResult(ActionType.CONTINUE)
+
+
+@registry.register("toggle_think", "Toggle thinking mode display", aliases=["think"], category=CommandCategory.MODEL)
+def cmd_toggle_think(handler) -> CommandResult:
+    """Toggle thinking mode - when enabled, shows model reasoning during responses."""
+    handler.app.thinking_enabled = not handler.app.thinking_enabled
+    status = "enabled" if handler.app.thinking_enabled else "disabled"
+    print(f"\nThinking mode is now: {status}")
+    if handler.app.thinking_enabled:
+        print("[grey50]Model reasoning will be shown during responses but filtered from history and twist operations[/grey50]")
+    else:
+        print("[grey50]Model reasoning will be hidden for clean output[/grey50]")
+    return CommandResult(ActionType.CONTINUE)
