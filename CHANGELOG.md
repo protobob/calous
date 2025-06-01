@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.10.dev] - 2025-05-31
+
+### Enhanced
+- **Context Color Coding**: Added color indicators for context usage (0-24% green, 25-49% yellow, 50-74% orange, 75-100% red)
+- **UI Cleanup**: Removed technical tokenizer information from user-facing displays for cleaner interface
+
+### Technical
+- Tokenizer data still collected internally for accurate token counting while hiding technical details from users
+- Improved visual feedback for context window management with intuitive color coding
+
 ## [0.6.9.dev] - 2025-05-31
 
 ### Added

@@ -402,13 +402,12 @@ class ModelInteraction:
             print("\n[bold red]No models installed.[/bold red]")
             print("[grey50]Install a model with: 'ollama pull model-name'[/grey50]")
             return None
-            
-        print("\nAvailable Ollama models:")
+            print("\nAvailable Ollama models:")
         for i, model in enumerate(models, 1):
             # Get context window info for display
             context_info = self.get_context_window_info(model)
             if context_info:
-                context_display = f"[cyan]{context_info.actual_context//1000}k[/cyan] ctx, [grey70]{context_info.tokenizer_type}[/grey70]"
+                context_display = f"[cyan]{context_info.actual_context//1000}k[/cyan] ctx"
                 print(f"{i}. {model} [{context_display}]")
             else:
                 print(f"{i}. {model}")

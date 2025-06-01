@@ -101,26 +101,33 @@ class UIManager:
         """Get user input with formatted prompt."""
         prompt_text = self.generate_prompt_text()
         return Prompt.ask(prompt_text).strip()    
-    
     def generate_prompt_text(self):
         """Generate the formatted prompt text shown before user input."""
         # Determine color based on chat index
         chat_index = getattr(self.app, 'active_chat_index', 0)
         chat_color = get_chat_color(chat_index)
-        
         # Get context window usage percentage
         context_display = "Context: ??"
         if self.app.selected_model:
             usage_percentage = self.app.model.get_context_usage_percentage(self.app.selected_model)
             if usage_percentage is not None:
-                context_display = f"Context: {usage_percentage:.0f}%"
+                # Determine color based on percentage ranges
+                if usage_percentage <= 24:
+                    percentage_color = "green"
+                elif usage_percentage <= 49:
+                    percentage_color = "yellow"
+                elif usage_percentage <= 74:
+                    percentage_color = "orange1"
+                else:  # 75-100
+                    percentage_color = "red"
+                
+                context_display = f"Context: [{percentage_color}]{usage_percentage:.0f}%[/{percentage_color}]"
         
         # Prepare the 'YOU:' part
-        you_text = f"[bold {chat_color}]|[/bold {chat_color}] [bold]YOU[/bold]"
-
+        you_text = f"[bold {chat_color}]|[/bold {chat_color}] [bold]YOU[/bold]"        
         return (
             f"\n"
-            f"[bold {chat_color}]|[/bold {chat_color}] [italic][grey70]{context_display}[/grey70][/italic]"
+            f"[bold {chat_color}]|[/bold {chat_color}] [italic][white]{context_display}[/white][/italic]"
             f"[grey50] (/help for help)[/grey50]\n"
             f"{you_text}"
         )
@@ -172,24 +179,26 @@ class UIManager:
                     bar_length = 10
                     filled_length = int(bar_length * usage_percentage / 100)
                     bar = "█" * filled_length + "░" * (bar_length - filled_length)
-                    
-                    # Color the percentage based on usage level
-                    if usage_percentage < 70:
+                      # Color the percentage based on usage level
+                    if usage_percentage <= 24:
                         percentage_color = "green"
-                    elif usage_percentage < 90:
+                    elif usage_percentage <= 49:
                         percentage_color = "yellow"
-                    else:
+                    elif usage_percentage <= 74:
+                        percentage_color = "orange1"
+                    else:  # 75-100
                         percentage_color = "red"
                     
                     print(f"[bold {chat_color}]|[/bold {chat_color}] {'Usage:':<20} [{percentage_color}]{bar} {usage_percentage:.1f}%[/{percentage_color}]")
-                
-                # Show tokenizer and model info
-                model_info = f"{context_info.tokenizer_type} ({context_info.architecture}"
+                # Show model info (without tokenizer details)
+                model_info = f"{context_info.architecture}"
                 if context_info.parameter_count != 'unknown':
-                    model_info += f", {context_info.parameter_count}"
-                if context_info.quantization != 'unknown':
-                    model_info += f", {context_info.quantization}"
-                model_info += ")"
+                    model_info += f" ({context_info.parameter_count}"
+                    if context_info.quantization != 'unknown':
+                        model_info += f", {context_info.quantization}"
+                    model_info += ")"
+                elif context_info.quantization != 'unknown':
+                    model_info += f" ({context_info.quantization})"
                 print(f"[bold {chat_color}]|[/bold {chat_color}] {'Model Info:':<20} [grey70]{model_info}[/grey70]")
                 
                 # Show estimated VRAM usage for full context
