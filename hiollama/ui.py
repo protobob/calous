@@ -37,8 +37,9 @@ class UIManager:
         # Always show the dynamic version
         table.add_row(f"/switch [NUMBER]", f"Switch between chats (1-{num_chats}). Default switches to next chat.")
         table.add_row(f"/twist [NUMBER]", f"Copy AI's last response to target chat (1-{num_chats}). Default uses next chat.")        # Add a header for Model Commands        table.add_row("", "")  # Empty row for spacing
-        table.add_row("[bold white]Model Commands:[/bold white]", "")
+        table.add_row("[bold white]Model Commands:[/bold white]", "")        
         table.add_row(f"[bold {command_color}]/model[/bold {command_color}]", "Select a different model.")
+        table.add_row(f"[bold {command_color}]/setctx[/bold {command_color}]", f"Set context window size. Usage: [bold {command_color}]/setctx NUMBER[/bold {command_color}] (2048-32768 tokens).")
         table.add_row(f"[bold {command_color}]/toggle_eval[/bold {command_color}]", "Toggle evaluation data display after responses.")
         table.add_row(f"[bold {command_color}]/toggle_think[/bold {command_color}]", "Toggle thinking mode (show/hide model reasoning).")
 
@@ -163,13 +164,12 @@ class UIManager:
         if self.app.selected_model:
             context_info = self.app.model.get_context_window_info(self.app.selected_model)
             usage_percentage = self.app.model.get_context_usage_percentage(self.app.selected_model)
-            
             if context_info:
-                # Format context window display
-                if context_info.runtime_context and context_info.runtime_context != context_info.max_context:
-                    context_display = f"{context_info.actual_context:,} tokens (Max: {context_info.max_context:,})"
+                # Display user-set context window with model's max context for reference
+                if self.app.num_ctx != context_info.max_context:
+                    context_display = f"{self.app.num_ctx:,} tokens (Model Max: {context_info.max_context:,})"
                 else:
-                    context_display = f"{context_info.actual_context:,} tokens"
+                    context_display = f"{self.app.num_ctx:,} tokens"
                 
                 print(f"[bold {chat_color}]|[/bold {chat_color}] {'Context Window:':<20} [bold cyan]{context_display}[/bold cyan]")
                 
@@ -200,13 +200,14 @@ class UIManager:
                 elif context_info.quantization != 'unknown':
                     model_info += f" ({context_info.quantization})"
                 print(f"[bold {chat_color}]|[/bold {chat_color}] {'Model Info:':<20} [grey70]{model_info}[/grey70]")
-                
-                # Show estimated VRAM usage for full context
-                vram_estimate = self.app.model.estimate_context_vram_usage(context_info)
+                  # Show estimated VRAM usage for user-set context window
+                # Create a modified context info that uses the user's num_ctx setting
+                user_context_info = context_info._replace(actual_context=self.app.num_ctx)
+                vram_estimate = self.app.model.estimate_context_vram_usage(user_context_info)
                 if vram_estimate != "unknown":
-                    print(f"[bold {chat_color}]|[/bold {chat_color}] {'Full Context VRAM:':<20} [yellow]{vram_estimate}[/yellow] [grey50](est.)[/grey50]")
+                    print(f"[bold {chat_color}]|[/bold {chat_color}] {'Context VRAM:':<20} [yellow]{vram_estimate}[/yellow] [grey50](est.)[/grey50]")
         
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Max History:':<20} [bold cyan]{self.app.MAX_HISTORY}[/bold cyan]")
+                    print(f"[bold {chat_color}]|[/bold {chat_color}] {'Max History:':<20} [bold cyan]{self.app.MAX_HISTORY}[/bold cyan]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Verbosity:':<20} [bold][{'green' if self.app.verbosity else 'red'}]{self.app.verbosity}[/{'green' if self.app.verbosity else 'red'}][/bold]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Thinking Mode:':<20} [bold][{'green' if self.app.thinking_enabled else 'red'}]{self.app.thinking_enabled}[/{'green' if self.app.thinking_enabled else 'red'}][/bold]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Logging Enabled:':<20} [bold][{'green' if self.app.logging_enabled else 'red'}]{self.app.logging_enabled}[/{'green' if self.app.logging_enabled else 'red'}][/bold]")

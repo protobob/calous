@@ -7,7 +7,7 @@ from .commands.handler import AdvancedCommandHandler  # Fixed import path
 from .ui import UIManager
 from .chat_history import ChatHistory
 from .model_interaction import ModelInteraction
-from .constants import DEFAULT_MODEL, DEFAULT_MAX_HISTORY, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS
+from .constants import DEFAULT_MODEL, DEFAULT_MAX_HISTORY, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS, DEFAULT_NUM_CTX
 from .types import CommandResult, ActionType
 from typing import Dict, Any, Optional, TYPE_CHECKING
 
@@ -18,10 +18,11 @@ class HiOllamaChat:
     
     def __init__(self, instance_index):
         self.instance_index = instance_index
-        
-        # Load configs from unified system
+          # Load configs from unified system
         self.config = ConfigManager.get_chat_config(instance_index)
-        global_config = ConfigManager.get_global_config()        # Initialize attributes from config
+        global_config = ConfigManager.get_global_config()
+        
+        # Initialize attributes from config
         self.selected_model = global_config.get("selected_model", DEFAULT_MODEL)
         self.verbosity = self.config.get("verbosity", True)
         self.MAX_HISTORY = self.config.get("MAX_HISTORY", DEFAULT_MAX_HISTORY)
@@ -31,6 +32,7 @@ class HiOllamaChat:
         }
         self.logging_enabled = self.config.get("logging_enabled", True)
         self.thinking_enabled = self.config.get("thinking_enabled", False)  # Default to False for clean output
+        self.num_ctx = self.config.get("num_ctx", DEFAULT_NUM_CTX)
         self.prompts = self.config.get("prompts", {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)})
           
         # For multi-instance support (simplified - no circular references)
@@ -55,7 +57,8 @@ class HiOllamaChat:
             # Fallback for standalone operation (shouldn't happen in normal use)
             ConfigManager.update_global_config({"selected_model": new_model})
             self.selected_model = new_model
-            return 1
+            return 1    
+    
     def save_config(self):
         """Save the current configuration."""
         # Update instance-specific config
@@ -65,6 +68,7 @@ class HiOllamaChat:
             "system_prompt": self.system_prompt["content"],
             "logging_enabled": self.logging_enabled,
             "thinking_enabled": self.thinking_enabled,
+            "num_ctx": self.num_ctx,
             "prompts": self.prompts
         }
         ConfigManager.update_chat_config(self.instance_index, chat_config)

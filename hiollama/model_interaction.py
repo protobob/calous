@@ -166,9 +166,9 @@ class ModelInteraction:
             content = message.get('content', '')
             total_tokens += self.estimate_token_count(content, context_info.tokenizer_type)
         
-        # Calculate percentage
-        if context_info.actual_context > 0:
-            percentage = (total_tokens / context_info.actual_context) * 100
+        # Calculate percentage based on user-set context window
+        if self.app.num_ctx > 0:
+            percentage = (total_tokens / self.app.num_ctx) * 100
             return min(100.0, percentage)  # Cap at 100%
         
         return 0.0
@@ -263,13 +263,23 @@ class ModelInteraction:
             chat_index = getattr(self.app, 'active_chat_index', 0)
             chat_color = get_chat_color(chat_index)
             print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]{chat_index + 1})[/bold {chat_color}][underline]{self.app.selected_model}[/underline]:\n")
-            
-            # Try to use native thinking API, fall back to without think parameter
+              # Try to use native thinking API, fall back to without think parameter
             try:
-                chunks = ollama.chat(model=self.app.selected_model, messages=messages, stream=True, think=self.app.thinking_enabled)
+                chunks = ollama.chat(
+                    model=self.app.selected_model, 
+                    messages=messages, 
+                    stream=True, 
+                    think=self.app.thinking_enabled,
+                    options={'num_ctx': self.app.num_ctx}
+                )
             except TypeError:
                 # Fallback for older ollama client that doesn't support think parameter
-                chunks = ollama.chat(model=self.app.selected_model, messages=messages, stream=True)
+                chunks = ollama.chat(
+                    model=self.app.selected_model, 
+                    messages=messages, 
+                    stream=True,
+                    options={'num_ctx': self.app.num_ctx}
+                )
             
             for chunk in chunks:
                 # Handle both content and thinking from the new API

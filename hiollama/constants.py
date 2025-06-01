@@ -19,6 +19,11 @@ RAINBOW_TEXT = "HIOLLAMA!"
 DEFAULT_MODEL = ""
 DEFAULT_MAX_HISTORY = 20
 DEFAULT_SYSTEM_PROMPT = ""
+DEFAULT_NUM_CTX = 2048
+
+# Context window limits
+MIN_NUM_CTX = 2048
+MAX_NUM_CTX = 32768
 
 # API configuration
 OLLAMA_API_URL = "http://localhost:11434/api/tags"
@@ -38,7 +43,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "0.6.10.dev"
+APP_VERSION = "0.6.11.dev"
 
 # Multi-chat configuration
 DEFAULT_NUM_CHATS = 4  # default if no config

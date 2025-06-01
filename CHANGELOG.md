@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.6.11] - 2025-06-01
+
+### Added
+- `/setctx` command to set custom context window size (2048-32768 tokens)
+- User-controlled context window overrides Ollama's default 2048 limit
+- Context usage percentage now reflects user-set context window instead of model metadata
+- VRAM estimation updated to use user-defined context size
+- Input validation with helpful error messages for context limits
+
+### Changed
+- Default context window explicitly set to 2048 tokens
+- UI context displays now based on user settings rather than model defaults
+- Context percentage calculations use actual user-set values
+
+### Technical
+- Added `num_ctx` parameter to Ollama API calls via options
+- Enhanced configuration system to persist context window settings
+- Updated help menu with new context management command
+
 ## [0.6.10.dev] - 2025-05-31
 
 ### Enhanced

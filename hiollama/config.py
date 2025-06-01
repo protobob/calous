@@ -1,9 +1,9 @@
 """Configuration management for Hi, Ollama!"""
 import json
 from rich import print
-from .constants import CONFIG_PATH, DEFAULT_MODEL, DEFAULT_MAX_HISTORY, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS, DEFAULT_NUM_CHATS
+from .constants import CONFIG_PATH, DEFAULT_MODEL, DEFAULT_MAX_HISTORY, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS, DEFAULT_NUM_CHATS, DEFAULT_NUM_CTX
 
-class ConfigManager:    
+class ConfigManager:
     
     @staticmethod
     def _generate_default_chat_config():
@@ -13,6 +13,7 @@ class ConfigManager:
             "MAX_HISTORY": DEFAULT_MAX_HISTORY,
             "system_prompt": DEFAULT_SYSTEM_PROMPT,
             "logging_enabled": True,
+            "num_ctx": DEFAULT_NUM_CTX,
             "prompts": {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)}
         }
     
