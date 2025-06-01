@@ -100,23 +100,27 @@ class UIManager:
     def get_user_input(self):
         """Get user input with formatted prompt."""
         prompt_text = self.generate_prompt_text()
-        return Prompt.ask(prompt_text).strip()
-        
+        return Prompt.ask(prompt_text).strip()    
+    
     def generate_prompt_text(self):
         """Generate the formatted prompt text shown before user input."""
-        current_history_len = len(self.app.chat_history.history)
-        
         # Determine color based on chat index
         chat_index = getattr(self.app, 'active_chat_index', 0)
         chat_color = get_chat_color(chat_index)
+        
+        # Get context window usage percentage
+        context_display = "Context: ??"
+        if self.app.selected_model:
+            usage_percentage = self.app.model.get_context_usage_percentage(self.app.selected_model)
+            if usage_percentage is not None:
+                context_display = f"Context: {usage_percentage:.0f}%"
         
         # Prepare the 'YOU:' part
         you_text = f"[bold {chat_color}]|[/bold {chat_color}] [bold]YOU[/bold]"
 
         return (
             f"\n"
-            f"[bold {chat_color}]|[/bold {chat_color}] [italic][bold {chat_color}]CH:[/bold {chat_color}]"
-            f"[grey70]{current_history_len}/{self.app.MAX_HISTORY}[/grey70][/italic]"
+            f"[bold {chat_color}]|[/bold {chat_color}] [italic][grey70]{context_display}[/grey70][/italic]"
             f"[grey50] (/help for help)[/grey50]\n"
             f"{you_text}"
         )
@@ -147,7 +151,52 @@ class UIManager:
         except ValueError:
             log_dir = str(LOG_DIR)
 
-        # Variables with updated formatting        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Selected Model:':<20} {self.app.selected_model}")
+        # Variables with updated formatting        
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Selected Model:':<20} {self.app.selected_model}")        # Context window information
+        if self.app.selected_model:
+            context_info = self.app.model.get_context_window_info(self.app.selected_model)
+            usage_percentage = self.app.model.get_context_usage_percentage(self.app.selected_model)
+            
+            if context_info:
+                # Format context window display
+                if context_info.runtime_context and context_info.runtime_context != context_info.max_context:
+                    context_display = f"{context_info.actual_context:,} tokens (Max: {context_info.max_context:,})"
+                else:
+                    context_display = f"{context_info.actual_context:,} tokens"
+                
+                print(f"[bold {chat_color}]|[/bold {chat_color}] {'Context Window:':<20} [bold cyan]{context_display}[/bold cyan]")
+                
+                # Show usage percentage with visual indicator
+                if usage_percentage is not None:
+                    # Create visual progress bar
+                    bar_length = 10
+                    filled_length = int(bar_length * usage_percentage / 100)
+                    bar = "█" * filled_length + "░" * (bar_length - filled_length)
+                    
+                    # Color the percentage based on usage level
+                    if usage_percentage < 70:
+                        percentage_color = "green"
+                    elif usage_percentage < 90:
+                        percentage_color = "yellow"
+                    else:
+                        percentage_color = "red"
+                    
+                    print(f"[bold {chat_color}]|[/bold {chat_color}] {'Usage:':<20} [{percentage_color}]{bar} {usage_percentage:.1f}%[/{percentage_color}]")
+                
+                # Show tokenizer and model info
+                model_info = f"{context_info.tokenizer_type} ({context_info.architecture}"
+                if context_info.parameter_count != 'unknown':
+                    model_info += f", {context_info.parameter_count}"
+                if context_info.quantization != 'unknown':
+                    model_info += f", {context_info.quantization}"
+                model_info += ")"
+                print(f"[bold {chat_color}]|[/bold {chat_color}] {'Model Info:':<20} [grey70]{model_info}[/grey70]")
+                
+                # Show estimated VRAM usage for full context
+                vram_estimate = self.app.model.estimate_context_vram_usage(context_info)
+                if vram_estimate != "unknown":
+                    print(f"[bold {chat_color}]|[/bold {chat_color}] {'Full Context VRAM:':<20} [yellow]{vram_estimate}[/yellow] [grey50](est.)[/grey50]")
+        
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Max History:':<20} [bold cyan]{self.app.MAX_HISTORY}[/bold cyan]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Verbosity:':<20} [bold][{'green' if self.app.verbosity else 'red'}]{self.app.verbosity}[/{'green' if self.app.verbosity else 'red'}][/bold]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Thinking Mode:':<20} [bold][{'green' if self.app.thinking_enabled else 'red'}]{self.app.thinking_enabled}[/{'green' if self.app.thinking_enabled else 'red'}][/bold]")

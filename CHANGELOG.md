@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.6.9.dev] - 2025-05-31
+
+### Added
+- **Context Window Detection**: Automatic detection of model context window sizes from Ollama metadata
+- **Context Usage Percentage**: Real-time display of context window usage in input prompt and `/showvars`
+- **Tokenizer Integration**: Automatic tokenizer selection based on model metadata for accurate token counting
+- **Enhanced Model Information**: Display context window, tokenizer type, and model architecture in `/showvars`
+
+### Enhanced
+- **Input Prompt**: Replaced old `CH:#/#` format with intuitive `Context: X%` display
+- **Model Selection**: Shows context window size and tokenizer type during model selection
+- **Variables Display**: Added comprehensive context window information with visual progress bar
+
+### Technical
+- Added `ContextWindowInfo` dataclass for structured model metadata
+- Implemented `get_context_window_info()` and `get_context_usage_percentage()` methods
+- Token counting includes system prompt and full chat history
+- Support for multiple tokenizer types (gpt2, llama, mistral, etc.)
+
 ## [0.6.8.dev] - 2025-05-31
 
 ### Fixed
