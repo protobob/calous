@@ -1,7 +1,8 @@
 """Model interaction for Hi, Ollama!"""
 import ollama
 import re
-from typing import Optional, NamedTuple
+import json
+from typing import Optional, NamedTuple, Dict, Any, List
 from rich import print
 from .utils import get_chat_color
 
@@ -236,8 +237,8 @@ class ModelInteraction:
                 return f"~{total_context_vram:.1f}GB"
                 
         except (ValueError, AttributeError) as e:
-            return "unknown"
-
+            return "unknown"    
+    
     def talk_to_model(self, user_prompt):
         """Send a prompt to the selected model and return the streaming response."""
         # Check if model is selected before making API call
@@ -247,34 +248,103 @@ class ModelInteraction:
             return {"message": {"content": "[Error: No model selected. Use /model to choose a model.]"}}
         
         messages = [self.app.system_prompt] + self.app.chat_history.history.copy()
-        return self._handle_streaming(messages, user_prompt)
+        
+        # Get available function tools from plugin system
+        tools = self._get_function_tools()
+        
+        return self._handle_streaming(messages, user_prompt, tools)
     
-    def _handle_streaming(self, messages, user_prompt):
-        """Handle streaming response from the model."""
+    def _get_function_tools(self) -> List[Dict[str, Any]]:
+        """Get function tools from the plugin system."""
+        # Access plugin manager through the app if available
+        if hasattr(self.app, 'plugin_manager') and self.app.plugin_manager:
+            tools = []            
+            for plugin in self.app.plugin_manager.get_function_calling_plugins():
+                schemas = plugin.get_function_schemas()
+                if schemas:
+                    # Add all function schemas from this plugin
+                    tools.extend(schemas)
+            return tools
+        return []
+    
+    def _handle_function_calls(self, tool_calls: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Handle function calls from the model."""
+        results = []
+        
+        if not hasattr(self.app, 'plugin_manager') or not self.app.plugin_manager:
+            return results
+        
+        for tool_call in tool_calls:
+            function_name = tool_call.get('function', {}).get('name')
+            function_args = tool_call.get('function', {}).get('arguments', {})
+            
+            # Parse arguments if they're a string
+            if isinstance(function_args, str):
+                try:
+                    function_args = json.loads(function_args)
+                except json.JSONDecodeError:
+                    function_args = {}
+            
+            print(f"[dim yellow]🔧 Calling function: {function_name}[/dim yellow]")            # Find plugin that can handle this function
+            result = None
+            for plugin in self.app.plugin_manager.get_function_calling_plugins():
+                schemas = plugin.get_function_schemas()
+                for schema in schemas:
+                    if schema.get('function', {}).get('name') == function_name:
+                        result = plugin.call_function(function_name, function_args)
+                        break
+                if result is not None:
+                    break
+            
+            if result is None:
+                result = {
+                    "error": f"Function {function_name} not found",
+                    "success": False
+                }
+            
+            # Format result for model
+            tool_result = {
+                "role": "tool",
+                "content": json.dumps(result, ensure_ascii=False),
+                "tool_call_id": tool_call.get('id', '')
+            }
+            results.append(tool_result)
+        
+        return results    
+    
+    def _handle_streaming(self, messages, user_prompt, tools=None):
+        """Handle streaming response from the model with optional function calling."""
         full_response = ""
         thinking_content = ""
         response_dict = None
+        tool_calls = []
         
-        try:            # Print the header before streaming starts
+        try:
+            # Print the header before streaming starts
             chat_index = getattr(self.app, 'active_chat_index', 0)
             chat_color = get_chat_color(chat_index)
             print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]{chat_index + 1})[/bold {chat_color}][underline]{self.app.selected_model}[/underline]:\n")
-              # Try to use native thinking API, fall back to without think parameter
-            try:                chunks = ollama.chat(
-                    model=self.app.selected_model, 
-                    messages=messages, 
-                    stream=True, 
-                    think=self.app.thinking_enabled,
-                    options={'num_ctx': self.app.num_ctx, 'temperature': self.app.temperature}
-                )
+            
+            # Prepare chat options
+            chat_options = {
+                'model': self.app.selected_model,
+                'messages': messages,
+                'stream': True,
+                'options': {'num_ctx': self.app.num_ctx, 'temperature': self.app.temperature}
+            }
+            
+            # Add tools if available
+            if tools:
+                chat_options['tools'] = tools
+            
+            # Try to use native thinking API, fall back to without think parameter
+            try:
+                chat_options['think'] = self.app.thinking_enabled
+                chunks = ollama.chat(**chat_options)
             except TypeError:
-                # Fallback for older ollama client that doesn't support think parameter                
-                chunks = ollama.chat(
-                    model=self.app.selected_model, 
-                    messages=messages, 
-                    stream=True,
-                    options={'num_ctx': self.app.num_ctx, 'temperature': self.app.temperature}
-                )
+                # Fallback for older ollama client that doesn't support think parameter
+                chat_options.pop('think', None)
+                chunks = ollama.chat(**chat_options)
             
             for chunk in chunks:
                 # Handle both content and thinking from the new API
@@ -285,6 +355,10 @@ class ModelInteraction:
                         full_response += content
                         print(content, end='', flush=True)
                     
+                    # Handle tool calls
+                    if hasattr(chunk.message, 'tool_calls') and chunk.message.tool_calls:
+                        tool_calls.extend(chunk.message.tool_calls)
+                    
                     # Thinking content (only displayed when thinking is enabled)
                     if self.app.thinking_enabled and hasattr(chunk.message, 'thinking'):
                         thinking = getattr(chunk.message, 'thinking', '')
@@ -294,9 +368,22 @@ class ModelInteraction:
                             print(f"[dim cyan]{thinking}[/dim cyan]", end='', flush=True)
                 
                 # Store the last chunk to get eval data if available
-                response_dict = chunk            
+                response_dict = chunk
             
             print()  # newline after stream
+            
+            # Handle function calls if present
+            if tool_calls:
+                tool_results = self._handle_function_calls(tool_calls)
+                if tool_results:
+                    # Add tool calls to messages and call model again
+                    messages.append({"role": "assistant", "content": full_response, "tool_calls": tool_calls})
+                    messages.extend(tool_results)
+                    
+                    print(f"[dim green]🔄 Processing function results...[/dim green]")
+                    
+                    # Make follow-up call without tools to get final response
+                    return self._handle_streaming(messages, user_prompt, tools=None)
             
             # With native API, full_response is always clean (no manual stripping needed)
             clean_response = full_response

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.7.0.dev (2025-06-02)
+
+### Added
+- Comprehensive plugin system architecture with function calling support
+- Plugin management and discovery system
+- Plugin commands: `/plugins` to list available plugins, `/plugin <name>` for details
+- D&D-style dice roller plugin as first example plugin
+- Function calling integration with Ollama API
+- Plugin capability framework (function calling, commands, hooks)
+
+### Changed
+- Enhanced model interaction to support function calling capabilities
+- Updated command system to handle plugin-provided commands
+
 ## [0.6.16.dev] - 2025-06-02
 
 ### Improved

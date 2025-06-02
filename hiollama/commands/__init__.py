@@ -9,5 +9,6 @@ from . import model
 from . import prompt
 from . import history
 from . import file
+from . import plugins
 
 __all__ = ['AdvancedCommandHandler']

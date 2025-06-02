@@ -9,6 +9,7 @@ from .chat_history import ChatHistory
 from .model_interaction import ModelInteraction
 from .constants import DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS, DEFAULT_NUM_CTX, DEFAULT_TEMPERATURE
 from .types import CommandResult, ActionType
+from .plugins.manager import PluginManager
 from typing import Dict, Any, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -33,10 +34,18 @@ class HiOllamaChat:
         self.num_ctx = self.config.get("num_ctx", DEFAULT_NUM_CTX)
         self.temperature = self.config.get("temperature", DEFAULT_TEMPERATURE)
         self.prompts = self.config.get("prompts", {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)})
-          
-        # For multi-instance support (simplified - no circular references)
+            # For multi-instance support (simplified - no circular references)
         self.active_chat_index = instance_index
-        self.session_manager = None  # Will be set by SessionManager
+        self.session_manager = None  # Will be set by SessionManager          # Initialize plugin manager (only for the first instance to avoid duplication)
+        if instance_index == 0:
+            import os
+            from pathlib import Path
+            # Get the plugin directory path
+            plugin_dir = Path(os.path.dirname(__file__)) / 'plugins'
+            self.plugin_manager = PluginManager()
+            self.plugin_manager.discover_and_load_plugins(plugin_dir)
+        else:
+            self.plugin_manager = None  # Will be set by SessionManager
         
         # Initialize components
         self.ui = UIManager(self)

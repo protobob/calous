@@ -23,7 +23,7 @@ class ChatSessionManager:
         # Log session start
         model = ConfigManager.get_global_config().get("selected_model", "unknown")
         unified_logger.log_session_start(self.num_chats, model)
-        
+          
     def _initialize_chats(self):
         """Initialize all chat instances."""
         # Import here to avoid circular import
@@ -34,6 +34,12 @@ class ChatSessionManager:
         for i, chat in enumerate(self.chats):
             chat.active_chat_index = i
             chat.session_manager = self  # Give chats reference to session manager only
+        
+        # Share plugin manager across all chats
+        if self.chats:
+            plugin_manager = self.chats[0].plugin_manager
+            for chat in self.chats[1:]:
+                chat.plugin_manager = plugin_manager
     
     def get_active_chat(self) -> 'HiOllamaChat':
         """Get the currently active chat instance."""
@@ -121,8 +127,8 @@ class ChatSessionManager:
         # Log the model change
         unified_logger.log_model_change(new_model, updated_count)
         
-        return updated_count
-
+        return updated_count    
+    
     def add_chat(self) -> bool:
         """Add a new chat session dynamically."""
         from .app import HiOllamaChat
@@ -131,6 +137,10 @@ class ChatSessionManager:
         new_chat_index = self.num_chats
         new_chat = HiOllamaChat(new_chat_index)
         new_chat.session_manager = self
+        
+        # Share plugin manager from existing chats
+        if self.chats and hasattr(self.chats[0], 'plugin_manager'):
+            new_chat.plugin_manager = self.chats[0].plugin_manager
         
         # Add to chats list
         self.chats.append(new_chat)
@@ -145,7 +155,7 @@ class ChatSessionManager:
         unified_logger.log_channel_switch(-1, new_chat_index, "addchat")
         
         print(f"[bold green]✓[/bold green] Chat {new_chat_index + 1} added successfully!")
-        return True    
+        return True
         
     def remove_chat(self, target_index: int) -> bool:
         """Remove a chat session dynamically."""
