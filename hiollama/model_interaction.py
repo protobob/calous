@@ -260,21 +260,20 @@ class ModelInteraction:
             chat_color = get_chat_color(chat_index)
             print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]{chat_index + 1})[/bold {chat_color}][underline]{self.app.selected_model}[/underline]:\n")
               # Try to use native thinking API, fall back to without think parameter
-            try:
-                chunks = ollama.chat(
+            try:                chunks = ollama.chat(
                     model=self.app.selected_model, 
                     messages=messages, 
                     stream=True, 
                     think=self.app.thinking_enabled,
-                    options={'num_ctx': self.app.num_ctx}
+                    options={'num_ctx': self.app.num_ctx, 'temperature': self.app.temperature}
                 )
             except TypeError:
-                # Fallback for older ollama client that doesn't support think parameter
+                # Fallback for older ollama client that doesn't support think parameter                
                 chunks = ollama.chat(
                     model=self.app.selected_model, 
                     messages=messages, 
                     stream=True,
-                    options={'num_ctx': self.app.num_ctx}
+                    options={'num_ctx': self.app.num_ctx, 'temperature': self.app.temperature}
                 )
             
             for chunk in chunks:

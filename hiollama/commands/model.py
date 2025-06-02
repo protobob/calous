@@ -2,7 +2,7 @@
 from typing import Optional
 from rich import print
 from ..types import CommandResult, ActionType
-from ..constants import MIN_NUM_CTX, MAX_NUM_CTX
+from ..constants import MIN_NUM_CTX, MAX_NUM_CTX, MIN_TEMPERATURE, MAX_TEMPERATURE, DEFAULT_TEMPERATURE
 from .registry import registry
 from .types import CommandCategory
 
@@ -106,6 +106,62 @@ def cmd_setctx(handler, context_size: Optional[int] = None) -> CommandResult:
     # Set the context size
     handler.app.num_ctx = context_size
     print(f"\n[green]Context window set to {context_size:,} tokens for this chat[/green]")
+    print("[grey50]This will take effect on the next message to the model[/grey50]")
+    
+    return CommandResult(ActionType.CONTINUE)
+
+
+@registry.register("settemp", "Set temperature parameter", category=CommandCategory.MODEL)
+def cmd_settemp(handler, temperature: Optional[float] = None) -> CommandResult:
+    """Set the temperature parameter for the current chat."""
+    if temperature is None:
+        # Show current setting and helpful guidance
+        current = handler.app.temperature
+        print(f"\n[bold]Current Temperature:[/bold] {current}")
+        
+        print(f"\n[grey50]Usage:[/grey50] [bold]/settemp NUMBER[/bold] - Set temperature parameter")
+        print(f"[grey50]Range:[/grey50] {MIN_TEMPERATURE} to {MAX_TEMPERATURE}")
+        print(f"[grey50]Default:[/grey50] {DEFAULT_TEMPERATURE}")
+        
+        # Provide guidance on temperature values
+        print(f"\n[bold cyan]Temperature Guide:[/bold cyan]")
+        print(f"  [blue]0.0[/blue]   - Completely deterministic (always same response)")
+        print(f"  [green]0.2[/green]   - Very focused and consistent")
+        print(f"  [green]0.4[/green]   - Focused but with some variation")
+        print(f"  [yellow]0.7[/yellow]   - Balanced creativity and consistency")
+        print(f"  [yellow]{DEFAULT_TEMPERATURE}[/yellow]   - Default Ollama setting (good balance)")
+        print(f"  [orange1]1.0[/orange1]   - More creative and varied responses")
+        print(f"  [orange1]1.2[/orange1]   - Quite creative, may be less coherent")
+        print(f"  [red]1.5+[/red]  - Very creative but potentially chaotic")
+        
+        print(f"\n[grey50]Lower values = more predictable, higher values = more creative[/grey50]")
+        return CommandResult(ActionType.CONTINUE)
+    
+    # Validate input
+    if temperature < MIN_TEMPERATURE:
+        print(f"\n[bold red]Error:[/bold red] Temperature must be at least {MIN_TEMPERATURE}")
+        return CommandResult(ActionType.CONTINUE)
+    
+    if temperature > MAX_TEMPERATURE:
+        print(f"\n[bold red]Error:[/bold red] Temperature cannot exceed {MAX_TEMPERATURE}")
+        return CommandResult(ActionType.CONTINUE)
+    
+    # Provide guidance based on temperature value
+    if temperature == 0.0:
+        print(f"\n[blue]Notice:[/blue] Deterministic mode - responses will be identical for same inputs")
+    elif temperature < 0.3:
+        print(f"\n[green]Notice:[/green] Very low temperature - responses will be highly consistent")
+    elif temperature > 1.5:
+        print(f"\n[yellow]Warning:[/yellow] High temperature ({temperature}) may produce:")
+        print(f"  • Very creative but potentially incoherent responses")
+        print(f"  • Unpredictable or inconsistent behavior")
+        print(f"  • Reduced factual accuracy")
+    elif temperature > 1.0:
+        print(f"\n[yellow]Notice:[/yellow] High temperature ({temperature}) - expect very creative responses")
+    
+    # Set the temperature
+    handler.app.temperature = temperature
+    print(f"\n[green]Temperature set to {temperature} for this chat[/green]")
     print("[grey50]This will take effect on the next message to the model[/grey50]")
     
     return CommandResult(ActionType.CONTINUE)

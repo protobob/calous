@@ -40,9 +40,10 @@ class UIManager:
         table.add_row(f"[bold {command_color}]/twist [NUMBER][/bold {command_color}]", f"Copy AI's last response to target chat (1-{num_chats}). Default uses next chat.")
         table.add_row(f"[bold {command_color}]/addchat[/bold {command_color}]", "Add a new chat session.")
         table.add_row(f"[bold {command_color}]/removechat[/bold {command_color}]", "Remove a chat session.")# Add a header for Model Commands        table.add_row("", "")  # Empty row for spacing
-        table.add_row("\n[bold white]Model Commands:[/bold white]", "")        
+        table.add_row("\n[bold white]Model Commands:[/bold white]", "")          
         table.add_row(f"[bold {command_color}]/model[/bold {command_color}]", "Select a different model.")
         table.add_row(f"[bold {command_color}]/setctx[/bold {command_color}]", f"Set context window size. Usage: [bold {command_color}]/setctx NUMBER[/bold {command_color}] (2048-32768 tokens).")
+        table.add_row(f"[bold {command_color}]/settemp[/bold {command_color}]", f"Set model temperature. Usage: [bold {command_color}]/settemp NUMBER[/bold {command_color}] (0.0-2.0).")
         table.add_row(f"[bold {command_color}]/toggle_eval[/bold {command_color}]", "Toggle evaluation data display after responses.")
         table.add_row(f"[bold {command_color}]/toggle_think[/bold {command_color}]", "Toggle thinking mode (show/hide model reasoning).")
 
@@ -206,9 +207,12 @@ class UIManager:
                 # Create a modified context info that uses the user's num_ctx setting
                 user_context_info = context_info._replace(actual_context=self.app.num_ctx)
                 vram_estimate = self.app.model.estimate_context_vram_usage(user_context_info)
-                
                 if vram_estimate != "unknown":
                     print(f"[bold {chat_color}]|[/bold {chat_color}] {'Context VRAM:':<20} [yellow]{vram_estimate}[/yellow] [grey50](est.)[/grey50]")
+        
+        # Display temperature with color coding based on value
+        temp_color = "blue" if self.app.temperature == 0.0 else "green" if self.app.temperature < 0.7 else "yellow" if self.app.temperature <= 1.0 else "orange1" if self.app.temperature <= 1.5 else "red"
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Temperature:':<20} [bold {temp_color}]{self.app.temperature}[/bold {temp_color}]")
         
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Verbosity:':<20} [bold][{'green' if self.app.verbosity else 'red'}]{self.app.verbosity}[/{'green' if self.app.verbosity else 'red'}][/bold]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Thinking Mode:':<20} [bold][{'green' if self.app.thinking_enabled else 'red'}]{self.app.thinking_enabled}[/{'green' if self.app.thinking_enabled else 'red'}][/bold]")

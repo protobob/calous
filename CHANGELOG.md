@@ -1,6 +1,26 @@
 # Changelog
 
-## [0.6.14.dev] - 2025-01-06
+## [0.6.15.dev] - 2025-06-02
+
+### Added
+- **Temperature Control**: New `/settemp` command for per-chat temperature control (0.0-2.0)
+- Temperature setting persists in chat configuration and displays in `/showvars` output
+- Uses Ollama's default temperature of 0.8 for consistent behavior with Ollama defaults
+- Temperature validation with helpful error messages for out-of-range values
+- Updated help menu to include temperature command documentation
+
+### Enhanced
+- **Model Parameter Control**: Extended model interaction to pass temperature parameter to Ollama API
+- **Configuration System**: Temperature included in unified config save/load operations
+- **UI Consistency**: Temperature display follows existing `/showvars` formatting patterns
+
+### Technical
+- Added `DEFAULT_TEMPERATURE` (0.8), `MIN_TEMPERATURE` (0.0), `MAX_TEMPERATURE` (2.0) constants
+- Enhanced `ModelInteraction._handle_streaming()` to pass temperature in options dictionary
+- Extended chat configuration schema to include temperature per chat instance
+- Updated version to 0.6.15.dev
+
+## [0.6.14.dev] - 2025-06-01
 
 ### Documentation
 - **Major documentation overhaul**: Complete rewrite of README.md and ARCHITECTURE.md

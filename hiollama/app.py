@@ -7,7 +7,7 @@ from .commands.handler import AdvancedCommandHandler  # Fixed import path
 from .ui import UIManager
 from .chat_history import ChatHistory
 from .model_interaction import ModelInteraction
-from .constants import DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS, DEFAULT_NUM_CTX
+from .constants import DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS, DEFAULT_NUM_CTX, DEFAULT_TEMPERATURE
 from .types import CommandResult, ActionType
 from typing import Dict, Any, Optional, TYPE_CHECKING
 
@@ -27,10 +27,11 @@ class HiOllamaChat:
         self.system_prompt = {
             "role": "system",
             "content": self.config.get("system_prompt", DEFAULT_SYSTEM_PROMPT)
-        }
+        }        
         self.logging_enabled = self.config.get("logging_enabled", True)
         self.thinking_enabled = self.config.get("thinking_enabled", False)  # Default to False for clean output
         self.num_ctx = self.config.get("num_ctx", DEFAULT_NUM_CTX)
+        self.temperature = self.config.get("temperature", DEFAULT_TEMPERATURE)
         self.prompts = self.config.get("prompts", {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)})
           
         # For multi-instance support (simplified - no circular references)
@@ -58,13 +59,14 @@ class HiOllamaChat:
             return 1    
     
     def save_config(self):
-        """Save the current configuration."""        # Update instance-specific config
+        """Save the current configuration."""        # Update instance-specific config        
         chat_config = {
             "verbosity": self.verbosity,
             "system_prompt": self.system_prompt["content"],
             "logging_enabled": self.logging_enabled,
             "thinking_enabled": self.thinking_enabled,
             "num_ctx": self.num_ctx,
+            "temperature": self.temperature,
             "prompts": self.prompts
         }
         ConfigManager.update_chat_config(self.instance_index, chat_config)
