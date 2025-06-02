@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.7.1.dev (2025-06-02)
+
+### Added
+- Plugin configuration system with selective plugin loading
+- Enhanced plugin logging with unified_logger integration
+- Plugin metadata and capability display in UI
+- Improved dice_roller plugin with better error handling and validation
+
+### Changed
+- Renamed "Functions" to "LLM Tools" in plugin UI for clarity
+- Updated plugin discovery system documentation
+- Enhanced plugin loading with detailed logging and error messages
+- Improved plugin status reporting in log files
+
+### Technical
+- Added `plugin_config.py` for centralized plugin enablement control
+- Implemented selective plugin loading with ENABLED_PLUGINS configuration
+- Enhanced dice_roller plugin implementation with validation and error handling
+- Added plugin loading summary with capability reporting
+
 ## 0.7.0.dev (2025-06-02)
 
 ### Added

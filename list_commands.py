@@ -18,6 +18,7 @@ import hiollama.commands.prompt
 import hiollama.commands.history
 import hiollama.commands.navigation
 import hiollama.commands.file
+import hiollama.commands.plugins
 
 def main():
     print("=== ALL REGISTERED COMMANDS ===\n")

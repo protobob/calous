@@ -7,6 +7,8 @@ enabling extensible functionality through various plugin types.
 
 from .base import PluginBase, FunctionCallingPlugin, CommandPlugin, HookPlugin, PluginCapability
 from .manager import PluginManager
+# Import plugin config to make it available as part of the plugins package
+from . import plugin_config
 
 __all__ = [
     'PluginBase',
@@ -14,5 +16,6 @@ __all__ = [
     'CommandPlugin',
     'HookPlugin',
     'PluginCapability',
-    'PluginManager'
+    'PluginManager',
+    'plugin_config'
 ]

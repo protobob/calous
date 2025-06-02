@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Callable
 from rich import print
 
+from ..unified_logger import unified_logger
 from .base import PluginBase, PluginCapability, FunctionCallingPlugin, CommandPlugin, HookPlugin
 
 
@@ -24,30 +25,59 @@ class PluginManager:
     def discover_and_load_plugins(self, plugin_dir: Path) -> None:
         """Discover and load all plugins from the plugin directory."""
         print(f"[DEBUG] Discovering plugins in directory: {plugin_dir}")
+        unified_logger.log_plugin_event("DISCOVERY", f"Scanning for plugins in {plugin_dir}")
+        
         if not plugin_dir.exists():
             print(f"[DEBUG] Plugin directory does not exist: {plugin_dir}")
+            unified_logger.log_plugin_event("ERROR", f"Plugin directory does not exist: {plugin_dir}")
             return
+              
+        # Load enabled plugin configuration
+        try:
+            from hiollama.plugins.plugin_config import ENABLED_PLUGINS
+            self.enabled_plugin_names = ENABLED_PLUGINS
+            
+            if self.enabled_plugin_names is None:
+                print(f"[blue]Plugin config:[/blue] Loading all available plugins (no filtering)")
+                unified_logger.log_plugin_event("CONFIG", "Loading all available plugins (no filtering)")
+            elif len(self.enabled_plugin_names) == 0:
+                print(f"[blue]Plugin config:[/blue] All plugins disabled (empty set in config)")
+                unified_logger.log_plugin_event("CONFIG", "All plugins disabled (empty set in config)")
+            else:
+                plugins_list = ', '.join(self.enabled_plugin_names)
+                print(f"[blue]Plugin filtering active:[/blue] Only loading: {plugins_list}")
+                unified_logger.log_plugin_event("CONFIG", f"Only loading these plugins: {plugins_list}")
+        except Exception as e:
+            print(f"[yellow]Warning:[/yellow] Could not load plugin configuration: {e}")
+            unified_logger.log_plugin_event("ERROR", f"Could not load plugin configuration: {e}")
+            self.enabled_plugin_names = None  # Load all plugins if config not present
 
         # Load built-in plugins
         builtin_dir = plugin_dir / "builtin"
         print(f"[DEBUG] Checking built-in plugins directory: {builtin_dir}")
+        unified_logger.log_plugin_event("SCAN", f"Checking built-in plugins directory: {builtin_dir}")
         if builtin_dir.exists():
             print(f"[DEBUG] Built-in plugins directory exists: {builtin_dir}")
             self._load_plugins_from_directory(builtin_dir)
         else:
             print(f"[DEBUG] Built-in plugins directory does not exist: {builtin_dir}")
-
-        # Load user plugins (future expansion)
+            unified_logger.log_plugin_event("ERROR", f"Built-in plugins directory does not exist: {builtin_dir}")        # Load user plugins (future expansion)
         user_dir = plugin_dir / "user"
         print(f"[DEBUG] Checking user plugins directory: {user_dir}")
+        unified_logger.log_plugin_event("SCAN", f"Checking user plugins directory: {user_dir}")
         if user_dir.exists():
             print(f"[DEBUG] User plugins directory exists: {user_dir}")
             self._load_plugins_from_directory(user_dir)
         else:
             print(f"[DEBUG] User plugins directory does not exist: {user_dir}")
+            unified_logger.log_plugin_event("INFO", f"User plugins directory does not exist (this is normal): {user_dir}")
+            
+        # Log a summary of loaded plugins
+        self._log_plugin_summary()
     
     def _load_plugins_from_directory(self, directory: Path) -> None:
         """Load all Python files in a directory as plugins."""
+        unified_logger.log_plugin_event("SCAN", f"Scanning directory {directory} for plugin files")
         for plugin_file in directory.glob("*.py"):
             if plugin_file.name.startswith("__"):
                 continue
@@ -56,10 +86,26 @@ class PluginManager:
                 self._load_plugin_file(plugin_file)
             except Exception as e:
                 print(f"[yellow]Warning:[/yellow] Failed to load plugin {plugin_file.name}: {e}")
+                unified_logger.log_plugin_event("ERROR", f"Failed to load plugin {plugin_file.name}: {e}")
     
     def _load_plugin_file(self, plugin_file: Path) -> None:
         """Load a single plugin file."""
-        module_name = f"hiollama.plugins.builtin.{plugin_file.stem}"
+        # Skip loading if not in enabled list
+        if hasattr(self, "enabled_plugin_names") and self.enabled_plugin_names is not None:
+            if plugin_file.stem not in self.enabled_plugin_names:
+                print(f"[blue]Skipping disabled plugin:[/blue] {plugin_file.stem}")
+                unified_logger.log_plugin_event("SKIP", f"Skipping disabled plugin: {plugin_file.stem}")
+                return
+                
+        unified_logger.log_plugin_event("LOAD", f"Loading plugin file: {plugin_file.stem}")
+        
+        # Determine appropriate module name based on plugin location
+        if "builtin" in str(plugin_file):
+            module_name = f"hiollama.plugins.builtin.{plugin_file.stem}"
+        elif "user" in str(plugin_file):
+            module_name = f"hiollama.plugins.user.{plugin_file.stem}"
+        else:
+            module_name = f"hiollama.plugins.{plugin_file.stem}"
         
         # Import the module
         spec = importlib.util.spec_from_file_location(module_name, plugin_file)
@@ -115,8 +161,8 @@ class PluginManager:
             
             if PluginCapability.HOOKS in capabilities:
                 self.hook_plugins.append(plugin)
-            
-            print(f"[green]✓[/green] Loaded plugin: {plugin.name} v{plugin.version}")
+                print(f"[green]✓[/green] Loaded plugin: {plugin.name} v{plugin.version}")
+            unified_logger.log_plugin_event("SUCCESS", f"Loaded plugin: {plugin.name} v{plugin.version}")
             return True
             
         except Exception as e:
@@ -124,8 +170,30 @@ class PluginManager:
             plugin.loaded = False
             self.plugins[plugin.name] = plugin
             print(f"[red]✗[/red] Failed to register plugin {plugin.name}: {e}")
+            unified_logger.log_plugin_event("ERROR", f"Failed to register plugin {plugin.name}: {e}")
             return False
     
+    def _log_plugin_summary(self) -> None:
+        """Log a summary of loaded plugins to the unified logger."""
+        loaded_count = sum(1 for p in self.plugins.values() if p.loaded)
+        failed_count = len(self.plugins) - loaded_count
+        
+        summary = f"Plugin loading complete: {loaded_count} plugins loaded"
+        if failed_count > 0:
+            summary += f", {failed_count} plugins failed"
+            
+        if loaded_count > 0:
+            summary += ". Loaded plugins:"
+            for plugin in self.plugins.values():
+                if plugin.loaded:
+                    capabilities = [cap.value for cap in plugin.get_capabilities()]
+                    summary += f"\n- {plugin.name} v{plugin.version} ({', '.join(capabilities)})"
+        else:
+            summary += ". No plugins were loaded."
+            
+        unified_logger.log_plugin_event("SUMMARY", summary)
+        unified_logger.add_separator("End of Plugin Loading")
+
     def get_all_function_schemas(self) -> List[Dict[str, Any]]:
         """Get all function calling schemas from loaded plugins."""
         schemas = []

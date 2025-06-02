@@ -112,6 +112,10 @@ class UnifiedLogger:
                 f.write(f"\n{separator}\n\n")
         except Exception as e:
             print(f"Failed to write log separator: {e}")
+            
+    def log_plugin_event(self, event_type: str, message: str):
+        """Log plugin-related events."""
+        self._write_log_entry(f"PLUGIN_{event_type.upper()}", message)
 
 
 # Global unified logger instance

@@ -36,9 +36,9 @@ def cmd_plugins(handler) -> CommandResult:
         
         # Format capabilities
         capabilities = []
-        for cap in plugin.capabilities:
+        for cap in plugin.capabilities:            
             if cap.name == "FUNCTION_CALLING":
-                capabilities.append("🔧 Functions")
+                capabilities.append("🔧 LLM Tools")
             elif cap.name == "COMMANDS":
                 capabilities.append("💬 Commands")
             elif cap.name == "HOOKS":
@@ -55,11 +55,10 @@ def cmd_plugins(handler) -> CommandResult:
             plugin.description
         )
     
-    print(table)
-    # Show function calling plugins specifically    
+    print(table)    # Show function calling plugins specifically    
     function_plugins = plugin_manager.get_function_calling_plugins()
     if function_plugins:
-        print(f"\n[bold cyan]Available Functions:[/bold cyan]")
+        print(f"\n[bold cyan]Available LLM Tools:[/bold cyan]")
         for plugin in function_plugins:
             schemas = plugin.get_function_schemas()
             for schema in schemas:
@@ -98,19 +97,18 @@ def cmd_plugin(handler, plugin_name: Optional[str] = None) -> CommandResult:
     
     # Show capabilities
     print(f"[bold]Capabilities:[/bold]")
-    for cap in plugin.capabilities:
+    for cap in plugin.capabilities:        
         if cap.name == "FUNCTION_CALLING":
-            print("  • 🔧 Function Calling - Provides functions for LLM use")
+            print("  • 🔧 LLM Tools - Provides capabilities for LLM use")
         elif cap.name == "COMMANDS":
             print("  • 💬 Commands - Adds user commands")
         elif cap.name == "HOOKS":
             print("  • 🔗 Hooks - Integrates with message processing")
         elif cap.name == "UI":
-            print("  • 🎨 UI - Modifies user interface")    # Show functions if it's a function calling plugin
-    if hasattr(plugin, 'get_function_schemas'):
+            print("  • 🎨 UI - Modifies user interface")    # Show functions if it's a function calling plugin    if hasattr(plugin, 'get_function_schemas'):
         schemas = plugin.get_function_schemas()
         if schemas:
-            print(f"\n[bold]Available Functions:[/bold]")
+            print(f"\n[bold]Available LLM Tools:[/bold]")
             for schema in schemas:
                 function_info = schema.get('function', {})
                 func_name = function_info.get('name', 'Unknown')

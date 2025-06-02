@@ -285,7 +285,7 @@ class ModelInteraction:
                 except json.JSONDecodeError:
                     function_args = {}
             
-            print(f"[dim yellow]🔧 Calling function: {function_name}[/dim yellow]")            # Find plugin that can handle this function
+            print(f"[dim yellow]🔧 Using LLM tool: {function_name}[/dim yellow]")            # Find plugin that can handle this function
             result = None
             for plugin in self.app.plugin_manager.get_function_calling_plugins():
                 schemas = plugin.get_function_schemas()
