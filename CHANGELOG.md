@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.16.dev] - 2025-06-02
+
+### Improved
+- Enhanced `/showvars` command output formatting
+- Reorganized variable display with clear sections for global settings and chat-specific variables
+- Improved readability with "GLOBAL SETTINGS" and "CHAT # VARIABLES" sections
+
 ## [0.6.15.dev] - 2025-06-02
 
 ### Added

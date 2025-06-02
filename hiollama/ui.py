@@ -127,7 +127,6 @@ class UIManager:
                     percentage_color = "red"
                 
                 context_display = f"Context: [{percentage_color}]{usage_percentage:.0f}%[/{percentage_color}]"
-        
         # Prepare the 'YOU:' part
         you_text = f"[bold {chat_color}]|[/bold {chat_color}] [bold]YOU[/bold]"        
         return (
@@ -146,9 +145,6 @@ class UIManager:
         chat_color = get_chat_color(getattr(self.app, 'active_chat_index', 0))
         active_chat_index = getattr(self.app, 'active_chat_index', 0)
         
-        # Title with CHAT # in the chat color
-        print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]CHAT {active_chat_index + 1} VARIABLES[/bold {chat_color}]\n")
-
         # Get the actual paths from constants and objects
         from .constants import CONFIG_PATH, LOG_DIR
         
@@ -163,8 +159,29 @@ class UIManager:
         except ValueError:
             log_dir = str(LOG_DIR)
 
-        # Variables with updated formatting        
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Selected Model:':<20} {self.app.selected_model}")        # Context window information
+        # GLOBAL SETTINGS Section
+        print(f"\n[bold]GLOBAL SETTINGS[/bold]\n")
+        print(f"{'Selected Model:':<20} {self.app.selected_model}")
+        
+        # Show model info in global section
+        if self.app.selected_model:
+            context_info = self.app.model.get_context_window_info(self.app.selected_model)
+            if context_info:
+                # Show model info (without tokenizer details)
+                model_info = f"{context_info.architecture}"
+                if context_info.parameter_count != 'unknown':
+                    model_info += f" ({context_info.parameter_count}"
+                    if context_info.quantization != 'unknown':
+                        model_info += f", {context_info.quantization}"
+                        model_info += ")"                
+                    elif context_info.quantization != 'unknown':
+                        model_info += f" ({context_info.quantization})"
+                print(f"{'Model Info:':<20} [grey70]{model_info}[/grey70]")
+        
+        # CHAT VARIABLES Section
+        print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]CHAT {active_chat_index + 1} VARIABLES[/bold {chat_color}]\n")
+
+        # Context window information        # Context window information
         if self.app.selected_model:
             context_info = self.app.model.get_context_window_info(self.app.selected_model)
             usage_percentage = self.app.model.get_context_usage_percentage(self.app.selected_model)
@@ -193,17 +210,9 @@ class UIManager:
                     else:  # 75-100
                         percentage_color = "red"
                     
-                    print(f"[bold {chat_color}]|[/bold {chat_color}] {'Usage:':<20} [{percentage_color}]{bar} {usage_percentage:.1f}%[/{percentage_color}]")
-                # Show model info (without tokenizer details)
-                model_info = f"{context_info.architecture}"
-                if context_info.parameter_count != 'unknown':
-                    model_info += f" ({context_info.parameter_count}"
-                    if context_info.quantization != 'unknown':
-                        model_info += f", {context_info.quantization}"
-                        model_info += ")"                
-                    elif context_info.quantization != 'unknown':
-                        model_info += f" ({context_info.quantization})"
-                print(f"[bold {chat_color}]|[/bold {chat_color}] {'Model Info:':<20} [grey70]{model_info}[/grey70]")                # Show estimated VRAM usage for user-set context window
+                    print(f"[bold {chat_color}]|[/bold {chat_color}] {'Context Usage:':<20} [{percentage_color}]{bar} {usage_percentage:.1f}%[/{percentage_color}]")
+                
+                # Show estimated VRAM usage for user-set context window
                 # Create a modified context info that uses the user's num_ctx setting
                 user_context_info = context_info._replace(actual_context=self.app.num_ctx)
                 vram_estimate = self.app.model.estimate_context_vram_usage(user_context_info)
@@ -212,11 +221,11 @@ class UIManager:
         
         # Display temperature with color coding based on value
         temp_color = "blue" if self.app.temperature == 0.0 else "green" if self.app.temperature < 0.7 else "yellow" if self.app.temperature <= 1.0 else "orange1" if self.app.temperature <= 1.5 else "red"
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Temperature:':<20} [bold {temp_color}]{self.app.temperature}[/bold {temp_color}]")
+        print(f"\n[bold {chat_color}]|[/bold {chat_color}] {'Temperature:':<20} [bold {temp_color}]{self.app.temperature}[/bold {temp_color}]")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Thinking Mode:':<20} [bold][{'green' if self.app.thinking_enabled else 'red'}]{self.app.thinking_enabled}[/{'green' if self.app.thinking_enabled else 'red'}][/bold]")
         
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Verbosity:':<20} [bold][{'green' if self.app.verbosity else 'red'}]{self.app.verbosity}[/{'green' if self.app.verbosity else 'red'}][/bold]")
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Thinking Mode:':<20} [bold][{'green' if self.app.thinking_enabled else 'red'}]{self.app.thinking_enabled}[/{'green' if self.app.thinking_enabled else 'red'}][/bold]")
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Logging Enabled:':<20} [bold][{'green' if self.app.logging_enabled else 'red'}]{self.app.logging_enabled}[/{'green' if self.app.logging_enabled else 'red'}][/bold]")
+        print(f"\n[bold {chat_color}]|[/bold {chat_color}] {'Logging Enabled:':<20} [bold][{'green' if self.app.logging_enabled else 'red'}]{self.app.logging_enabled}[/{'green' if self.app.logging_enabled else 'red'}][/bold]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Config Path:':<20} [grey70]~/{config_path}[/grey70]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Log Directory:':<20} [grey70]~/{log_dir}[/grey70]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'System Prompt:':<20} [grey70]{self.app.system_prompt['content']}[/grey70]\n")
