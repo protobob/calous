@@ -1,264 +1,199 @@
-# HiOllama 🌈
+# HiOllama
 
-A colorful, multi-chat CLI interface for interacting with Ollama AI models. Chat with multiple AI instances simultaneously, switch between conversations, and share responses across chats.
+> **A Paradigm Shift in AI Communication**  
+> *Create multiple AI personalities that can talk to each other*
 
-## What is HiOllama?
+HiOllama revolutionizes how we interact with AI by enabling **multiple distinct AI personalities** to coexist and communicate within a single application. Unlike traditional single-context chat interfaces, HiOllama creates isolated AI personalities through unique system prompts and conversation histories, while allowing them to seamlessly communicate with each other.
 
-HiOllama lets you run multiple AI chat sessions at once, each with its own personality and conversation history. Think of it like having several AI assistants working on different tasks - you can switch between them instantly and even copy responses from one chat to another.
+## 🌟 The Paradigm Shift
 
-## Features ✨
+**Traditional AI Chat**: One conversation, one context, one personality.
 
-- **Multiple Chat Sessions**: Run 1-14 concurrent AI conversations
-- **Rainbow Color Coding**: Each chat has its own color for easy identification
-- **Smart Chat Switching**: Jump between conversations instantly
-- **Twist Operation**: Copy AI responses between chats
-- **Flexible Configuration**: Customize each chat's behavior independently
-- **Command System**: Rich set of commands for chat management
-- **Conversation History**: Full history tracking with optional logging
-- **System Prompts**: Give each chat its own personality or role
+**HiOllama**: Multiple AI personalities, each with their own:
+- **System prompt** (defining their role, knowledge, and behavior)
+- **Conversation history** (their unique memory and context)
+- **Ability to communicate** with other AI personalities via the `/twist` command
 
-## Prerequisites
+Think of it as hosting a **multi-dimensional AI conference** where different AI experts, assistants, or personas can collaborate, debate, and share insights - all powered by a single Ollama model.
 
-Before installing HiOllama, you need:
+## ✨ Key Features
 
-1. **Python 3.8 or higher**
-   - Check if you have Python: Open terminal/command prompt and type `python --version`
-   - If not installed, download from [python.org](https://python.org/downloads/)
+### 🎭 Multi-Personality Architecture
+- **Unlimited Chat Sessions**: Create as many AI personalities as needed
+- **Unique System Prompts**: Each session can have a completely different AI persona
+- **Isolated Contexts**: Conversations remain separate unless explicitly bridged
+- **Persistent Memory**: Each personality maintains its own conversation history
 
-2. **Ollama**
-   - Download and install from [ollama.ai](https://ollama.ai)
-   - Make sure it's running (you should see the Ollama icon in your system tray)
-   - Pull at least one model: `ollama pull qwen2.5:0.5b` (recommended for testing)
+### 🔄 Inter-Personality Communication
+- **`/twist` Command**: Send messages between AI personalities
+- **Cross-Context Collaboration**: Let different AI experts work together
+- **Knowledge Sharing**: Bridge insights between specialized AI personas
 
-## Installation
+### ⚡ Powerful Command System
+**23+ Commands across 6 categories:**
 
-### Method 1: From PyPI (Recommended)
+- **🎯 Core Chat**: `/new`, `/switch`, `/list`, `/rename`, `/delete`
+- **🔄 Communication**: `/twist`, `/copy` (send messages between AI personalities)
+- **💾 Session Management**: `/save`, `/load`, `/export` (backup AI personalities)  
+- **⚙️ Model Config**: `/model`, `/system`, `/config` (manage global settings)
+- **🔍 Info & Control**: `/status`, `/clear`, `/help` (monitor and control)
+- **🛠️ Advanced**: `/debug`, `/history`, `/search` (power user features)
+
+**➡️ See [COMMANDS.md](COMMANDS.md) for complete command reference with examples and usage patterns**
+
+## 🚀 Quick Start
+
+### Prerequisites
+- **Python 3.8+**
+- **Ollama** installed and running locally
+- At least one Ollama model downloaded (e.g., `llama2`, `mistral`, `codellama`)
+
+### Installation
+
 ```bash
-pip install hiollama
-```
-
-### Method 2: From Source
-```bash
+# Clone the repository
 git clone https://github.com/yourusername/hiollama.git
 cd hiollama
-pip install -e .
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Ensure Ollama is running
+ollama serve
+
+# Start HiOllama
+python -m hiollama
 ```
 
-## Quick Start
-
-### Basic Usage
-```bash
-# Start with default 4 chats
-hiollama
-
-# Start with custom number of chats (max 14)
-hiollama 8
-```
-
-### First Run Setup
-1. When you first run HiOllama, it will create a configuration file at `~/.hiollama_config_unified.json`
-2. If you don't have any Ollama models, run `/model` to select one
-3. Each chat starts with a blank system prompt - customize them with `/system` to give each chat its own personality
-
-## Using HiOllama
-
-### The Interface
-
-When you start HiOllama, you'll see:
-- **HIOLLAMA!** header in rainbow colors
-- **ACTIVE CHATS** overview showing all your chat sessions
-- **Current chat summary** (if you have conversation history)
-- **Colored prompt** showing which chat you're in
-
-```
-HIOLLAMA!
-v.0.5.3.dev
-
-ACTIVE CHATS: (/switch [1-4] to change)
-► 1: [No system prompt set]
-  2: [No system prompt set]
-  3: [No system prompt set]
-  4: [No system prompt set]
-
-| CH:0/20 (/help for help)
-| YOU
-```
-
-### Essential Commands
-
-Type `/help` to see all commands. Here are the most important ones:
-
-#### Navigation
-- `/switch 2` - Switch to chat 2
-- `/switch` - Switch to next chat
-- `/twist 3` - Copy last AI response to chat 3
-- `/twist` - Copy to next chat
-
-#### Chat Management
-- `/system New personality here` - Change the current chat's personality
-- `/clear` - Clear current chat history
-- `/history` - View conversation history
-
-#### Model & Settings
-- `/model` - Choose a different AI model
-- `/showvars` - View current settings
-- `/quit` - Exit and save configuration
-
-### Example Workflow
-
-1. **Start HiOllama**:
-   ```bash
-   hiollama 3
-   ```
-
-2. **Set up different chat personalities**:
-   ```
-   Chat 1: /system You are a Python coding expert
-   Chat 2: /system You are a creative writing assistant  
-   Chat 3: /system You are a technical documentation writer
-   ```
-
-3. **Work on different tasks**:
-   - Chat with the coding expert about a bug
-   - Switch to the writer for some creative ideas
-   - Copy good explanations between chats with `/twist`
-
-4. **Switch between conversations**:
-   ```
-   /switch 2    # Go to creative writing chat
-   /switch      # Go to next chat (3)
-   /switch 1    # Back to coding chat
-   ```
-
-## Configuration
-
-HiOllama stores settings in `~/.hiollama_config_unified.json`. The configuration includes:
-
-- **Global settings**: Model selection, number of chats
-- **Per-chat settings**: System prompts, history limits, logging preferences
-
-### Example Configuration Structure
-```json
-{
-  "global": {
-    "selected_model": "qwen2.5:0.5b",
-    "num_chats": 4  },  "chats": {
-    "0": {
-      "system_prompt": "",
-      "MAX_HISTORY": 20,
-      "verbosity": true
-    }
-  }
-}
-```
-
-## Advanced Features
-
-### Twist Operation
-The "twist" feature copies the last AI response from your current chat to another chat as a new user message. This is useful for:
-- Getting a second opinion on an answer
-- Continuing a conversation in a different context
-- Cross-pollinating ideas between specialized chats
-
-### System Prompts
-Each chat can have its own personality through system prompts:
-- **Start blank**: All chats begin with no system prompt - customize them with `/system`
-- **Technical Assistant**: `/system You are a direct, technical assistant. No greetings, just facts.`
-- **Creative Helper**: `/system You are an enthusiastic creative writing assistant.`
-- **Code Reviewer**: `/system You are a senior developer reviewing code for bugs and improvements.`
-
-### History Management
-- Each chat maintains its own conversation history
-- Clear history anytime with `/clear`
-- Optional file logging to `~/hiollama_logs/`
-
-## Troubleshooting
-
-### Common Issues
-
-**"No models found"**
-- Make sure Ollama is running
-- Pull a model: `ollama pull qwen2.5:0.5b`
-- Check available models: `ollama list`
-
-**"Connection refused"**
-- Ensure Ollama is started and running on port 11434
-- Try restarting Ollama
-
-**Commands not working**
-- Make sure commands start with `/`
-- Use `/help` to see correct syntax
-- Check for typos in command names
-
-**Colors not showing**
-- Your terminal might not support colors
-- Try a modern terminal like Windows Terminal, iTerm2, or GNOME Terminal
-
-### Getting Help
-
-- Type `/help` in HiOllama for command reference
-- Check the logs in `~/hiollama_logs/` for error details
-- Report issues on GitHub
-
-## Tips for New Users
-
-1. **Start small**: Begin with 2-3 chats to get familiar
-2. **Use different system prompts**: Give each chat a specific role
-3. **Experiment with `/twist`**: It's great for comparing responses
-4. **Save useful prompts**: Use `/setprompt` to save frequently used prompts
-5. **Check `/showvars`**: See your current settings anytime
-
-## Development
-
-Want to contribute or modify HiOllama?
+### Your First Multi-Personality Setup
 
 ```bash
-git clone https://github.com/yourusername/hiollama.git
-cd hiollama
-pip install -e ".[dev]"
+# Start with default AI personality
+> Hello! How can I help you today?
+
+# Create a coding expert personality
+/new
+/system You are a senior software engineer specializing in Python and system architecture.
+> I'm ready to help with coding challenges and architectural decisions.
+
+# Create a creative writing personality  
+/new
+/system You are a creative writing coach who helps with storytelling, character development, and narrative structure.
+> I'm here to help bring your stories to life!
+
+# Let the coding expert and writing coach collaborate
+/twist 1 "Can you help me create a compelling narrative for a software project README?"
+
+# Switch between personalities
+/switch 0  # Back to general assistant
+/switch 1  # Coding expert
+/switch 2  # Writing coach
 ```
 
-### Testing
+## 🎯 Use Cases
 
-HiOllama includes a comprehensive test suite to ensure reliability:
+### 🔬 **Multi-Expert Collaboration**
+Create specialized AI personalities for different domains:
+- **Technical Expert**: System architecture, debugging, code review
+- **Creative Director**: UI/UX design, user experience, branding
+- **Project Manager**: Planning, coordination, stakeholder communication
+- **Quality Assurance**: Testing strategies, edge cases, validation
 
-```bash
-# Run all tests
-python test_runner.py
+### 📚 **Educational Scenarios**
+- **Teacher + Student**: Create learning dialogues between AI personas
+- **Debate Partners**: Have AI personalities argue different perspectives
+- **Study Groups**: Multiple AI tutors with different teaching styles
 
-# Run only quick tests (validation and CLI)
-python test_runner.py --quick
+### 🎨 **Creative Projects**
+- **Character Development**: Create AI personalities matching story characters
+- **Worldbuilding**: Different AI perspectives for various aspects of fictional worlds
+- **Content Creation**: Collaborate between AI writers, editors, and critics
 
-# Run specific test suites
-python test_runner.py cli      # Command-line interface tests
-python test_runner.py commands # User command functionality tests
-python test_runner.py full     # Full integration tests
+### 🔧 **Development Workflows**
+- **Code Reviewer**: Specialized AI for code quality and security
+- **Documentation Writer**: AI focused on clear technical communication
+- **Testing Specialist**: AI personality dedicated to comprehensive testing strategies
 
-# Alternative: Run tests from the tests directory
-cd tests
-python run_tests.py
+## 🏗️ Architecture Highlights
+
+### Single Model, Multiple Personalities
+HiOllama uses **one Ollama model** to power all AI personalities. The magic happens through:
+- **Isolated System Prompts**: Each session gets unique context and role definition
+- **Separate Conversation Histories**: Personalities maintain independent memories
+- **Dynamic Context Switching**: Seamlessly move between different AI personas
+
+### Event-Driven Design
+- **Session Manager**: Orchestrates multiple AI personalities
+- **Command Registry**: Extensible system for adding new capabilities
+- **Configuration Management**: Global and per-session settings
+
+### Extensible Command System
+Adding new commands is straightforward:
+```python
+@register_command
+class YourCustomCommand(Command):
+    aliases = ["custom", "cc"]
+    description = "Your custom functionality"
+    category = CommandCategory.ADVANCED
+    
+    def execute(self, args: str, session_manager: ChatSessionManager) -> CommandResult:
+        # Your implementation
+        return CommandResult.success("Custom command executed!")
 ```
 
-**Test Coverage:**
-- ✅ Command-line argument validation
-- ✅ User command functionality (`/help`, `/showvars`, `/model`, etc.)
-- ✅ Multi-chat configuration (1-14 chats)
-- ✅ UI elements and formatting
-- ✅ Integration with Ollama backend
-- ✅ Error handling and edge cases
+## 📖 Documentation
 
-**Before submitting changes:**
-1. Run the full test suite: `python test_runner.py`
-2. Ensure all tests pass
-3. Test manually with different chat configurations
-4. Check that Unicode characters display correctly on your platform
+- **[COMMANDS.md](COMMANDS.md)** - Complete command reference with examples and usage patterns
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Detailed technical architecture and design patterns
+- **[API Reference](docs/api.md)** - Complete command and configuration reference
+- **[Examples](docs/examples.md)** - Real-world multi-personality scenarios
 
-See ARCHITECTURE.md for detailed technical documentation.
+## 🤝 Contributing
 
-## License
+We welcome contributions to expand HiOllama's multi-personality capabilities!
 
-MIT License - see LICENSE file for details.
+### Areas for Contribution
+- **New Commands**: Expand the command system
+- **Personality Templates**: Pre-configured AI personality setups
+- **Integration Features**: Connect with external tools and APIs
+- **UI Improvements**: Enhance the chat interface
+- **Documentation**: Examples, tutorials, and guides
+
+### Getting Started
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature-name`
+3. Make your changes and add tests
+4. Submit a pull request with detailed description
+
+## 📋 Requirements
+
+```
+ollama>=0.1.0
+requests>=2.28.0
+prompt-toolkit>=3.0.0
+rich>=12.0.0
+pyyaml>=6.0
+```
+
+## 🔮 Future Vision
+
+HiOllama is evolving towards an **AI Personality Ecosystem** where:
+- **Personality Marketplaces**: Share and discover AI personality configurations
+- **Cross-Model Support**: Use different models for different personalities
+- **Advanced Communication**: Rich media exchange between AI personalities
+- **Persistent Relationships**: AI personalities that remember each other across sessions
+- **Collaborative Workspaces**: Multiple users interacting with shared AI personalities
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## 🙏 Acknowledgments
+
+- **Ollama Team** - For providing the excellent local LLM infrastructure
+- **AI Community** - For inspiration and feedback on multi-context AI interactions
+- **Contributors** - Everyone helping to expand the boundaries of AI communication
 
 ---
 
-Made with 🌈 for the Ollama community
+**HiOllama**: *Where AI personalities come alive and collaborate* 🎭✨

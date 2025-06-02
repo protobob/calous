@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.6.14.dev] - 2025-01-06
+
+### Documentation
+- **Major documentation overhaul**: Complete rewrite of README.md and ARCHITECTURE.md
+- **NEW**: Created comprehensive COMMANDS.md with all 22 implemented commands
+- **Enhanced**: Updated TODO.md with organized roadmap and 50+ enhancement ideas
+- **Fixed**: Corrected command documentation to reflect actual implementation
+- **Improved**: Better project structure and user onboarding experience
+
+### Architecture
+- **Clarified**: Single global model architecture across all chat sessions
+- **Documented**: Complete technical deep dive with Mermaid diagrams
+- **Enhanced**: Command registry and extensibility guidelines
+
+### Commands
+- **Verified**: All 22 commands now accurately documented
+- **Organized**: Commands categorized by functionality
+- **Planned**: Added /rename command to development roadmap
+
 ## [0.6.13.dev] - 2025-06-01
 
 ### Removed
