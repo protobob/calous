@@ -196,18 +196,17 @@ class UIManager:
                     model_info += f" ({context_info.parameter_count}"
                     if context_info.quantization != 'unknown':
                         model_info += f", {context_info.quantization}"
-                    model_info += ")"
-                elif context_info.quantization != 'unknown':
-                    model_info += f" ({context_info.quantization})"
-                print(f"[bold {chat_color}]|[/bold {chat_color}] {'Model Info:':<20} [grey70]{model_info}[/grey70]")
-                  # Show estimated VRAM usage for user-set context window
+                        model_info += ")"                
+                    elif context_info.quantization != 'unknown':
+                        model_info += f" ({context_info.quantization})"
+                print(f"[bold {chat_color}]|[/bold {chat_color}] {'Model Info:':<20} [grey70]{model_info}[/grey70]")                # Show estimated VRAM usage for user-set context window
                 # Create a modified context info that uses the user's num_ctx setting
                 user_context_info = context_info._replace(actual_context=self.app.num_ctx)
                 vram_estimate = self.app.model.estimate_context_vram_usage(user_context_info)
                 if vram_estimate != "unknown":
                     print(f"[bold {chat_color}]|[/bold {chat_color}] {'Context VRAM:':<20} [yellow]{vram_estimate}[/yellow] [grey50](est.)[/grey50]")
         
-                    print(f"[bold {chat_color}]|[/bold {chat_color}] {'Max History:':<20} [bold cyan]{self.app.MAX_HISTORY}[/bold cyan]")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Max History:':<20} [bold cyan]{self.app.MAX_HISTORY}[/bold cyan]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Verbosity:':<20} [bold][{'green' if self.app.verbosity else 'red'}]{self.app.verbosity}[/{'green' if self.app.verbosity else 'red'}][/bold]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Thinking Mode:':<20} [bold][{'green' if self.app.thinking_enabled else 'red'}]{self.app.thinking_enabled}[/{'green' if self.app.thinking_enabled else 'red'}][/bold]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Logging Enabled:':<20} [bold][{'green' if self.app.logging_enabled else 'red'}]{self.app.logging_enabled}[/{'green' if self.app.logging_enabled else 'red'}][/bold]")

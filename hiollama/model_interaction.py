@@ -171,11 +171,11 @@ class ModelInteraction:
             percentage = (total_tokens / self.app.num_ctx) * 100
             return min(100.0, percentage)  # Cap at 100%
         
-        return 0.0
-
+        return 0.0    
+    
     def estimate_context_vram_usage(self, context_info: ContextWindowInfo) -> str:
         """Estimate VRAM usage for context window based on model parameters."""
-        if not context_info or not context_info.parameter_count:
+        if not context_info or not context_info.parameter_count or context_info.parameter_count == 'unknown':
             return "unknown"
         
         try:
@@ -209,10 +209,8 @@ class ModelInteraction:
                 num_layers = 26
             else:  # < 3B
                 hidden_dim = 2048
-                num_layers = 24
-            
-            # Bytes per parameter based on quantization
-            quant = context_info.quantization.upper() if context_info.quantization else ''
+                num_layers = 24            # Bytes per parameter based on quantization
+            quant = str(context_info.quantization).upper() if context_info.quantization else ''
             if 'Q4' in quant:
                 bytes_per_param = 0.5  # 4-bit quantization
             elif 'Q8' in quant:
@@ -222,16 +220,14 @@ class ModelInteraction:
             elif 'F32' in quant:
                 bytes_per_param = 4.0  # 32-bit float
             else:
-                bytes_per_param = 0.5  # Default to Q4 estimate
-            
-            # Calculate KV cache VRAM for full context
+                bytes_per_param = 0.5  # Default to Q4 estimate            # Calculate KV cache VRAM for full context
             tokens = context_info.actual_context
             kv_cache_bytes = tokens * hidden_dim * num_layers * 2 * bytes_per_param
             kv_cache_gb = kv_cache_bytes / (1024**3)
             
-            # Add rough estimate for attention computation overhead
-            attention_overhead_gb = (tokens * tokens * hidden_dim * bytes_per_param) / (1024**3)
-            
+            # Add realistic estimate for attention computation overhead
+            # Use a small percentage of KV cache size instead of quadratic formula
+            attention_overhead_gb = kv_cache_gb * 0.2  # 20% overhead for attention computation
             total_context_vram = kv_cache_gb + attention_overhead_gb
             
             if total_context_vram < 1:
@@ -239,7 +235,7 @@ class ModelInteraction:
             else:
                 return f"~{total_context_vram:.1f}GB"
                 
-        except (ValueError, AttributeError):
+        except (ValueError, AttributeError) as e:
             return "unknown"
 
     def talk_to_model(self, user_prompt):

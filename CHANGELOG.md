@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.6.12.dev] - 2025-06-01
+
+### Added
+- **VRAM Estimation**: Context window VRAM usage estimation now displays in `/showvars`
+- Real-time VRAM estimates based on user-set context window size from `/setctx`
+- Intelligent model parameter detection for accurate memory calculations
+
+### Enhanced
+- **Improved `/setctx` guidance**: Updated with realistic VRAM usage estimates and better warnings
+- Context window recommendations with performance impact warnings
+- VRAM estimates now account for model size, quantization, and context length
+
+### Fixed
+- VRAM estimation quantization handling for integer values from model metadata
+- Context VRAM calculation uses proper KV cache + attention overhead formula
+- Display indentation issues in `/showvars` output
+
+### Technical
+- Enhanced `estimate_context_vram_usage()` with realistic attention overhead calculation (20% of KV cache)
+- Improved error handling for model metadata parsing
+- Better parameter count and quantization detection from Ollama model info
+
 ## [0.6.11] - 2025-06-01
 
 ### Added
