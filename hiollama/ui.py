@@ -49,14 +49,11 @@ class UIManager:
         table.add_row(f"[bold {command_color}]/setprompt[/bold {command_color}]", f"Set a saved prompt. Usage: [bold {command_color}]/setprompt NUMBER PROMPT_TEXT[/bold {command_color}].")
         table.add_row(f"[bold {command_color}]/prompt[/bold {command_color}]", f"Use a saved prompt. Usage: [bold {command_color}]/prompt NUMBER[/bold {command_color}].")
         table.add_row(f"[bold {command_color}]/showprompt[/bold {command_color}]", f"Display saved prompts. Usage: [bold {command_color}]/showprompt NUMBER[/bold {command_color}] or [bold {command_color}]/showprompt all[/bold {command_color}].")
-        table.add_row(f"[bold {command_color}]/system[/bold {command_color}]", "Change the system prompt.")
-
-        # Add a header for Chat History Commands
+        table.add_row(f"[bold {command_color}]/system[/bold {command_color}]", "Change the system prompt.")        # Add a header for Chat History Commands
         table.add_row("", "")  # Empty row for spacing
         table.add_row("[bold white]Chat History Commands:[/bold white]", "")
         table.add_row(f"[bold {command_color}]/history[/bold {command_color}]", "Display the current chat history.")
         table.add_row(f"[bold {command_color}]/clear[/bold {command_color}]", "Clear the current chat history.")
-        table.add_row(f"[bold {command_color}]/setmax[/bold {command_color}]", f"Set maximum chat history. Usage: [bold {command_color}]/setmax NUMBER[/bold {command_color}].")
         table.add_row(f"[bold {command_color}]/toggle_log[/bold {command_color}]", "Toggle logging of chat history.")
 
         # Add a header for File Commands
@@ -203,10 +200,10 @@ class UIManager:
                 # Create a modified context info that uses the user's num_ctx setting
                 user_context_info = context_info._replace(actual_context=self.app.num_ctx)
                 vram_estimate = self.app.model.estimate_context_vram_usage(user_context_info)
+                
                 if vram_estimate != "unknown":
                     print(f"[bold {chat_color}]|[/bold {chat_color}] {'Context VRAM:':<20} [yellow]{vram_estimate}[/yellow] [grey50](est.)[/grey50]")
         
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Max History:':<20} [bold cyan]{self.app.MAX_HISTORY}[/bold cyan]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Verbosity:':<20} [bold][{'green' if self.app.verbosity else 'red'}]{self.app.verbosity}[/{'green' if self.app.verbosity else 'red'}][/bold]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Thinking Mode:':<20} [bold][{'green' if self.app.thinking_enabled else 'red'}]{self.app.thinking_enabled}[/{'green' if self.app.thinking_enabled else 'red'}][/bold]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Logging Enabled:':<20} [bold][{'green' if self.app.logging_enabled else 'red'}]{self.app.logging_enabled}[/{'green' if self.app.logging_enabled else 'red'}][/bold]")

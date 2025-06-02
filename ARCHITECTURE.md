@@ -72,8 +72,8 @@ HiOllamaChat
 │   ├── chat_history     # ChatHistory instance
 │   ├── model            # ModelInteraction instance
 │   └── commands         # AdvancedCommandHandler instance
-└── Configuration:    ├── verbosity
-    ├── MAX_HISTORY
+└── Configuration:
+    ├── verbosity
     └── prompts{}
 ```
 
@@ -115,10 +115,9 @@ HiOllama uses a single JSON configuration file with global and per-chat sections
   "global": {
     "selected_model": "qwen3:0.6B",
     "num_chats": 4
-  },
-  "chats": {
-    "0": {      "verbosity": true,
-      "MAX_HISTORY": 20,
+  },  "chats": {
+    "0": {
+      "verbosity": true,
       "system_prompt": "...",
       "logging_enabled": true,
       "prompts": {"prompt1": "", "prompt2": "..."}
@@ -157,7 +156,7 @@ commands/
     ├── navigation.py    # /switch, /twist
     ├── model.py         # /model, /toggle_eval
     ├── prompt.py        # /prompt, /setprompt, /system
-    ├── history.py       # /history, /clear, /setmax
+    ├── history.py       # /history, /clear
     └── file.py          # /load
 ```
 

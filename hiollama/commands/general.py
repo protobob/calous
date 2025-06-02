@@ -42,13 +42,11 @@ def cmd_resetchat(handler) -> CommandResult:
         
         confirm = Prompt.ask("\nAre you sure you want to continue?", choices=["y", "n"], default="n")
         
-        if confirm == 'y':
-            # Get the default chat configuration
+        if confirm == 'y':            # Get the default chat configuration
             default_config = ConfigManager._generate_default_chat_config()
             
             # Update the chat instance with default values
             handler.app.verbosity = default_config["verbosity"]
-            handler.app.MAX_HISTORY = default_config["MAX_HISTORY"]
             handler.app.system_prompt = {
                 "role": "system",
                 "content": default_config["system_prompt"]

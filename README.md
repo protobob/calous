@@ -169,7 +169,6 @@ Each chat can have its own personality through system prompts:
 
 ### History Management
 - Each chat maintains its own conversation history
-- Set custom history limits with `/setmax 50`
 - Clear history anytime with `/clear`
 - Optional file logging to `~/hiollama_logs/`
 

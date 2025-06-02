@@ -14,14 +14,14 @@ from unittest.mock import patch, mock_open
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from hiollama.config import ConfigManager
-from hiollama.constants import DEFAULT_MODEL, DEFAULT_NUM_CHATS, DEFAULT_MAX_HISTORY, DEFAULT_SYSTEM_PROMPT
+from hiollama.constants import DEFAULT_MODEL, DEFAULT_NUM_CHATS, DEFAULT_SYSTEM_PROMPT
 
 def test_default_config_generation():
     """Test generation of default chat configuration."""
     print("🔍 Testing default config generation...")
     
     config = ConfigManager._generate_default_chat_config()    # Verify all required fields are present
-    required_fields = ['verbosity', 'MAX_HISTORY', 'system_prompt', 'prompts', 'logging_enabled']
+    required_fields = ['verbosity', 'system_prompt', 'prompts', 'logging_enabled']
     for field in required_fields:
         if field not in config:
             print(f"❌ Missing required field: {field}")
@@ -30,10 +30,6 @@ def test_default_config_generation():
     # Verify default values
     if config['verbosity'] != True:
         print(f"❌ Expected verbosity=True, got {config['verbosity']}")
-        return False
-    
-    if config['MAX_HISTORY'] != DEFAULT_MAX_HISTORY:
-        print(f"❌ Expected MAX_HISTORY={DEFAULT_MAX_HISTORY}, got {config['MAX_HISTORY']}")
         return False
     
     if config['system_prompt'] != DEFAULT_SYSTEM_PROMPT:

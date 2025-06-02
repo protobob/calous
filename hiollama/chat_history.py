@@ -39,11 +39,6 @@ class ChatHistory:
                         except json.JSONDecodeError:
                             # Skip malformed lines
                             continue
-                
-                # Respect the maximum history limit
-                if len(self.history) > self.app.MAX_HISTORY:
-                    self.history = self.history[-self.app.MAX_HISTORY:]
-                
                 if messages_loaded > 0:
                     print(f"[dim green]Loaded {messages_loaded} messages from chat history[/dim green]")
                     
@@ -87,12 +82,10 @@ class ChatHistory:
                 print(f"[dim green]History file deleted: {history_file.name}[/dim green]")
             except Exception as e:
                 print(f"[dim red]Warning: Failed to delete history file: {e}[/dim red]")
-        
+    
     def add_message(self, role, content):
-        """Add a message to the chat history, respecting the maximum history limit."""
+        """Add a message to the chat history."""
         self.history.append({"role": role, "content": content})
-        if len(self.history) > self.app.MAX_HISTORY:
-            self.history.pop(0)
         
         # Save message to history file immediately
         self._save_message_to_file(role, content)

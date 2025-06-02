@@ -61,9 +61,8 @@ def main():
                 "Model Commands:",
                 "/model", "/toggle_eval",
                 "Prompt Commands:",
-                "/setprompt", "/prompt", "/showprompt", "/system",
-                "Chat History Commands:",
-                "/history", "/clear", "/setmax", "/toggle_log",
+                "/setprompt", "/prompt", "/showprompt", "/system",                "Chat History Commands:",
+                "/history", "/clear", "/toggle_log",
                 "File Commands:",
                 "/load"
             ],
@@ -72,9 +71,7 @@ def main():
         {
             "command": "/showvars",
             "expected": [
-                "CHAT 1 VARIABLES",
-                "Selected Model:",
-                "Max History:",
+                "CHAT 1 VARIABLES",                "Selected Model:",
                 "Verbosity:",
                 "Think Filtering:",
                 "Logging Enabled:",

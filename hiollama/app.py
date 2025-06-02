@@ -7,7 +7,7 @@ from .commands.handler import AdvancedCommandHandler  # Fixed import path
 from .ui import UIManager
 from .chat_history import ChatHistory
 from .model_interaction import ModelInteraction
-from .constants import DEFAULT_MODEL, DEFAULT_MAX_HISTORY, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS, DEFAULT_NUM_CTX
+from .constants import DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS, DEFAULT_NUM_CTX
 from .types import CommandResult, ActionType
 from typing import Dict, Any, Optional, TYPE_CHECKING
 
@@ -21,11 +21,9 @@ class HiOllamaChat:
           # Load configs from unified system
         self.config = ConfigManager.get_chat_config(instance_index)
         global_config = ConfigManager.get_global_config()
-        
-        # Initialize attributes from config
+          # Initialize attributes from config
         self.selected_model = global_config.get("selected_model", DEFAULT_MODEL)
         self.verbosity = self.config.get("verbosity", True)
-        self.MAX_HISTORY = self.config.get("MAX_HISTORY", DEFAULT_MAX_HISTORY)
         self.system_prompt = {
             "role": "system",
             "content": self.config.get("system_prompt", DEFAULT_SYSTEM_PROMPT)
@@ -60,11 +58,9 @@ class HiOllamaChat:
             return 1    
     
     def save_config(self):
-        """Save the current configuration."""
-        # Update instance-specific config
+        """Save the current configuration."""        # Update instance-specific config
         chat_config = {
             "verbosity": self.verbosity,
-            "MAX_HISTORY": self.MAX_HISTORY,
             "system_prompt": self.system_prompt["content"],
             "logging_enabled": self.logging_enabled,
             "thinking_enabled": self.thinking_enabled,

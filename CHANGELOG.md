@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.6.13.dev] - 2025-06-01
+
+### Removed
+- **Deprecated `/setmax` system**: Removed old message-count-based history management
+- `MAX_HISTORY` configuration option and related trimming logic
+- `/setmax` command from chat history commands
+- Max History display from `/showvars` output
+
+### Changed
+- **Simplified context management**: Chat history now grows naturally, limited only by context window (`/setctx`)
+- Context usage is now controlled exclusively through token-based `/setctx` command (2048-32768 tokens)
+- Cleaner user experience with single context control instead of dual history/context limits
+
+### Technical
+- Removed `DEFAULT_MAX_HISTORY` constant and all related code
+- Updated documentation to reflect streamlined context management
+- All tests updated to remove `MAX_HISTORY` references
+
 ## [0.6.12.dev] - 2025-06-01
 
 ### Added

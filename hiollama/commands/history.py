@@ -79,21 +79,7 @@ def cmd_export(handler, filename: Optional[str] = None) -> CommandResult:
     
     return CommandResult(ActionType.CONTINUE)
 
-@registry.register("setmax", "Set maximum history size", category=CommandCategory.HISTORY)
-def cmd_setmax(handler, size: int) -> CommandResult:
-    """Set maximum chat history size."""
-    if not (2 <= size <= 100) or size % 2 != 0:
-        print("[bold red]Error:[/bold red] Size must be an even number between 2 and 100.")
-        return CommandResult(ActionType.CONTINUE)
-    
-    handler.app.MAX_HISTORY = size
-    
-    # Trim history if it's longer than the new limit
-    if len(handler.app.chat_history.history) > size:
-        handler.app.chat_history.history = handler.app.chat_history.history[-size:]
-    
-    print(f"\nMaximum chat history set to {size}")
-    return CommandResult(ActionType.CONTINUE)
+
 
 
 @registry.register("toggle_log", "Toggle unified logging", aliases=["log"], category=CommandCategory.HISTORY)
