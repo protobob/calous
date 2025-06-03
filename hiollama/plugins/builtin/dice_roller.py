@@ -79,12 +79,7 @@ class DiceRollerPlugin(FunctionCallingPlugin):
                     },
                     "required": ["dice_expression"]
                 }
-            }
-        }]
-
-    def execute_function(self, function_name: str, **kwargs) -> str:
-        result = self.call_function(function_name, kwargs)
-        return json.dumps(result, ensure_ascii=False)
+            }        }]
 
     def call_function(self, function_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
         if function_name != "roll_dice":
@@ -111,7 +106,6 @@ class DiceRollerPlugin(FunctionCallingPlugin):
             }
             return result
         except Exception as e:
-            logger.error(f"Dice roll error: {e}")
             return {"error": str(e), "success": False}
 
     def _roll(self, expr: str, verbose: bool) -> Dict[str, Any]:

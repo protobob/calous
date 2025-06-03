@@ -50,11 +50,18 @@ class FunctionCallingPlugin(PluginBase):
         """Return OpenAI function calling schemas for this plugin."""
         pass
     
-    @abstractmethod
     def execute_function(self, function_name: str, **kwargs) -> str:
         """Execute a function call and return the result."""
-        pass
+        # Default implementation calls call_function and converts to JSON string
+        import json
+        result = self.call_function(function_name, kwargs)
+        return json.dumps(result, ensure_ascii=False)
     
+    @abstractmethod
+    def call_function(self, function_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a function call and return the result as a dictionary."""
+        pass
+
     def get_function_names(self) -> List[str]:
         """Return list of function names this plugin provides."""
         schemas = self.get_function_schemas()

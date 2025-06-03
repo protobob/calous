@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.8.0.dev (2025-06-03)
+
+### Added
+- **Centralized Plugin Function Call Logging**: Implemented unified logging system for all plugin function calls
+- Enhanced plugin architecture with improved base class design
+- Comprehensive function call tracking with arguments, results, and error logging
+- Automated test suite for centralized logging functionality
+
+### Changed
+- **Plugin Architecture Enhancement**: Modified `FunctionCallingPlugin` base class structure
+  - Made `execute_function()` non-abstract with default JSON conversion implementation
+  - Added abstract `call_function()` method that plugins must implement
+  - Improved plugin instantiation and error handling
+- Centralized all function call logging in `model_interaction.py`
+
+### Fixed
+- Resolved abstract method instantiation errors for function calling plugins
+- Improved consistency of logging format across all plugin function calls
+
+### Technical
+- Added centralized logging in `ModelInteraction._handle_function_calls()` method
+- Enhanced plugin base class with backward compatibility
+- Implemented comprehensive test coverage for logging functionality
+- Updated plugin architecture to support cleaner, more maintainable code
+
+### Impact
+- All plugin function calls (dice roller, calculator, future plugins) now automatically logged
+- Developers can create plugins without implementing logging code
+- Improved debugging and auditing capabilities for plugin usage
+- Foundation for enhanced plugin development and monitoring
+
 ## 0.7.1.dev (2025-06-02)
 
 ### Added
@@ -8,7 +39,7 @@
 - Plugin metadata and capability display in UI
 - Improved dice_roller plugin with better error handling and validation
 
-### Changed
+### Changedn
 - Renamed "Functions" to "LLM Tools" in plugin UI for clarity
 - Updated plugin discovery system documentation
 - Enhanced plugin loading with detailed logging and error messages

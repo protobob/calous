@@ -266,9 +266,10 @@ class ModelInteraction:
                     tools.extend(schemas)
             return tools
         return []
-    
     def _handle_function_calls(self, tool_calls: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Handle function calls from the model."""
+        from .unified_logger import unified_logger
+        
         results = []
         
         if not hasattr(self.app, 'plugin_manager') or not self.app.plugin_manager:
@@ -285,22 +286,55 @@ class ModelInteraction:
                 except json.JSONDecodeError:
                     function_args = {}
             
-            print(f"[dim yellow]🔧 Using LLM tool: {function_name}[/dim yellow]")            # Find plugin that can handle this function
-            result = None
-            for plugin in self.app.plugin_manager.get_function_calling_plugins():
-                schemas = plugin.get_function_schemas()
-                for schema in schemas:
-                    if schema.get('function', {}).get('name') == function_name:
-                        result = plugin.call_function(function_name, function_args)
-                        break
-                if result is not None:
-                    break
+            print(f"[dim yellow]🔧 Using LLM tool: {function_name}[/dim yellow]")
             
-            if result is None:
+            # Log function call attempt
+            unified_logger._write_log_entry(
+                entry_type="PLUGIN_FUNCTION_CALL",
+                content=f"Function: {function_name}, Args: {function_args}"
+            )
+            
+            # Find plugin that can handle this function
+            result = None
+            plugin_name = None
+            try:
+                for plugin in self.app.plugin_manager.get_function_calling_plugins():
+                    schemas = plugin.get_function_schemas()
+                    for schema in schemas:
+                        if schema.get('function', {}).get('name') == function_name:
+                            plugin_name = plugin.name
+                            result = plugin.call_function(function_name, function_args)
+                            break
+                    if result is not None:
+                        break
+                
+                if result is None:
+                    result = {
+                        "error": f"Function {function_name} not found",
+                        "success": False
+                    }
+                    # Log function not found
+                    unified_logger._write_log_entry(
+                        entry_type="PLUGIN_FUNCTION_ERROR",
+                        content=f"Function: {function_name}, Error: Function not found"
+                    )
+                else:
+                    # Log successful function result
+                    unified_logger._write_log_entry(
+                        entry_type="PLUGIN_FUNCTION_RESULT",
+                        content=f"Plugin: {plugin_name}, Function: {function_name}, Result: {result}"
+                    )
+                    
+            except Exception as e:
                 result = {
-                    "error": f"Function {function_name} not found",
+                    "error": f"Error executing {function_name}: {str(e)}",
                     "success": False
                 }
+                # Log function execution error
+                unified_logger._write_log_entry(
+                    entry_type="PLUGIN_FUNCTION_ERROR",
+                    content=f"Plugin: {plugin_name}, Function: {function_name}, Error: {str(e)}"
+                )
             
             # Format result for model
             tool_result = {
