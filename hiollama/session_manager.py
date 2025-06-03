@@ -18,12 +18,28 @@ class ChatSessionManager:
         self.active_chat_index = 0
         # Use constant for default
         self.num_chats = num_chats if num_chats is not None else DEFAULT_NUM_CHATS
+        
+        # Initialize plugin manager at session level
+        self._initialize_plugin_manager()
+        
+        # Initialize chats with plugin manager
         self._initialize_chats()
         
         # Log session start
-        model = ConfigManager.get_global_config().get("selected_model", "unknown")
+        model = ConfigManager.get_global_config().get("selected_model", "unknown")        
         unified_logger.log_session_start(self.num_chats, model)
           
+    def _initialize_plugin_manager(self):
+        """Initialize the plugin manager for all chat instances."""
+        import os
+        from pathlib import Path
+        from .plugins.manager import PluginManager
+        
+        # Get the plugin directory path
+        plugin_dir = Path(os.path.dirname(__file__)) / 'plugins'
+        self.plugin_manager = PluginManager()
+        self.plugin_manager.discover_and_load_plugins(plugin_dir)
+    
     def _initialize_chats(self):
         """Initialize all chat instances."""
         # Import here to avoid circular import
@@ -34,12 +50,7 @@ class ChatSessionManager:
         for i, chat in enumerate(self.chats):
             chat.active_chat_index = i
             chat.session_manager = self  # Give chats reference to session manager only
-        
-        # Share plugin manager across all chats
-        if self.chats:
-            plugin_manager = self.chats[0].plugin_manager
-            for chat in self.chats[1:]:
-                chat.plugin_manager = plugin_manager
+            chat.plugin_manager = self.plugin_manager  # Inject shared plugin manager
     
     def get_active_chat(self) -> 'HiOllamaChat':
         """Get the currently active chat instance."""
@@ -138,9 +149,8 @@ class ChatSessionManager:
         new_chat = HiOllamaChat(new_chat_index)
         new_chat.session_manager = self
         
-        # Share plugin manager from existing chats
-        if self.chats and hasattr(self.chats[0], 'plugin_manager'):
-            new_chat.plugin_manager = self.chats[0].plugin_manager
+        # Inject shared plugin manager
+        new_chat.plugin_manager = self.plugin_manager
         
         # Add to chats list
         self.chats.append(new_chat)

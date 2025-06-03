@@ -520,7 +520,7 @@ class ModelInteraction:
             print(f"\n[bold red]Error fetching models:[/bold red] {e}")
             print(f"[grey50]Check if Ollama is installed and running properly[/grey50]")
             return []
-            
+    
     def select_model(self):
         """Display available models and let the user select one."""
         models = self.list_ollama_models()
@@ -528,7 +528,8 @@ class ModelInteraction:
             print("\n[bold red]No models installed.[/bold red]")
             print("[grey50]Install a model with: 'ollama pull model-name'[/grey50]")
             return None
-            print("\nAvailable Ollama models:")
+        
+        print("\nAvailable Ollama models:")
         for i, model in enumerate(models, 1):
             # Get context window info for display
             context_info = self.get_context_window_info(model)

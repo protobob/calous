@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.8.1.dev (2025-06-03)
+
+### Changed
+- **Plugin Manager Architecture Refactor**: Moved plugin manager ownership from first chat instance to session manager
+  - Plugin manager now initialized and owned by `ChatSessionManager`
+  - All chat instances receive plugin manager via dependency injection
+  - Eliminated asymmetric design where Chat 1 had special responsibilities
+  - Improved plugin lifecycle management and maintainability
+
+### Fixed
+- **Plugin Registration Logging**: Fixed inconsistent success message printing for hook plugins
+  - Corrected print statement placement in plugin registration logic
+  - All plugin types now receive consistent success feedback
+
+### Technical
+- Enhanced session manager with `_initialize_plugin_manager()` method
+- Updated `add_chat()` method to properly inject shared plugin manager
+- Cleaner separation of concerns between session management and plugin management
+- Improved architectural consistency across chat instances
+
+### Impact
+- More robust multi-chat plugin sharing
+- Cleaner codebase with better separation of concerns
+- Foundation for future plugin system enhancements
+- Safer dynamic chat operations without affecting plugin system
+
 ## 0.8.0.dev (2025-06-03)
 
 ### Added

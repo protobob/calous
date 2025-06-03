@@ -131,7 +131,7 @@ class PluginManager:
                     print(f"[yellow]Warning:[/yellow] Failed to instantiate plugin {attr_name}: {e}")
     
     def register_plugin(self, plugin: PluginBase) -> bool:
-        """Register a plugin instance."""
+        """Register a plugin instance."""        
         try:
             # Initialize the plugin
             if not plugin.initialize():
@@ -161,7 +161,9 @@ class PluginManager:
             
             if PluginCapability.HOOKS in capabilities:
                 self.hook_plugins.append(plugin)
-                print(f"[green]✓[/green] Loaded plugin: {plugin.name} v{plugin.version}")
+            
+            # Print success message for all loaded plugins
+            print(f"[green]✓[/green] Loaded plugin: {plugin.name} v{plugin.version}")
             unified_logger.log_plugin_event("SUCCESS", f"Loaded plugin: {plugin.name} v{plugin.version}")
             return True
             
