@@ -6,7 +6,6 @@ from .registry import registry
 from .types import CommandCategory
 
 
-@registry.register("switch", "Switch between chats", category=CommandCategory.NAVIGATION)
 def cmd_switch(handler, chat_number: Optional[int] = None) -> CommandResult:
     """Switch to specified chat or cycle to next."""
     target_chat = None
@@ -19,7 +18,6 @@ def cmd_switch(handler, chat_number: Optional[int] = None) -> CommandResult:
     return CommandResult(ActionType.SWITCH, {"target_chat": target_chat})
 
 
-@registry.register("addchat", "Add a new chat session", category=CommandCategory.NAVIGATION)
 def cmd_addchat(handler) -> CommandResult:
     """Add a new chat session dynamically."""
     # Validate maximum chat limit
@@ -34,7 +32,6 @@ def cmd_addchat(handler) -> CommandResult:
     return CommandResult(ActionType.ADDCHAT)
 
 
-@registry.register("removechat", "Remove a chat session", category=CommandCategory.NAVIGATION)
 def cmd_removechat(handler, chat_number: Optional[int] = None) -> CommandResult:
     """Remove a chat session dynamically."""
     current_num_chats = handler.app.session_manager.num_chats
@@ -54,11 +51,10 @@ def cmd_removechat(handler, chat_number: Optional[int] = None) -> CommandResult:
             return CommandResult(ActionType.CONTINUE)
         target_index = chat_number - 1  # Convert to 0-based index
     
-    print(f"[bold yellow]Removing Chat {chat_number}...[/bold yellow] Configuration will be preserved.")
+    print(f"[bold yellow]Removing Chat {chat_number}...[/bold yellow] Configuration will be preserved.")    
     return CommandResult(ActionType.REMOVECHAT, {"target_index": target_index})
 
 
-@registry.register("twist", "Copy AI response to another chat", category=CommandCategory.NAVIGATION)
 def cmd_twist(handler, target_chat: Optional[int] = None) -> CommandResult:
     """Twist last AI response to target chat."""
     # Validate last response exists
@@ -88,3 +84,37 @@ def cmd_twist(handler, target_chat: Optional[int] = None) -> CommandResult:
         "content": clean_twist_content,
         "target_chat": target_index
     })
+
+
+# Hierarchical chat session management commands
+
+@registry.register("chat.add", "Add a new chat session", category=CommandCategory.NAVIGATION)
+def cmd_chat_add(handler) -> CommandResult:
+    """Add a new chat session using hierarchical command."""
+    return cmd_addchat(handler)
+
+
+@registry.register("chat.switch", "Switch between chat sessions", category=CommandCategory.NAVIGATION)
+def cmd_chat_switch(handler, chat_number: Optional[int] = None) -> CommandResult:
+    """Switch to specified chat or cycle to next using hierarchical command."""
+    return cmd_switch(handler, chat_number)
+
+
+@registry.register("chat.remove", "Remove a chat session", category=CommandCategory.NAVIGATION)
+def cmd_chat_remove(handler, chat_number: Optional[int] = None) -> CommandResult:
+    """Remove a chat session using hierarchical command."""
+    return cmd_removechat(handler, chat_number)
+
+
+@registry.register("chat.twist", "Copy AI response to another chat", category=CommandCategory.NAVIGATION)
+def cmd_chat_twist(handler, target_chat: Optional[int] = None) -> CommandResult:
+    """Twist last AI response to target chat using hierarchical command."""
+    return cmd_twist(handler, target_chat)
+
+
+@registry.register("chat.reset", "Reset current chat to factory defaults", category=CommandCategory.NAVIGATION)
+def cmd_chat_reset(handler) -> CommandResult:
+    """Reset the current chat to factory defaults with confirmation."""
+    # Import the resetchat function from general.py
+    from .general import cmd_resetchat
+    return cmd_resetchat(handler)

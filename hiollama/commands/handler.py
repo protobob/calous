@@ -55,9 +55,8 @@ class AdvancedCommandHandler:
         try:
             # Convert parsed args to kwargs
             kwargs = vars(parsed_args)
-            
-            # Special handling for commands with nargs='+'
-            if cmd_def.name in ["system", "setprompt", "load"]:
+              # Special handling for commands with nargs='+'
+            if cmd_def.name in ["system", "setprompt", "load", "file.load"]:
                 if "prompt" in kwargs and isinstance(kwargs["prompt"], list):
                     kwargs["prompt"] = " ".join(kwargs["prompt"])
             

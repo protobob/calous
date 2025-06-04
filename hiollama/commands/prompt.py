@@ -24,7 +24,6 @@ def cmd_system(handler, prompt: str) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("setprompt", "Save a prompt to a slot", category=CommandCategory.PROMPT)
 def cmd_setprompt(handler, slot: int, prompt: str) -> CommandResult:
     """Set a saved prompt."""
     from ..constants import MAX_PROMPTS
@@ -43,7 +42,6 @@ def cmd_setprompt(handler, slot: int, prompt: str) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("prompt", "Use a saved prompt", category=CommandCategory.PROMPT)
 def cmd_prompt(handler, slot: int) -> CommandResult:
     """Use a saved prompt."""
     from ..constants import MAX_PROMPTS
@@ -62,11 +60,10 @@ def cmd_prompt(handler, slot: int) -> CommandResult:
     chat_color = get_chat_color(getattr(handler.app, 'active_chat_index', 0))
     
     print(f"\n[bold {chat_color}]|[/bold {chat_color}] Using Prompt {slot}: [grey70]{selected_prompt}[/grey70]")
-    handler.app.handle_regular_input(selected_prompt)
+    handler.app.handle_regular_input(selected_prompt)    
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("showprompt", "Display saved prompts", aliases=["prompts"], category=CommandCategory.PROMPT)
 def cmd_showprompt(handler, slot: Optional[int] = None) -> CommandResult:
     """Display saved prompts."""
     from ..constants import MAX_PROMPTS
@@ -102,3 +99,22 @@ def cmd_showprompt(handler, slot: Optional[int] = None) -> CommandResult:
         print()  # Add spacing after output
     
     return CommandResult(ActionType.CONTINUE)
+
+
+# New hierarchical prompt commands
+@registry.register("prompt.use", "Use a saved prompt", category=CommandCategory.PROMPT)
+def cmd_prompt_use(handler, slot: int) -> CommandResult:
+    """Use a saved prompt."""
+    return cmd_prompt(handler, slot)
+
+
+@registry.register("prompt.set", "Save the current prompt", category=CommandCategory.PROMPT)
+def cmd_prompt_set(handler, slot: int, prompt: str) -> CommandResult:
+    """Set a saved prompt."""
+    return cmd_setprompt(handler, slot, prompt)
+
+
+@registry.register("prompt.list", "List all saved prompts", category=CommandCategory.PROMPT)
+def cmd_prompt_list(handler, slot: Optional[int] = None) -> CommandResult:
+    """Display saved prompts."""
+    return cmd_showprompt(handler, slot)

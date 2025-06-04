@@ -8,7 +8,6 @@ from .registry import registry
 from .types import CommandCategory
 
 
-@registry.register("plugins", "List available plugins and their status", category=CommandCategory.GENERAL)
 def cmd_plugins(handler) -> CommandResult:
     """List all available plugins and their status."""
     if not hasattr(handler.app, 'plugin_manager') or not handler.app.plugin_manager:
@@ -71,7 +70,6 @@ def cmd_plugins(handler) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("plugin", "Get details about a specific plugin", category=CommandCategory.GENERAL)
 def cmd_plugin(handler, plugin_name: Optional[str] = None) -> CommandResult:
     """Get detailed information about a specific plugin."""
     if not plugin_name:
@@ -132,7 +130,6 @@ def cmd_plugin(handler, plugin_name: Optional[str] = None) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("reload_plugins", "Reload all plugins (for development)", category=CommandCategory.GENERAL)
 def cmd_reload_plugins(handler) -> CommandResult:
     """Reload all plugins from disk."""
     if not hasattr(handler.app, 'plugin_manager') or not handler.app.plugin_manager:
@@ -163,3 +160,21 @@ def cmd_reload_plugins(handler) -> CommandResult:
         print("Plugin reload cancelled.")
     
     return CommandResult(ActionType.CONTINUE)
+
+# New hierarchical plugin commands
+@registry.register("plugin.list", "List all available plugins", category=CommandCategory.GENERAL)
+def cmd_plugin_list(handler) -> CommandResult:
+    """List all available plugins and their status."""
+    return cmd_plugins(handler)
+
+
+@registry.register("plugin.info", "Get details for a specific plugin", category=CommandCategory.GENERAL)
+def cmd_plugin_info(handler, name: str) -> CommandResult:
+    """Get detailed information about a specific plugin."""
+    return cmd_plugin(handler, name)
+
+
+@registry.register("plugin.reload", "Reload all plugins (for development)", category=CommandCategory.GENERAL)
+def cmd_plugin_reload(handler) -> CommandResult:
+    """Reload all plugins from disk."""
+    return cmd_reload_plugins(handler)

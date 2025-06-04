@@ -23,50 +23,51 @@ class UIManager:
         # Create a table for the help menu
         table = Table(show_header=False, box=None, padding=(0, 1))
         table.add_column("Command", style=f"bold {command_color}", no_wrap=True)
-        table.add_column("Description", style="grey70")        # Add a header for General Commands
-        table.add_row("[bold white]General Commands:[/bold white]", "")
-        table.add_row(f"[bold {command_color}]/help[/bold {command_color}]", "Show this help menu.")
-        table.add_row(f"[bold {command_color}]/quit[/bold {command_color}]", "Exit the program and save the configuration.")
-        table.add_row(f"[bold {command_color}]/showvars[/bold {command_color}]", "Display current system variables.")
-        table.add_row(f"[bold {command_color}]/resetchat[/bold {command_color}]", "Reset chat to factory defaults.")
+        table.add_column("Description", style="grey70")        # Add a header for System Commands
+        table.add_row("[bold white]System Commands:[/bold white]", "")
+        table.add_row(f"[bold {command_color}]/sys.help[/bold {command_color}]", "Show this help menu.")
+        table.add_row(f"[bold {command_color}]/sys.quit[/bold {command_color}]", "Exit the program and save the configuration.")
+        table.add_row(f"[bold {command_color}]/sys.vars[/bold {command_color}]", "Display current system variables.")
         
         # Get num_chats dynamically from session manager
         num_chats = self.app.session_manager.num_chats if hasattr(self.app, 'session_manager') and self.app.session_manager else ConfigManager.get_num_chats()
-        
-        # Add a header for Chat Navigation Commands
+          # Add a header for Chat Session Management Commands
         table.add_row("", "")  # Empty row for spacing
-        table.add_row("[bold white]Chat Navigation Commands:[/bold white]", "")
-        table.add_row(f"[bold {command_color}]/switch [NUMBER][/bold {command_color}]", f"Switch between chats (1-{num_chats}). Default switches to next chat.")
-        table.add_row(f"[bold {command_color}]/twist [NUMBER][/bold {command_color}]", f"Copy AI's last response to target chat (1-{num_chats}). Default uses next chat.")
-        table.add_row(f"[bold {command_color}]/addchat[/bold {command_color}]", "Add a new chat session.")
-        table.add_row(f"[bold {command_color}]/removechat[/bold {command_color}]", "Remove a chat session.")# Add a header for Model Commands        table.add_row("", "")  # Empty row for spacing
-        table.add_row("\n[bold white]Model Commands:[/bold white]", "")          
-        table.add_row(f"[bold {command_color}]/model[/bold {command_color}]", "Select a different model.")
-        table.add_row(f"[bold {command_color}]/setctx[/bold {command_color}]", f"Set context window size. Usage: [bold {command_color}]/setctx NUMBER[/bold {command_color}] (2048-32768 tokens).")
-        table.add_row(f"[bold {command_color}]/settemp[/bold {command_color}]", f"Set model temperature. Usage: [bold {command_color}]/settemp NUMBER[/bold {command_color}] (0.0-2.0).")
-        table.add_row(f"[bold {command_color}]/toggle_eval[/bold {command_color}]", "Toggle evaluation data display after responses.")
-        table.add_row(f"[bold {command_color}]/toggle_think[/bold {command_color}]", "Toggle thinking mode (show/hide model reasoning).")
+        table.add_row("[bold white]Chat Session Management:[/bold white]", "")
+        table.add_row(f"[bold {command_color}]/chat.switch [NUMBER][/bold {command_color}]", f"Switch between chats (1-{num_chats}). Default switches to next chat.")
+        table.add_row(f"[bold {command_color}]/chat.twist [NUMBER][/bold {command_color}]", f"Copy AI's last response to target chat (1-{num_chats}). Default uses next chat.")
+        table.add_row(f"[bold {command_color}]/chat.add[/bold {command_color}]", "Add a new chat session.")
+        table.add_row(f"[bold {command_color}]/chat.remove[/bold {command_color}]", "Remove a chat session.")
+        table.add_row(f"[bold {command_color}]/chat.reset[/bold {command_color}]", "Reset chat to factory defaults.")        # Add a header for Model Control Commands        
+        table.add_row("", "")  # Empty row for spacing
+        table.add_row("[bold white]Model Control Commands:[/bold white]", "")          
+        table.add_row(f"[bold {command_color}]/model.switch[/bold {command_color}]", "Select a different model.")
+        table.add_row(f"[bold {command_color}]/model.setctx[/bold {command_color}]", f"Set context window size. Usage: [bold {command_color}]/model.setctx NUMBER[/bold {command_color}] (2048-32768 tokens).")
+        table.add_row(f"[bold {command_color}]/model.eval on/off[/bold {command_color}]", "Toggle evaluation data display after responses.")
+        table.add_row(f"[bold {command_color}]/model.think on/off[/bold {command_color}]", "Toggle thinking mode (show/hide model reasoning).")        # Add a header for Prompt Management Commands
+        table.add_row("", "")  # Empty row for spacing
+        table.add_row("[bold white]Prompt Management Commands:[/bold white]", "")
+        table.add_row(f"[bold {command_color}]/prompt.set[/bold {command_color}]", f"Set a saved prompt. Usage: [bold {command_color}]/prompt.set NUMBER PROMPT_TEXT[/bold {command_color}].")
+        table.add_row(f"[bold {command_color}]/prompt.use[/bold {command_color}]", f"Use a saved prompt. Usage: [bold {command_color}]/prompt.use NUMBER[/bold {command_color}].")
+        table.add_row(f"[bold {command_color}]/prompt.list[/bold {command_color}]", f"Display saved prompts. Usage: [bold {command_color}]/prompt.list NUMBER[/bold {command_color}] or [bold {command_color}]/prompt.list all[/bold {command_color}].")
+        table.add_row(f"[bold {command_color}]/system[/bold {command_color}]", "Change the system prompt.")        # Add a header for History & Logging Commands
+        table.add_row("", "")  # Empty row for spacing
+        table.add_row("[bold white]History & Logging Commands:[/bold white]", "")        
+        table.add_row(f"[bold {command_color}]/history.show[/bold {command_color}]", "Display the current chat history.")
+        table.add_row(f"[bold {command_color}]/history.clear[/bold {command_color}]", "Clear the current chat history.")
+        table.add_row(f"[bold {command_color}]/log.on[/bold {command_color}]", "Enable logging of chat history.")
+        table.add_row(f"[bold {command_color}]/log.off[/bold {command_color}]", "Disable logging of chat history.")
+        table.add_row(f"[bold {command_color}]/log.today[/bold {command_color}]", "View unified log for today.")        # Add a header for File Management Commands
+        table.add_row("", "")  # Empty row for spacing
+        table.add_row("[bold white]File Management Commands:[/bold white]", "")
+        table.add_row(f"[bold {command_color}]/file.load[/bold {command_color}]", f"Load a file as a prompt. Usage: [bold {command_color}]/file.load FILENAME PROMPT[/bold {command_color}].")
 
-        # Add a header for Prompt Commands
+        # Add a header for Plugin System Commands
         table.add_row("", "")  # Empty row for spacing
-        table.add_row("[bold white]Prompt Commands:[/bold white]", "")
-        table.add_row(f"[bold {command_color}]/setprompt[/bold {command_color}]", f"Set a saved prompt. Usage: [bold {command_color}]/setprompt NUMBER PROMPT_TEXT[/bold {command_color}].")
-        table.add_row(f"[bold {command_color}]/prompt[/bold {command_color}]", f"Use a saved prompt. Usage: [bold {command_color}]/prompt NUMBER[/bold {command_color}].")
-        table.add_row(f"[bold {command_color}]/showprompt[/bold {command_color}]", f"Display saved prompts. Usage: [bold {command_color}]/showprompt NUMBER[/bold {command_color}] or [bold {command_color}]/showprompt all[/bold {command_color}].")
-        table.add_row(f"[bold {command_color}]/system[/bold {command_color}]", "Change the system prompt.")        # Add a header for Chat History Commands
-        table.add_row("", "")  # Empty row for spacing
-        table.add_row("[bold white]Chat History Commands:[/bold white]", "")
-        table.add_row(f"[bold {command_color}]/history[/bold {command_color}]", "Display the current chat history.")
-        table.add_row(f"[bold {command_color}]/clear[/bold {command_color}]", "Clear the current chat history.")
-        table.add_row(f"[bold {command_color}]/export[/bold {command_color}]", "Export chat history.")
-        table.add_row(f"[bold {command_color}]/toggle_log[/bold {command_color}]", "Toggle logging of chat history.")
-        table.add_row(f"[bold {command_color}]/unified_log[/bold {command_color}]", "View unified log for today.")
-
-        # Add a header for File Commands
-        table.add_row("", "")  # Empty row for spacing
-        table.add_row("[bold white]File Commands:[/bold white]", "")
-        table.add_row(f"[bold {command_color}]/load[/bold {command_color}]", f"Load a file as a prompt. Usage: [bold {command_color}]/load FILENAME PROMPT[/bold {command_color}].")
-        table.add_row(f"[bold {command_color}]/save[/bold {command_color}]", "Save conversation to file.")
+        table.add_row("[bold white]Plugin System Commands:[/bold white]", "")
+        table.add_row(f"[bold {command_color}]/plugin.list[/bold {command_color}]", "List all available plugins.")
+        table.add_row(f"[bold {command_color}]/plugin.info[/bold {command_color}]", "Get information about a specific plugin.")
+        table.add_row(f"[bold {command_color}]/plugin.reload[/bold {command_color}]", "Reload the plugin system.")
 
         # Print the table
         print(f"\n[bold grey70]| GLOBAL HELP MENU[/bold grey70]\n")

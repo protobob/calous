@@ -1,4 +1,34 @@
-# Changelog
+# CHANGELOG
+
+## [0.9.0.dev] - 2025-06-04
+
+### MAJOR CHANGES
+- **Complete Command System Overhaul**: Replaced all single-word commands with hierarchical dot-notation system
+- **Breaking Change**: Removed all legacy commands - users must now use new command structure
+
+### Added
+- Hierarchical command structure with logical grouping:
+  - **Chat Management**: `/chat.add`, `/chat.switch`, `/chat.remove`, `/chat.twist`, `/chat.reset`
+  - **Model Control**: `/model.switch`, `/model.setctx`, `/model.eval on/off`, `/model.think on/off` 
+  - **Prompt Management**: `/prompt.use`, `/prompt.set`, `/prompt.list`
+  - **History & Logging**: `/history.show`, `/history.clear`, `/log.on`, `/log.off`, `/log.today`
+  - **File Management**: `/file.load`
+  - **Plugin System**: `/plugin.list`, `/plugin.info`, `/plugin.reload`
+  - **System Commands**: `/sys.help`, `/sys.vars`, `/sys.quit`
+
+### Changed
+- Updated help menu to reflect new hierarchical command organization
+- Improved command categorization and organization
+- Enhanced command descriptions for better clarity
+
+### Removed
+- All legacy single-word commands (26+ commands removed)
+
+### Fixed
+- `/file.load` now properly handles multi-word prompts
+- Logging commands now use correct attribute names
+
+---
 
 ## [0.8.2.dev] - 2025-06-04
 

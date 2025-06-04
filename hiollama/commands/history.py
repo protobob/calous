@@ -9,7 +9,6 @@ from ..unified_logger import unified_logger
 from ..utils import get_chat_color
 
 
-@registry.register("clear", "Clear chat history", category=CommandCategory.HISTORY)
 def cmd_clear(handler) -> CommandResult:
     """Clear the current chat's history with confirmation."""
     try:
@@ -32,14 +31,12 @@ def cmd_clear(handler) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("history", "Show chat history", aliases=["hist"], category=CommandCategory.HISTORY)
 def cmd_history(handler) -> CommandResult:
     """Display chat history."""
     handler.app.chat_history.print_history()
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("export", "Export chat history", category=CommandCategory.HISTORY)
 def cmd_export(handler, filename: Optional[str] = None) -> CommandResult:
     """Export chat history to a file."""
     import json
@@ -76,21 +73,9 @@ def cmd_export(handler, filename: Optional[str] = None) -> CommandResult:
         
     except Exception as e:
         print(f"[bold red]Error exporting history:[/bold red] {e}")
-    
-    return CommandResult(ActionType.CONTINUE)
+        return CommandResult(ActionType.CONTINUE)
 
 
-
-
-@registry.register("toggle_log", "Toggle unified logging", aliases=["log"], category=CommandCategory.HISTORY)
-def cmd_toggle_log(handler) -> CommandResult:
-    """Toggle unified logging of all chat activities."""
-    enabled = unified_logger.toggle_logging()
-    print(f"\nUnified logging is now: {'enabled' if enabled else 'disabled'}")
-    return CommandResult(ActionType.CONTINUE)
-
-
-@registry.register("unified_log", "View unified log for today", aliases=["viewlog"], category=CommandCategory.HISTORY)
 def cmd_unified_log(handler) -> CommandResult:
     """View the unified log for today."""
     from pathlib import Path
@@ -121,3 +106,45 @@ def cmd_unified_log(handler) -> CommandResult:
         print(f"[bold red]Error reading unified log:[/bold red] {e}")
     
     return CommandResult(ActionType.CONTINUE)
+
+
+# New hierarchical history commands
+@registry.register("history.clear", "Clear the current chat history", category=CommandCategory.HISTORY)
+def cmd_history_clear(handler) -> CommandResult:
+    """Clear the current chat's history with confirmation."""
+    return cmd_clear(handler)
+
+
+@registry.register("history.show", "View the current chat history", category=CommandCategory.HISTORY)
+def cmd_history_show(handler) -> CommandResult:
+    """Display chat history."""
+    return cmd_history(handler)
+
+
+# New hierarchical logging commands
+@registry.register("log.on", "Enable unified logging", category=CommandCategory.HISTORY)
+def cmd_log_on(handler) -> CommandResult:
+    """Enable unified logging of all chat activities."""
+    if unified_logger.enabled:
+        print("\nUnified logging is already enabled")
+    else:
+        unified_logger.toggle_logging()
+        print("\nUnified logging is now: enabled")
+    return CommandResult(ActionType.CONTINUE)
+
+
+@registry.register("log.off", "Disable unified logging", category=CommandCategory.HISTORY)
+def cmd_log_off(handler) -> CommandResult:
+    """Disable unified logging of all chat activities."""
+    if not unified_logger.enabled:
+        print("\nUnified logging is already disabled")
+    else:
+        unified_logger.toggle_logging()
+        print("\nUnified logging is now: disabled")
+    return CommandResult(ActionType.CONTINUE)
+
+
+@registry.register("log.today", "View today's unified log", category=CommandCategory.HISTORY)
+def cmd_log_today(handler) -> CommandResult:
+    """View the unified log for today."""
+    return cmd_unified_log(handler)

@@ -30,9 +30,8 @@ class CommandRegistry:
                     parser.add_argument("prompt", nargs='+', help="System prompt text (no quotes needed)")
                 elif name == "setprompt":
                     parser.add_argument("slot", type=int, help="Prompt slot number")
-                    parser.add_argument("prompt", nargs='+', help="Prompt text (no quotes needed)")
-            # Special handling for load command
-            elif name == "load":
+                    parser.add_argument("prompt", nargs='+', help="Prompt text (no quotes needed)")            # Special handling for load command
+            elif name in ["load", "file.load"]:
                 parser.add_argument("filepath", type=str, help="File path to load")
                 parser.add_argument("prompt", nargs='+', help="Prompt text (no quotes needed)")
             else:

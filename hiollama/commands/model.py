@@ -7,7 +7,6 @@ from .registry import registry
 from .types import CommandCategory
 
 
-@registry.register("model", "Select a different Ollama model", category=CommandCategory.MODEL)
 def cmd_model(handler) -> CommandResult:
     """Select a different model globally."""
     selected = handler.app.model.select_model()
@@ -18,7 +17,6 @@ def cmd_model(handler) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("toggle_eval", "Toggle evaluation data display", aliases=["eval"], category=CommandCategory.MODEL)
 def cmd_toggle_eval(handler) -> CommandResult:
     """Toggle display of evaluation data."""
     handler.app.verbosity = not handler.app.verbosity
@@ -26,7 +24,6 @@ def cmd_toggle_eval(handler) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("toggle_think", "Toggle thinking mode display", aliases=["think"], category=CommandCategory.MODEL)
 def cmd_toggle_think(handler) -> CommandResult:
     """Toggle thinking mode - when enabled, shows model reasoning during responses."""
     handler.app.thinking_enabled = not handler.app.thinking_enabled
@@ -39,7 +36,6 @@ def cmd_toggle_think(handler) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("setctx", "Set context window size", category=CommandCategory.MODEL)
 def cmd_setctx(handler, context_size: Optional[int] = None) -> CommandResult:
     """Set the context window size for the current chat."""
     if context_size is None:
@@ -107,11 +103,9 @@ def cmd_setctx(handler, context_size: Optional[int] = None) -> CommandResult:
     handler.app.num_ctx = context_size
     print(f"\n[green]Context window set to {context_size:,} tokens for this chat[/green]")
     print("[grey50]This will take effect on the next message to the model[/grey50]")
-    
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("settemp", "Set temperature parameter", category=CommandCategory.MODEL)
 def cmd_settemp(handler, temperature: Optional[float] = None) -> CommandResult:
     """Set the temperature parameter for the current chat."""
     if temperature is None:
@@ -163,5 +157,61 @@ def cmd_settemp(handler, temperature: Optional[float] = None) -> CommandResult:
     handler.app.temperature = temperature
     print(f"\n[green]Temperature set to {temperature} for this chat[/green]")
     print("[grey50]This will take effect on the next message to the model[/grey50]")
+    
+    return CommandResult(ActionType.CONTINUE)
+
+
+# New hierarchical model commands
+@registry.register("model.switch", "Change the current model", category=CommandCategory.MODEL)
+def cmd_model_switch(handler) -> CommandResult:
+    """Select a different model globally."""
+    return cmd_model(handler)
+
+
+@registry.register("model.setctx", "Set max context window size", category=CommandCategory.MODEL)
+def cmd_model_setctx(handler, context_size: Optional[int] = None) -> CommandResult:
+    """Set the context window size for the current chat."""
+    return cmd_setctx(handler, context_size)
+
+
+@registry.register("model.eval", "Toggle evaluation display", category=CommandCategory.MODEL)
+def cmd_model_eval(handler, state: str) -> CommandResult:
+    """Enable or disable evaluation data display."""
+    if state.lower() not in ["on", "off"]:
+        print("[bold red]Error:[/bold red] State must be 'on' or 'off'")
+        print("[grey50]Usage: /model.eval on  or  /model.eval off[/grey50]")
+        return CommandResult(ActionType.CONTINUE)
+    
+    target_state = state.lower() == "on"
+    
+    if handler.app.verbosity == target_state:
+        print(f"\nEvaluation display is already {'enabled' if target_state else 'disabled'}")
+    else:
+        handler.app.verbosity = target_state
+        print(f"\nEvaluation display is now: {'enabled' if target_state else 'disabled'}")
+    
+    return CommandResult(ActionType.CONTINUE)
+
+
+@registry.register("model.think", "Toggle thinking display", category=CommandCategory.MODEL)
+def cmd_model_think(handler, state: str) -> CommandResult:
+    """Enable or disable thinking mode display."""
+    if state.lower() not in ["on", "off"]:
+        print("[bold red]Error:[/bold red] State must be 'on' or 'off'")
+        print("[grey50]Usage: /model.think on  or  /model.think off[/grey50]")
+        return CommandResult(ActionType.CONTINUE)
+    
+    target_state = state.lower() == "on"
+    
+    if handler.app.thinking_enabled == target_state:
+        print(f"\nThinking mode is already {'enabled' if target_state else 'disabled'}")
+    else:
+        handler.app.thinking_enabled = target_state
+        status = "enabled" if target_state else "disabled"
+        print(f"\nThinking mode is now: {status}")
+        if target_state:
+            print("[grey50]Model reasoning will be shown during responses but filtered from history and twist operations[/grey50]")
+        else:
+            print("[grey50]Model reasoning will be hidden for clean output[/grey50]")
     
     return CommandResult(ActionType.CONTINUE)

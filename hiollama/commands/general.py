@@ -8,27 +8,23 @@ from rich import print
 from rich.prompt import Prompt
 
 
-@registry.register("help", "Show this help menu", aliases=["h"], category=CommandCategory.GENERAL)
 def cmd_help(handler) -> CommandResult:
     """Display the help menu using the existing UI manager implementation."""
     handler.app.ui.help_menu()
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("quit", "Exit and save configuration", aliases=["q", "exit"], category=CommandCategory.GENERAL)
 def cmd_quit(handler) -> CommandResult:
     """Save configuration and exit."""
     return CommandResult(ActionType.QUIT)
 
 
-@registry.register("showvars", "Display current system variables", aliases=["vars"], category=CommandCategory.GENERAL)
 def cmd_showvars(handler) -> CommandResult:
     """Display application variables."""
     handler.app.ui.show_variables()
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("resetchat", "Reset chat to factory defaults", category=CommandCategory.GENERAL)
 def cmd_resetchat(handler) -> CommandResult:
     """Reset the current chat to factory defaults with confirmation."""
     try:
@@ -64,4 +60,24 @@ def cmd_resetchat(handler) -> CommandResult:
             print("Reset operation cancelled.")
     except KeyboardInterrupt:
         print("\nReset operation cancelled.")
+    return CommandResult(ActionType.CONTINUE)
+
+# New hierarchical system commands
+@registry.register("sys.help", "Show this command reference", category=CommandCategory.GENERAL)
+def cmd_sys_help(handler) -> CommandResult:
+    """Display the help menu using the existing UI manager implementation."""
+    handler.app.ui.help_menu()
+    return CommandResult(ActionType.CONTINUE)
+
+
+@registry.register("sys.quit", "Exit and save configuration", category=CommandCategory.GENERAL)
+def cmd_sys_quit(handler) -> CommandResult:
+    """Save configuration and exit."""
+    return CommandResult(ActionType.QUIT)
+
+
+@registry.register("sys.vars", "Show current system variables", category=CommandCategory.GENERAL)
+def cmd_sys_vars(handler) -> CommandResult:
+    """Display application variables."""
+    handler.app.ui.show_variables()
     return CommandResult(ActionType.CONTINUE)
