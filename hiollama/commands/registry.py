@@ -11,6 +11,17 @@ class CommandRegistry:
     def __init__(self):
         self.commands: Dict[str, CommandDefinition] = {}
         self.aliases: Dict[str, str] = {}
+        self.user_aliases: Dict[str, str] = {}
+        self._load_user_aliases()
+    
+    def _load_user_aliases(self):
+        """Load user-defined aliases from config."""
+        try:
+            from ..config import ConfigManager
+            self.user_aliases = ConfigManager.get_aliases()
+        except Exception:
+            # Fallback if config not available during import
+            self.user_aliases = {}
     
     def register(self, name: str, description: str = "", aliases: List[str] = None, 
                 category: str = CommandCategory.GENERAL):
@@ -110,7 +121,11 @@ class CommandRegistry:
         if name in self.commands:
             return self.commands[name]
         
-        # Check aliases
+        # Check user aliases first (they take precedence)
+        if name in self.user_aliases:
+            return self.commands.get(self.user_aliases[name])
+        
+        # Check built-in aliases
         if name in self.aliases:
             return self.commands[self.aliases[name]]
         
@@ -119,6 +134,46 @@ class CommandRegistry:
     def get_all_commands(self) -> Dict[str, CommandDefinition]:
         """Get all registered commands."""
         return self.commands.copy()
+    
+    def add_user_alias(self, alias: str, command: str) -> bool:
+        """Add a user-defined alias and persist to config."""
+        # Validate that target command exists
+        if not self.get_command(command):
+            return False
+            
+        # Prevent aliases that conflict with existing command names
+        if alias in self.commands:
+            return False
+            
+        try:
+            from ..config import ConfigManager
+            ConfigManager.add_alias(alias, command)
+            self.user_aliases[alias] = command
+            return True
+        except Exception:
+            return False
+    
+    def remove_user_alias(self, alias: str) -> bool:
+        """Remove a user-defined alias and update config."""
+        if alias not in self.user_aliases:
+            return False
+            
+        try:
+            from ..config import ConfigManager
+            success = ConfigManager.remove_alias(alias)
+            if success:
+                del self.user_aliases[alias]
+            return success
+        except Exception:
+            return False
+    
+    def list_user_aliases(self) -> Dict[str, str]:
+        """Get all user-defined aliases."""
+        return self.user_aliases.copy()
+    
+    def refresh_user_aliases(self):
+        """Reload user aliases from config."""
+        self._load_user_aliases()
 
 
 # Global registry instance

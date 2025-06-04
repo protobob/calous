@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## [0.9.1.dev] - 2025-06-04
+
+### Added
+- User-defined alias system with persistent storage in config
+- Built-in aliases: `/quit` for `/sys.quit`, `/help` for `/sys.help`
+- New alias commands:
+  - `/alias.add <alias> <command>` - Create custom command aliases
+  - `/alias.remove <alias>` - Remove user-defined aliases
+  - `/alias.list` - Display all current aliases
+  - `/alias` - Show alias command help
+
+### Technical
+- Extended ConfigManager with alias persistence methods
+- Enhanced CommandRegistry to support both built-in and user-defined aliases
+- User aliases stored in global config section alongside other settings
+
+---
+
 ## [0.9.0.dev] - 2025-06-04
 
 ### MAJOR CHANGES

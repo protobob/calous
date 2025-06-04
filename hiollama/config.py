@@ -116,3 +116,47 @@ class ConfigManager:
         """Get the configured number of chats."""
         global_config = ConfigManager.get_global_config()
         return global_config.get("num_chats", DEFAULT_NUM_CHATS)
+    
+    @staticmethod
+    def get_aliases():
+        """Get user-defined command aliases from config."""
+        global_config = ConfigManager.get_global_config()
+        return global_config.get("aliases", {})
+    
+    @staticmethod
+    def add_alias(alias, command):
+        """Add a user-defined command alias."""
+        unified_config = ConfigManager.load_unified_config()
+        
+        # Ensure global section exists
+        if "global" not in unified_config:
+            unified_config["global"] = {}
+        
+        # Ensure aliases section exists
+        if "aliases" not in unified_config["global"]:
+            unified_config["global"]["aliases"] = {}
+        
+        # Add the alias
+        unified_config["global"]["aliases"][alias] = command
+        
+        ConfigManager.save_unified_config(unified_config)
+    
+    @staticmethod
+    def remove_alias(alias):
+        """Remove a user-defined command alias."""
+        unified_config = ConfigManager.load_unified_config()
+        
+        # Check if aliases exist
+        if ("global" in unified_config and 
+            "aliases" in unified_config["global"] and 
+            alias in unified_config["global"]["aliases"]):
+            
+            del unified_config["global"]["aliases"][alias]
+            ConfigManager.save_unified_config(unified_config)
+            return True
+        return False
+    
+    @staticmethod
+    def list_aliases():
+        """List all user-defined command aliases."""
+        return ConfigManager.get_aliases()
