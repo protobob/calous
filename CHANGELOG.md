@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.8.2.dev] - 2025-06-04
+
+### Added
+- `/reload_plugins` command for dynamic plugin reloading during development
+- Plugin reload functionality exposed to users through command interface
+- Enhanced plugin development workflow with hot-reload capability
+
+### Fixed
+- Plugin dependencies in setup.py (removed unused beautifulsoup4, added missing asteval)
+- Plugin system dependency management improved
+
 ## 0.8.1.dev (2025-06-03)
 
 ### Changed

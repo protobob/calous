@@ -31,6 +31,9 @@ HiOllama provides a comprehensive command system to manage multiple AI chat sess
 | `/quit` | General | Exit and save configuration |
 | `/resetchat` | General | Reset chat to factory defaults |
 | `/showvars` | General | Display current system variables |
+| `/plugins` | General | List available plugins and their status |
+| `/plugin` | General | Get details about a specific plugin |
+| `/reload_plugins` | General | Reload all plugins (for development) |
 
 ## 🎯 Navigation & Chat Management
 
@@ -275,6 +278,33 @@ Essential system commands for help, configuration, and application control.
 - Shows current configuration settings
 - Displays model parameters and session info
 - Useful for troubleshooting and system monitoring
+
+### `/plugins`
+**Purpose**: List available plugins and their status  
+**Usage**: `/plugins`  
+**Details**:
+- Shows all loaded plugins with their capabilities
+- Displays plugin status (active/inactive)
+- Lists available LLM tools from function calling plugins
+- Useful for checking plugin system health
+
+### `/plugin <plugin_name>`
+**Purpose**: Get details about a specific plugin  
+**Usage**: `/plugin dice_roller`  
+**Details**:
+- Shows detailed information about a single plugin
+- Displays available functions and their parameters
+- Shows plugin version, description, and capabilities
+- Useful for understanding plugin functionality
+
+### `/reload_plugins`
+**Purpose**: Reload all plugins (for development)  
+**Usage**: `/reload_plugins`  
+**Details**:
+- Reloads all plugins from disk
+- Useful during plugin development and testing
+- Requires confirmation as it destroys plugin state
+- **Warning**: This is a destructive operation
 
 ## 🔧 Command Aliases
 

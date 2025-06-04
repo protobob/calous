@@ -2,6 +2,7 @@
 from typing import Optional
 from rich import print
 from rich.table import Table
+from rich.prompt import Prompt
 from ..types import CommandResult, ActionType
 from .registry import registry
 from .types import CommandCategory
@@ -127,5 +128,38 @@ def cmd_plugin(handler, plugin_name: Optional[str] = None) -> CommandResult:
                     required = param_name in required_params
                     req_marker = " [red]*[/red]" if required else ""
                     print(f"      - {param_name} ({param_type}){req_marker}: {param_desc}")
+    
+    return CommandResult(ActionType.CONTINUE)
+
+
+@registry.register("reload_plugins", "Reload all plugins (for development)", category=CommandCategory.GENERAL)
+def cmd_reload_plugins(handler) -> CommandResult:
+    """Reload all plugins from disk."""
+    if not hasattr(handler.app, 'plugin_manager') or not handler.app.plugin_manager:
+        print("[bold red]Plugin system not available[/bold red]")
+        return CommandResult(ActionType.CONTINUE)
+    
+    # Ask for confirmation as this is a destructive operation
+    print("[bold yellow]Warning:[/bold yellow] This will reload all plugins from disk.")
+    print("Any plugin state will be lost and all plugins will be reinitialized.")
+    
+    confirm = Prompt.ask("\nAre you sure you want to continue?", choices=["y", "n"], default="n")
+    
+    if confirm == 'y':
+        # Get the plugin directory from the session manager
+        plugin_dir = None
+        if hasattr(handler.app, 'session_manager') and handler.app.session_manager:
+            import os
+            from pathlib import Path
+            plugin_dir = Path(os.path.dirname(os.path.dirname(__file__))) / 'plugins'
+        
+        if plugin_dir and plugin_dir.exists():
+            print("[blue]Reloading plugins...[/blue]")
+            handler.app.plugin_manager.reload_plugins(plugin_dir)
+            print("[green]✓[/green] Plugin reload complete!")
+        else:
+            print("[bold red]Error:[/bold red] Could not locate plugin directory")
+    else:
+        print("Plugin reload cancelled.")
     
     return CommandResult(ActionType.CONTINUE)

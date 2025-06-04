@@ -32,10 +32,15 @@ class PluginBase(ABC):
     def cleanup(self) -> None:
         """Clean up plugin resources. Override if needed."""
         pass
-    
+
     def get_capabilities(self) -> List[PluginCapability]:
         """Return list of capabilities this plugin provides."""
         return self.capabilities.copy()
+    
+    @property
+    def is_active(self) -> bool:
+        """Check if plugin is currently active/enabled."""
+        return self.loaded and self.error is None
 
 
 class FunctionCallingPlugin(PluginBase):
