@@ -52,7 +52,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "0.10.0.dev"
+APP_VERSION = "0.11.1.dev"
 
 # Multi-chat configuration
 DEFAULT_NUM_CHATS = 4  # default if no config
@@ -61,3 +61,25 @@ DEFAULT_NUM_CHATS = 4  # default if no config
 MAX_CHATS = 14
 TWIST_PREVIEW_LENGTH = 100
 SWITCH_PREVIEW_LENGTH = 50
+
+# UI Formatting Constants
+class Colors:
+    """Rich color constants for consistent UI formatting."""
+    ERROR = "[bold red]"
+    SUCCESS = "[green]"
+    WARNING = "[yellow]"
+    INFO = "[bold cyan]"
+    HINT = "[grey50]"
+    COMMAND = "[cyan]"
+    RESET = ""
+
+class Messages:
+    """Standard message templates."""
+    OPERATION_CANCELLED = "Operation cancelled."
+    ALIAS_CREATION_FAILED = "Failed to create alias"
+    ALIAS_REMOVAL_FAILED = "Failed to remove alias"
+    
+class Confirmations:
+    """Standard confirmation choices."""
+    YES_NO = ["y", "n"]
+    DEFAULT_NO = "n"

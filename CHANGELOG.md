@@ -1,5 +1,36 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
+## [0.11.1.dev] - 2025-06-06
+
+### Added
+- New service layer architecture with `AliasService` and `ChatService`
+- Comprehensive `CommandFormatter` system for consistent UI output
+- Specialized `AliasFormatter` and `FileFormatter` classes
+- Enhanced error handling with standardized formatting
+- Confirmation utilities in formatters
+
+### Changed
+- Refactored `general.py` commands to use service layer pattern
+- Refactored `file.py` commands to use `FileFormatter`
+- Eliminated duplicate wrapper functions in command registration
+- Improved separation of concerns between UI and business logic
+- All error messages now consistently start with newline character
+- Enhanced type hints and documentation
+
+### Improved
+- Code maintainability through better separation of concerns
+- Testability by extracting business logic from UI concerns
+- Consistency across all command output formatting
+- File size management - kept modules under 150 lines for better readability
+
+### Technical
+- Added `alias_service.py` for alias management logic
+- Added `chat_service.py` for chat operations
+- Added `formatters.py` for centralized UI formatting
+- Updated constants with new UI formatting classes
+
 ## [0.11.0.dev] - 2025-01-XX
 
 ### Added
