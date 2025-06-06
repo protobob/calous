@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.2.dev] - 2025-06-06
+
+### Added
+- **Image Loading Support for Vision Models**: JPG, PNG, and other image files can now be loaded with `file.load` and automatically passed to vision models (llama3.2-vision, llava, etc.)
+- Added `IMAGE_EXTENSIONS` constant for supported image formats (.jpg, .jpeg, .png, .gif, .bmp, .webp, .tiff, .tif, .svg)
+- Created `ImageService` for handling image file operations with base64 encoding
+- Enhanced file type validation to properly categorize images vs binary files
+
+### Changed
+- Modified `handle_regular_input()` and `talk_to_model()` to support images embedded in message content
+- Updated file loading logic to detect and handle image files differently from text files
+- Images are now embedded in message content following Ollama's multimodal API format
+- Moved file extension constants from inline definitions to `constants.py` for better organization
+
+### Technical
+- Refactored `handler.py` following established patterns with `HandlerFormatter` and service classes
+- Created `CommandParsingService` and `CommandExecutionService` for better separation of concerns
+- Enhanced error handling for image loading operations with standardized formatting
+- Images passed via message `images` field rather than separate API parameter
+
 ## [0.11.1.dev] - 2025-06-06
 
 ### Added

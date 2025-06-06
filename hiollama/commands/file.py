@@ -1,26 +1,14 @@
 """File operation commands."""
 from rich.prompt import Prompt
+from rich import print
 from pathlib import Path
 import textwrap
 from ..types import CommandResult, ActionType
-from ..constants import MAX_FILE_SIZE, LARGE_FILE_WARNING_SIZE
+from ..constants import MAX_FILE_SIZE, LARGE_FILE_WARNING_SIZE, TEXT_EXTENSIONS, BINARY_EXTENSIONS, IMAGE_EXTENSIONS
 from .registry import registry
 from .types import CommandCategory
 from .formatters import FileFormatter
-
-# Supported text file extensions
-TEXT_EXTENSIONS = {
-    '.txt', '.md', '.py', '.js', '.ts', '.html', '.css', '.json', '.xml', '.yaml', '.yml',
-    '.ini', '.cfg', '.conf', '.log', '.sql', '.sh', '.bat', '.ps1', '.csv', '.tsv',
-    '.c', '.cpp', '.h', '.hpp', '.java', '.cs', '.php', '.rb', '.go', '.rs', '.kt',
-    '.swift', '.scala', '.clj', '.hs', '.elm', '.lua', '.r', '.m', '.pl', '.vim'
-}
-
-# Binary/executable extensions to warn about
-BINARY_EXTENSIONS = {
-    '.exe', '.dll', '.so', '.dylib', '.bin', '.img', '.iso', '.zip', '.rar', '.tar',
-    '.gz', '.7z', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'
-}
+from .image_service import ImageService
 
 
 def _read_file_content(file_path: Path) -> str:
@@ -65,6 +53,10 @@ def _validate_file_type(file_path: Path) -> bool:
         formatter.no_extension_notice()
         return True
     
+    # Handle image files - no validation needed for supported vision models
+    if extension in IMAGE_EXTENSIONS:
+        return True
+    
     # Warn about binary files
     if extension in BINARY_EXTENSIONS:
         formatter.binary_file_warning(extension)
@@ -98,6 +90,34 @@ def _format_file_content(file_path: Path, content: str, prompt: str) -> str:
         return f"File content from {file_path.name}:\n{indented_content}"
 
 
+def _handle_image_load(handler, file_path: Path, prompt: str) -> CommandResult:
+    """Handle loading of image files for vision models."""
+    formatter = FileFormatter()
+    
+    try:
+        # Get image information
+        image_info = ImageService.get_image_info(file_path)
+        
+        # Prepare image for Ollama (returns file path)
+        image_path = ImageService.prepare_image_for_ollama(file_path)
+        
+        # Display image loading success
+        print(f"[green]✓[/green] Image loaded: {image_info['name']} ({image_info['size_mb']} MB)")
+        
+        # Send to model with image
+        if prompt.strip():
+            handler.app.handle_regular_input(prompt, images=[image_path])
+        else:
+            # Default prompt for image analysis
+            handler.app.handle_regular_input("Please analyze this image.", images=[image_path])
+        
+        return CommandResult(ActionType.CONTINUE)
+        
+    except Exception as e:
+        formatter.generic_error(f"Failed to load image: {str(e)}")
+        return CommandResult(ActionType.CONTINUE)
+
+
 def cmd_load(handler, filepath: str, prompt: str = "") -> CommandResult:
     """Load a file and send it with a prompt."""
     formatter = FileFormatter()
@@ -118,7 +138,11 @@ def cmd_load(handler, filepath: str, prompt: str = "") -> CommandResult:
             formatter.file_load_cancelled()
             return CommandResult(ActionType.CONTINUE)
         
-        # Read file content with safety checks
+        # Handle image files differently
+        if ImageService.is_image_file(file_path):
+            return _handle_image_load(handler, file_path, prompt)
+        
+        # Handle text files (existing logic)
         try:
             file_content = _read_file_content(file_path)
         except ValueError as e:

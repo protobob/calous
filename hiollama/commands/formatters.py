@@ -273,3 +273,39 @@ class FileFormatter(CommandFormatter):
     def file_load_error(message: str):
         """Print file loading error."""
         print(f"\n{Colors.ERROR}Error loading file:{Colors.RESET} {message}")
+
+
+class HandlerFormatter(CommandFormatter):
+    """Specialized formatter for command handler output."""
+    
+    @staticmethod
+    def invalid_command_syntax(error: str):
+        """Print invalid command syntax error."""
+        print(f"\n{Colors.ERROR}Error:{Colors.RESET} Invalid command syntax: {error}")
+    
+    @staticmethod
+    def empty_command_error():
+        """Print empty command error."""
+        print(f"\n{Colors.ERROR}Error:{Colors.RESET} Empty command.")
+    
+    @staticmethod
+    def invalid_command(command_name: str):
+        """Print invalid command error with help hint."""
+        print(f"\n{Colors.ERROR}Invalid command:{Colors.RESET} /{command_name}")
+        print(f"{Colors.HINT}Type /help to see available commands.{Colors.RESET}")
+    
+    @staticmethod
+    def command_usage(usage: str):
+        """Print command usage information."""
+        print(f"{Colors.HINT}Usage: {usage.strip()}{Colors.RESET}")
+    
+    @staticmethod
+    def argument_parse_error(error: str, usage: str):
+        """Print argument parsing error with usage."""
+        HandlerFormatter.print_error(str(error))
+        HandlerFormatter.command_usage(usage)
+    
+    @staticmethod
+    def command_execution_error(error: str):
+        """Print command execution error."""
+        print(f"\n{Colors.ERROR}Command execution error:{Colors.RESET} {error}")

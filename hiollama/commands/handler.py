@@ -1,9 +1,7 @@
 """Command handler for parsing and executing commands."""
-import shlex
-from rich import print
 from ..types import CommandResult, ActionType
 from .registry import registry
-from ..unified_logger import unified_logger
+from .command_service import CommandParsingService, CommandExecutionService
 
 
 class AdvancedCommandHandler:
@@ -15,57 +13,25 @@ class AdvancedCommandHandler:
     
     def parse_and_execute(self, user_input: str) -> CommandResult:
         """Parse and execute commands with full argparse support."""
-        if not user_input.startswith('/'):
+        # Parse command input
+        parsed_input = CommandParsingService.parse_command_input(user_input)
+        if not parsed_input:
             return CommandResult(ActionType.CONTINUE)
         
-        # Remove leading slash and parse command line
-        try:
-            # Use shlex to properly handle quoted arguments
-            tokens = shlex.split(user_input[1:])
-        except ValueError as e:
-            print(f"[bold red]Error:[/bold red] Invalid command syntax: {e}")
-            return CommandResult(ActionType.CONTINUE)
+        command_name, args = parsed_input
         
-        if not tokens:
-            print("[bold red]Error:[/bold red] Empty command.")
-            return CommandResult(ActionType.CONTINUE)
-        
-        command_name = tokens[0].lower()
-        args = tokens[1:]
-        
-        # Get command definition
-        cmd_def = self.registry.get_command(command_name)
+        # Validate command exists
+        cmd_def = CommandParsingService.validate_command(command_name, self.registry)
         if not cmd_def:
-            print(f"[bold red]Invalid command:[/bold red] /{command_name}")
-            print("[grey50]Type /help to see available commands.[/grey50]")
             return CommandResult(ActionType.CONTINUE)
         
-        # Parse arguments
-        try:
-            parsed_args = cmd_def.parser.parse_args(args)
-        except SystemExit:
-            # Argparse tried to exit - show usage
-            print(f"[grey50]Usage: {cmd_def.parser.format_usage().strip()}[/grey50]")
+        # Parse command arguments
+        kwargs = CommandParsingService.parse_command_arguments(cmd_def, args)
+        if kwargs is None:
             return CommandResult(ActionType.CONTINUE)
-        except Exception as e:
-            print(f"[bold red]Error:[/bold red] {e}")
-            print(f"[grey50]Usage: {cmd_def.parser.format_usage().strip()}[/grey50]")
-            return CommandResult(ActionType.CONTINUE)          # Execute command
-        try:
-            # Convert parsed args to kwargs
-            kwargs = vars(parsed_args)
-              # Special handling for commands with nargs='+'
-            if cmd_def.name in ["file.load"]:
-                if "prompt" in kwargs and isinstance(kwargs["prompt"], list):
-                    kwargs["prompt"] = " ".join(kwargs["prompt"])
-            
-            # Log command execution
-            unified_logger.log_command_execution(
-                self.app.instance_index, 
-                f"/{command_name} {' '.join(args)}" if args else f"/{command_name}"
-            )
-            
-            return cmd_def.handler(self, **kwargs)
-        except Exception as e:
-            print(f"[bold red]Command execution error:[/bold red] {e}")
-            return CommandResult(ActionType.CONTINUE)
+        
+        # Apply special command handling
+        kwargs = CommandParsingService.apply_special_command_handling(cmd_def, kwargs)
+        
+        # Execute command
+        return CommandExecutionService.execute_command(self, cmd_def, kwargs, command_name, args)

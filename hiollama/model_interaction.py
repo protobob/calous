@@ -237,9 +237,9 @@ class ModelInteraction:
                 return f"~{total_context_vram:.1f}GB"
                 
         except (ValueError, AttributeError) as e:
-            return "unknown"    
-    
-    def talk_to_model(self, user_prompt):
+            return "unknown"      
+            
+    def talk_to_model(self, user_prompt, images=None):
         """Send a prompt to the selected model and return the streaming response."""
         # Check if model is selected before making API call
         if not self.app.selected_model or self.app.selected_model.strip() == "":
@@ -248,6 +248,15 @@ class ModelInteraction:
             return {"message": {"content": "[Error: No model selected. Use /model to choose a model.]"}}
         
         messages = [self.app.system_prompt] + self.app.chat_history.history.copy()
+        
+        # If images are provided, add them to the last user message
+        if images and messages:
+            # Find the most recent user message (should be the last one in history)
+            for i in range(len(messages) - 1, -1, -1):
+                if messages[i].get('role') == 'user':
+                    # Add images to this message
+                    messages[i] = {**messages[i], 'images': images}
+                    break
         
         # Get available function tools from plugin system
         tools = self._get_function_tools()
@@ -345,7 +354,6 @@ class ModelInteraction:
             results.append(tool_result)
         
         return results    
-    
     def _handle_streaming(self, messages, user_prompt, tools=None):
         """Handle streaming response from the model with optional function calling."""
         full_response = ""
@@ -413,9 +421,7 @@ class ModelInteraction:
                     # Add tool calls to messages and call model again
                     messages.append({"role": "assistant", "content": full_response, "tool_calls": tool_calls})
                     messages.extend(tool_results)
-                    
                     print(f"[dim green]🔄 Processing function results...[/dim green]")
-                    
                     # Make follow-up call without tools to get final response
                     return self._handle_streaming(messages, user_prompt, tools=None)
             

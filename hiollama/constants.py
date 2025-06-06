@@ -44,6 +44,25 @@ CONFIG_PATH = Path.home() / ".hiollama_config_unified.json"
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 LARGE_FILE_WARNING_SIZE = 1 * 1024 * 1024  # 1MB
 
+# Supported file extensions for file operations
+TEXT_EXTENSIONS = {
+    '.txt', '.md', '.py', '.js', '.ts', '.html', '.css', '.json', '.xml', '.yaml', '.yml',
+    '.ini', '.cfg', '.conf', '.log', '.sql', '.sh', '.bat', '.ps1', '.csv', '.tsv',
+    '.c', '.cpp', '.h', '.hpp', '.java', '.cs', '.php', '.rb', '.go', '.rs', '.kt',
+    '.swift', '.scala', '.clj', '.hs', '.elm', '.lua', '.r', '.m', '.pl', '.vim'
+}
+
+# Image extensions for vision models
+IMAGE_EXTENSIONS = {
+    '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.tif', '.svg'
+}
+
+# Binary/executable extensions that require user confirmation
+BINARY_EXTENSIONS = {
+    '.exe', '.dll', '.so', '.dylib', '.bin', '.img', '.iso', '.zip', '.rar', '.tar',
+    '.gz', '.7z', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'
+}
+
 # Prompt configuration
 MAX_PROMPTS = 10
 
@@ -52,7 +71,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "0.11.1.dev"
+APP_VERSION = "0.11.2.dev"
 
 # Multi-chat configuration
 DEFAULT_NUM_CHATS = 4  # default if no config

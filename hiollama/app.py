@@ -103,13 +103,13 @@ class HiOllamaChat:
         self.handle_regular_input(user_input)
         return CommandResult(ActionType.CONTINUE)
     
-    def handle_regular_input(self, user_input):
+    def handle_regular_input(self, user_input, images=None):
         """Process regular user input (non-commands)."""
         # Add the user message to history BEFORE sending to the model
         self.chat_history.add_message("user", user_input)
     
         try:
-            response = self.model.talk_to_model(user_input)
+            response = self.model.talk_to_model(user_input, images=images)
             # Streaming handles its own processing including history and logging
         except Exception as e:
             print(f"[bold red]Error processing input:[/bold red] {e}")
