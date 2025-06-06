@@ -40,6 +40,10 @@ HISTORY_DIR = HIOLLAMA_DIR / ".history"
 PERSONA_DIR = HIOLLAMA_DIR / "persona"
 CONFIG_PATH = Path.home() / ".hiollama_config_unified.json"
 
+# File size limits (in bytes)
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+LARGE_FILE_WARNING_SIZE = 1 * 1024 * 1024  # 1MB
+
 # Prompt configuration
 MAX_PROMPTS = 10
 

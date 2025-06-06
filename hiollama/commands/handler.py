@@ -50,13 +50,12 @@ class AdvancedCommandHandler:
         except Exception as e:
             print(f"[bold red]Error:[/bold red] {e}")
             print(f"[grey50]Usage: {cmd_def.parser.format_usage().strip()}[/grey50]")
-            return CommandResult(ActionType.CONTINUE)
-          # Execute command
+            return CommandResult(ActionType.CONTINUE)          # Execute command
         try:
             # Convert parsed args to kwargs
             kwargs = vars(parsed_args)
               # Special handling for commands with nargs='+'
-            if cmd_def.name in ["system", "setprompt", "load", "file.load"]:
+            if cmd_def.name in ["file.load"]:
                 if "prompt" in kwargs and isinstance(kwargs["prompt"], list):
                     kwargs["prompt"] = " ".join(kwargs["prompt"])
             

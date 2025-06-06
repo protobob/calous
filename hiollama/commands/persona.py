@@ -269,7 +269,7 @@ def cmd_persona_delete(handler, name) -> CommandResult:
         return CommandResult(ActionType.CONTINUE)
     
     from rich.prompt import Prompt
-      # Ask for confirmation
+    # Ask for confirmation
     print(f"\n[bold yellow]Warning:[/bold yellow] This will [bold red]DELETE[/bold red] saved persona file '{name}'.")
     print("This action cannot be undone.")
     

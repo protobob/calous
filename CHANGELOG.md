@@ -1,6 +1,37 @@
-# CHANGELOG
+# Changelog
 
-## [0.10.0.dev] - 2025-06-05
+## [0.11.0.dev] - 2025-01-XX
+
+### Added
+- Comprehensive file loading safety checks with configurable size limits
+- Multi-encoding support (UTF-8, UTF-8 BOM, Latin-1, CP1252, ASCII) for robust file reading
+- File type validation with warnings for binary/executable files
+- Content preview functionality for loaded files
+- User confirmation prompts for large files and potentially problematic file types
+
+### Changed
+- **BREAKING**: Removed obsolete `system`, `setprompt`, and `load` commands from command registry
+- Made file loading prompt parameter optional (now defaults to empty string)
+- Improved file extension validation with explicit handling for files without extensions
+- Enhanced error messages for file operations with resolved path information
+- Moved file size constants (`MAX_FILE_SIZE`, `LARGE_FILE_WARNING_SIZE`) to centralized constants.py
+
+### Fixed
+- Markdown injection vulnerability in file content formatting (now uses safe indentation)
+- Command system argument parsing for obsolete commands
+- File loading robustness with comprehensive encoding fallback chain
+
+### Security
+- Prevented markdown injection attacks through secure content indentation
+- Added file size limits to prevent memory exhaustion
+- Enhanced path resolution and validation
+
+### Refactored
+- Complete overhaul of `hiollama/commands/file.py` with modular utility functions
+- Extracted file reading, validation, and formatting logic into separate functions
+- Improved code organization and maintainability
+
+## [0.10.0.dev] - Previous Release
 
 ### Added
 - **Persona System**: Complete replacement for the old `/system` command

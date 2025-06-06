@@ -34,13 +34,8 @@ class CommandRegistry:
                 add_help=False,  # We'll handle help ourselves
                 exit_on_error=False  # Don't exit on parse errors
             )            # Special handling for commands that need to capture remaining text
-            if name in ["system", "setprompt", "persona.name", "persona.set", "persona.load", "persona.delete"]:
-                if name == "system":
-                    parser.add_argument("prompt", nargs='+', help="System prompt text (no quotes needed)")
-                elif name == "setprompt":
-                    parser.add_argument("slot", type=int, help="Prompt slot number")
-                    parser.add_argument("prompt", nargs='+', help="Prompt text (no quotes needed)")
-                elif name == "persona.name":
+            if name in ["persona.name", "persona.set", "persona.load", "persona.delete"]:
+                if name == "persona.name":
                     parser.add_argument("name", nargs='+', help="Persona name (multiple words allowed)")
                 elif name == "persona.set":
                     parser.add_argument("slot", type=int, help="Persona slot number (0-9)")
@@ -49,8 +44,8 @@ class CommandRegistry:
                     parser.add_argument("name", nargs='+', help="Persona name to load (multiple words allowed)")
                 elif name == "persona.delete":
                     parser.add_argument("name", nargs='+', help="Persona name to delete (multiple words allowed)")
-            # Special handling for load command
-            elif name in ["load", "file.load"]:
+            # Special handling for file.load command
+            elif name in ["file.load"]:
                 parser.add_argument("filepath", type=str, help="File path to load")
                 parser.add_argument("prompt", nargs='+', help="Prompt text (no quotes needed)")
             else:
