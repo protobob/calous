@@ -1,5 +1,32 @@
 # CHANGELOG
 
+## [0.10.0.dev] - 2025-06-05
+
+### Added
+- **Persona System**: Complete replacement for the old `/system` command
+  - Modular persona system with 10 slots (0-9) for building layered system prompts
+  - Named personas saved as JSON files in `~/hiollama/persona/`
+  - Commands: `/persona.set`, `/persona.get`, `/persona.clear`, `/persona.name`, `/persona.show`, `/persona.reset`
+  - Persistence: `/persona.save`, `/persona.load`, `/persona.list`, `/persona.delete`
+  - Multi-word support for persona names and content (no quotes needed)
+  - Per-chat persona storage - each chat maintains its own persona data
+  - Automatic prompt concatenation with double newlines for optimal model parsing
+
+### Changed
+- Active chat display now shows persona names instead of system prompt content
+- Updated UI help menu to include comprehensive persona commands
+- File paths now use centralized constants from `constants.py`
+
+### Removed
+- **BREAKING**: Removed deprecated `/system` command (replaced by persona system)
+- No backwards compatibility - clean migration to persona system
+
+### Fixed
+- Proper filename character validation for persona names
+- Overwrite protection for saved personas with confirmation prompts
+
+---
+
 ## [0.9.1.dev] - 2025-06-04
 
 ### Added

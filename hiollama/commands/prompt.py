@@ -7,23 +7,6 @@ from .types import CommandCategory
 from ..unified_logger import unified_logger
 
 
-@registry.register("system", "Change system prompt", category=CommandCategory.PROMPT)
-def cmd_system(handler, prompt: str) -> CommandResult:
-    """Change the system prompt."""
-    if not prompt.strip():
-        print("\n[bold red]Error:[/bold red] System prompt cannot be empty.")
-        return CommandResult(ActionType.CONTINUE)
-
-    print(f"\nPrevious System Prompt: [grey50]{handler.app.system_prompt['content']}[/grey50]")
-    handler.app.system_prompt = {"role": "system", "content": prompt}
-    print(f"System prompt updated to: [grey50]{prompt}[/grey50]")
-    
-    # Log the system prompt change
-    unified_logger.log_system_prompt_change(handler.app.instance_index, prompt)
-    
-    return CommandResult(ActionType.CONTINUE)
-
-
 def cmd_setprompt(handler, slot: int, prompt: str) -> CommandResult:
     """Set a saved prompt."""
     from ..constants import MAX_PROMPTS

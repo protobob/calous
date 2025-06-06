@@ -10,5 +10,6 @@ from . import prompt
 from . import history
 from . import file
 from . import plugins
+from . import persona
 
 __all__ = ['AdvancedCommandHandler']

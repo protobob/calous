@@ -46,11 +46,24 @@ class UIManager:
         table.add_row(f"[bold {command_color}]/model.eval on/off[/bold {command_color}]", "Toggle evaluation data display after responses.")
         table.add_row(f"[bold {command_color}]/model.think on/off[/bold {command_color}]", "Toggle thinking mode (show/hide model reasoning).")        # Add a header for Prompt Management Commands
         table.add_row("", "")  # Empty row for spacing
-        table.add_row("[bold white]Prompt Management Commands:[/bold white]", "")
+        table.add_row("[bold white]Prompt Management Commands:[/bold white]", "")        
         table.add_row(f"[bold {command_color}]/prompt.set[/bold {command_color}]", f"Set a saved prompt. Usage: [bold {command_color}]/prompt.set NUMBER PROMPT_TEXT[/bold {command_color}].")
         table.add_row(f"[bold {command_color}]/prompt.use[/bold {command_color}]", f"Use a saved prompt. Usage: [bold {command_color}]/prompt.use NUMBER[/bold {command_color}].")
         table.add_row(f"[bold {command_color}]/prompt.list[/bold {command_color}]", f"Display saved prompts. Usage: [bold {command_color}]/prompt.list NUMBER[/bold {command_color}] or [bold {command_color}]/prompt.list all[/bold {command_color}].")
-        table.add_row(f"[bold {command_color}]/system[/bold {command_color}]", "Change the system prompt.")        # Add a header for History & Logging Commands
+        
+        # Add a header for Persona System Commands
+        table.add_row("", "")  # Empty row for spacing
+        table.add_row("[bold white]Persona System Commands:[/bold white]", "")
+        table.add_row(f"[bold {command_color}]/persona.set SLOT TEXT[/bold {command_color}]", "Set content for persona slot (0-9).")
+        table.add_row(f"[bold {command_color}]/persona.get [SLOT][/bold {command_color}]", "Get content from persona slot or show all slots.")
+        table.add_row(f"[bold {command_color}]/persona.clear [SLOT][/bold {command_color}]", "Clear persona slot or all slots.")
+        table.add_row(f"[bold {command_color}]/persona.name [NAME][/bold {command_color}]", "Set or get persona name.")
+        table.add_row(f"[bold {command_color}]/persona.show[/bold {command_color}]", "Show complete persona information.")
+        table.add_row(f"[bold {command_color}]/persona.reset[/bold {command_color}]", "Reset persona to default state.")
+        table.add_row(f"[bold {command_color}]/persona.save[/bold {command_color}]", "Save current persona to file.")
+        table.add_row(f"[bold {command_color}]/persona.load NAME[/bold {command_color}]", "Load persona from file.")
+        table.add_row(f"[bold {command_color}]/persona.list[/bold {command_color}]", "List all saved personas.")
+        table.add_row(f"[bold {command_color}]/persona.delete NAME[/bold {command_color}]", "Delete a saved persona file.")# Add a header for History & Logging Commands
         table.add_row("", "")  # Empty row for spacing
         table.add_row("[bold white]History & Logging Commands:[/bold white]", "")        
         table.add_row(f"[bold {command_color}]/history.show[/bold {command_color}]", "Display the current chat history.")
@@ -87,19 +100,23 @@ class UIManager:
         # Always use the dynamic version
         switch_hint = f"/switch [1-{num_chats}] to change" if num_chats > 1 else ""
         
-        print(f"[bold white]ACTIVE CHATS:[/bold white] [grey50]({switch_hint})[/grey50]")
-        
+        print(f"[bold white]ACTIVE CHATS:[/bold white] [grey50]({switch_hint})[/grey50]")        
         for i, chat in enumerate(chat_instances):
             chat_color_for_chat = get_chat_color(i)
             
-            # Get system prompt and truncate if needed
-            sys_prompt = chat.system_prompt.get('content', '[No system prompt set]')
-            if len(sys_prompt) > MAX_PREVIEW_LENGTH:
-                sys_prompt = sys_prompt[:MAX_PREVIEW_LENGTH] + "..."
-              # Mark active chat with arrow (using ASCII character for Windows compatibility)
+            # Get persona name and truncate if needed
+            if hasattr(chat, 'persona') and chat.persona:
+                persona_text = chat.persona.name or '[Unnamed persona]'
+            else:
+                # Fallback to old system_prompt for backwards compatibility
+                persona_text = '[Legacy system prompt]'
+            if len(persona_text) > MAX_PREVIEW_LENGTH:
+                persona_text = persona_text[:MAX_PREVIEW_LENGTH] + "..."
+            
+            # Mark active chat with arrow (using ASCII character for Windows compatibility)            
             prefix = ">" if i == self.app.active_chat_index else " "
             
-            print(f"{prefix} [bold {chat_color_for_chat}]{i + 1}:[/bold {chat_color_for_chat}] [grey70]{sys_prompt}[/grey70]")
+            print(f"{prefix} [bold {chat_color_for_chat}]{i + 1}:[/bold {chat_color_for_chat}] [grey70]{persona_text}[/grey70]")
         
         print()  # Add spacing after overview
     
@@ -226,10 +243,22 @@ class UIManager:
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Thinking Mode:':<20} [bold][{'green' if self.app.thinking_enabled else 'red'}]{self.app.thinking_enabled}[/{'green' if self.app.thinking_enabled else 'red'}][/bold]")
         
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Verbosity:':<20} [bold][{'green' if self.app.verbosity else 'red'}]{self.app.verbosity}[/{'green' if self.app.verbosity else 'red'}][/bold]")
-        print(f"\n[bold {chat_color}]|[/bold {chat_color}] {'Logging Enabled:':<20} [bold][{'green' if self.app.logging_enabled else 'red'}]{self.app.logging_enabled}[/{'green' if self.app.logging_enabled else 'red'}][/bold]")
+        print(f"\n[bold {chat_color}]|[/bold {chat_color}] {'Logging Enabled:':<20} [bold][{'green' if self.app.logging_enabled else 'red'}]{self.app.logging_enabled}[/{'green' if self.app.logging_enabled else 'red'}][/bold]")        
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Config Path:':<20} [grey70]~/{config_path}[/grey70]")
         print(f"[bold {chat_color}]|[/bold {chat_color}] {'Log Directory:':<20} [grey70]~/{log_dir}[/grey70]")
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'System Prompt:':<20} [grey70]{self.app.system_prompt['content']}[/grey70]\n")
+        
+        # Show persona information instead of system prompt
+        if hasattr(self.app, 'persona') and self.app.persona:
+            persona_name = self.app.persona.name or "Unnamed"
+            persona_content = self.app.persona.get_combined_prompt()
+            if not persona_content:
+                persona_content = "[No persona set]"
+            print(f"[bold {chat_color}]|[/bold {chat_color}] {'Persona Name:':<20} [grey70]{persona_name}[/grey70]")
+            print(f"[bold {chat_color}]|[/bold {chat_color}] {'Persona Content:':<20} [grey70]{persona_content}[/grey70]")
+        else:
+            # Fallback to old system prompt
+            print(f"[bold {chat_color}]|[/bold {chat_color}] {'System Prompt:':<20} [grey70]{self.app.system_prompt['content']}[/grey70]")
+        print()
 
     def display_chat_context(self, chat_color: str) -> None:
         """Display the current chat context with active chats overview first."""

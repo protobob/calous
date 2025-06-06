@@ -37,6 +37,7 @@ API_TIMEOUT = 5
 HIOLLAMA_DIR = Path.home() / "hiollama"
 LOG_DIR = HIOLLAMA_DIR / "logs"
 HISTORY_DIR = HIOLLAMA_DIR / ".history"
+PERSONA_DIR = HIOLLAMA_DIR / "persona"
 CONFIG_PATH = Path.home() / ".hiollama_config_unified.json"
 
 # Prompt configuration
@@ -47,7 +48,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "0.9.1.dev"
+APP_VERSION = "0.10.0.dev"
 
 # Multi-chat configuration
 DEFAULT_NUM_CHATS = 4  # default if no config
