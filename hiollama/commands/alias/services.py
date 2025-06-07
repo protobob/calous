@@ -1,7 +1,7 @@
 """Service layer for alias management operations."""
 from typing import Dict, Optional, Tuple
-from .registry import registry
-from ..config import ConfigManager
+from ..registry import registry
+from ...config import ConfigManager
 
 
 class AliasResult:

@@ -10,7 +10,7 @@ class ImageService:
     @staticmethod
     def is_image_file(file_path: Path) -> bool:
         """Check if a file is an image based on its extension."""
-        from ..constants import IMAGE_EXTENSIONS
+        from ...constants import IMAGE_EXTENSIONS
         return file_path.suffix.lower() in IMAGE_EXTENSIONS
     
     @staticmethod

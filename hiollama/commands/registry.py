@@ -47,7 +47,11 @@ class CommandRegistry:
             # Special handling for file.load command
             elif name in ["file.load"]:
                 parser.add_argument("filepath", type=str, help="File path to load")
-                parser.add_argument("prompt", nargs='+', help="Prompt text (no quotes needed)")
+                parser.add_argument("prompt", nargs='*', default="", help="Prompt text (no quotes needed)")
+            # Special handling for prompt.set command
+            elif name == "prompt.set":
+                parser.add_argument("slot", type=int, help="Prompt slot number")
+                parser.add_argument("prompt", nargs='+', help="Prompt text (multiple words allowed)")
             else:
                 # Regular argument parsing for other commands
                 sig = inspect.signature(func)

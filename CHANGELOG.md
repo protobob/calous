@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.0.dev] - 2025-01-07
+
+### MAJOR ARCHITECTURAL RESTRUCTURING 🏗️
+
+#### Added
+- **Hierarchical Command Organization**: Complete migration from flat command files to category-based directory structure
+- **Service Layer Architecture**: Implemented dedicated service classes for business logic separation
+  - `AliasService`, `ChatService`, `ModelService`, `PersonaService`, `HistoryService`, `LogService`, `FileService`, `PluginService`, `PromptService`, `SysService`
+- **Specialized Formatters**: Category-specific formatter classes for consistent UI presentation
+  - Individual formatters for each command category with Rich markup support
+- **Enhanced Command Registration**: All 39 commands successfully reorganized into 10 logical categories:
+  - `alias/` (4 commands), `chat/` (5 commands), `file/` (1 command), `history/` (2 commands)
+  - `log/` (3 commands), `model/` (5 commands), `persona/` (10 commands), `plugin/` (3 commands)  
+  - `prompt/` (3 commands), `sys/` (3 commands)
+
+#### Changed
+- **BREAKING**: Complete restructuring of command file organization
+  - Migrated from flat files (`general.py`, `navigation.py`, `model.py`, etc.) to hierarchical structure
+  - Each category now contains: `commands.py`, `services.py`, `formatters.py`, `__init__.py`
+- **Separation of Concerns**: Clear division between command handling, business logic, and UI formatting
+- **Import Structure**: Updated `commands/__init__.py` to import from new hierarchical modules
+- **Error Handling**: Consistent validation and user feedback across all command categories
+
+#### Removed
+- Legacy command files: `general.py`, `navigation.py`, `model.py`, `history.py`, `persona.py`, `file.py`
+- Obsolete import paths and flat command organization
+
+#### Technical
+- **Code Organization**: Each command category follows consistent structure:
+  - Commands handle user interaction and argument parsing
+  - Services contain business logic and validation
+  - Formatters manage UI presentation and Rich markup
+- **Enhanced Maintainability**: Modular architecture enables easier testing and future development
+- **Consistent Patterns**: Standardized error handling, result objects, and user guidance
+
+### Impact
+This represents a foundational architectural improvement that enhances code maintainability, testability, and extensibility while preserving all existing functionality. The new structure provides a solid foundation for future command development.
+
 ## [0.11.2.dev] - 2025-06-06
 
 ### Added

@@ -77,7 +77,7 @@ class CommandParsingService:
             Modified kwargs dict
         """
         # Special handling for commands with nargs='+'
-        if cmd_def.name in ["file.load"]:
+        if cmd_def.name in ["file.load", "prompt.set"]:
             if "prompt" in kwargs and isinstance(kwargs["prompt"], list):
                 kwargs["prompt"] = " ".join(kwargs["prompt"])
         
