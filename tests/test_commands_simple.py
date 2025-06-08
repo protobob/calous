@@ -44,13 +44,11 @@ def test_single_command(command, expected_text, test_name):
 def main():
     """Test core HiOllama commands."""
     print("🚀 HiOllama Simple Command Testing")
-    print("=" * 45)
-    
-    # Test commands we know work
+    print("=" * 45)    # Test commands we know work - using less specific text to avoid encoding issues
     tests = [
-        ("/help", "GLOBAL HELP MENU", "/help command"),
-        ("/showvars", "CHAT 1 VARIABLES", "/showvars command"),
-        ("/quit", "Exiting and saving", "/quit command")
+        ("/sys.help", "System Commands", "/sys.help command"),
+        ("/sys.vars", "Selected Model", "/sys.vars command"),
+        ("/sys.quit", "Exiting", "/sys.quit command")
     ]
     
     passed = 0

@@ -81,35 +81,3 @@ def cmd_model_settemp(handler, temperature: Optional[float] = None) -> CommandRe
     return CommandResult(ActionType.CONTINUE)
 
 
-# Legacy command support (for backwards compatibility)
-def cmd_model(handler) -> CommandResult:
-    """Select a different model globally."""
-    return cmd_model_switch(handler)
-
-
-def cmd_toggle_eval(handler) -> CommandResult:
-    """Toggle display of evaluation data."""
-    service = ModelService(handler.app)
-    current_state = service.get_evaluation_display()
-    result = service.set_evaluation_display(not current_state)
-    ModelFormatter.format_evaluation_toggled(result)
-    return CommandResult(ActionType.CONTINUE)
-
-
-def cmd_toggle_think(handler) -> CommandResult:
-    """Toggle thinking mode - when enabled, shows model reasoning during responses."""
-    service = ModelService(handler.app)
-    current_state = service.get_thinking_mode()
-    result = service.set_thinking_mode(not current_state)
-    ModelFormatter.format_thinking_toggled(result)
-    return CommandResult(ActionType.CONTINUE)
-
-
-def cmd_setctx(handler, context_size: Optional[int] = None) -> CommandResult:
-    """Set the context window size for the current chat."""
-    return cmd_model_setctx(handler, context_size)
-
-
-def cmd_settemp(handler, temperature: Optional[float] = None) -> CommandResult:
-    """Set the temperature parameter for the current chat."""
-    return cmd_model_settemp(handler, temperature)

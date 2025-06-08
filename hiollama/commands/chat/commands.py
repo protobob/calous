@@ -88,28 +88,4 @@ def cmd_chat_reset(handler) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-# Legacy command support (for backwards compatibility)
-def cmd_addchat(handler) -> CommandResult:
-    """Add a new chat session dynamically."""
-    return cmd_chat_add(handler)
-
-
-def cmd_switch(handler, chat_number: Optional[int] = None) -> CommandResult:
-    """Switch to specified chat or cycle to next."""
-    return cmd_chat_switch(handler, chat_number)
-
-
-def cmd_removechat(handler, chat_number: Optional[int] = None) -> CommandResult:
-    """Remove a chat session dynamically."""
-    return cmd_chat_remove(handler, chat_number)
-
-
-def cmd_twist(handler, target_chat: Optional[int] = None) -> CommandResult:
-    """Twist last AI response to target chat."""
-    return cmd_chat_twist(handler, target_chat)
-
-
-def cmd_resetchat(handler) -> CommandResult:
-    """Reset the current chat to factory defaults with confirmation."""
-    return cmd_chat_reset(handler)
     

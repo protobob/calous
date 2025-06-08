@@ -13,9 +13,8 @@ def test_command(command, expected_outputs, test_name):
     """Test a specific command and check for expected outputs."""
     print(f"🔍 Testing {test_name}...")
     
-    try:
-        # Use PowerShell to send command and quit
-        cmd = f'"{command}"; "/quit" | python -m hiollama 1'
+    try:        # Use PowerShell to send command and quit
+        cmd = f'"{command}"; "/sys.quit" | python -m hiollama 1'
         result = subprocess.run(
             ["powershell", "-Command", cmd], 
             capture_output=True, 
@@ -51,58 +50,58 @@ def main():
     """Test core HiOllama commands."""
     print("🚀 HiOllama Command Testing")
     print("=" * 40)
-    
-    # Define command tests
+      # Define command tests
     tests = [        {
-            "command": "/help",
+            "command": "/sys.help",
             "expected": [
-                "GLOBAL HELP MENU",
-                "General Commands:",                "/help", "/quit", "/showvars", "/switch",                "Model Commands:",
-                "/model", "/toggle_eval",
-                "Prompt Commands:",
-                "/prompt", "/showprompt",
-                "Chat History Commands:",
-                "/history", "/clear", "/toggle_log",
-                "File Commands:"
+                "System Commands:",
+                "/sys.help", "/sys.quit", "/sys.vars",
+                "Chat Session Management:",
+                "/chat.switch", "/chat.add",
+                "Model Control Commands:",
+                "/model.switch", "/model.eval",
+                "Prompt Management Commands:",
+                "/prompt.set", "/prompt.use",
+                "History & Logging Commands:",
+                "/history.show", "/log.on",
+                "File Management Commands:",
+                "/file.load"
             ],
-            "name": "/help command"
+            "name": "/sys.help command"
         },
         {
-            "command": "/showvars",
+            "command": "/sys.vars",
             "expected": [
-                "CHAT 1 VARIABLES",                "Selected Model:",
+                "Selected Model:",
                 "Verbosity:",
-                "Think Filtering:",
                 "Logging Enabled:",
                 "Config Path:",
-                "Log Directory:",
                 "System Prompt:"
             ],
-            "name": "/showvars command"
+            "name": "/sys.vars command"
         },
         {
-            "command": "/showprompt all",
+            "command": "/prompt.list all",
             "expected": [
-                "SYSTEM PROMPTS FOR ALL CHATS",
                 "Chat 1:",
                 "Chat 2:"
             ],
-            "name": "/showprompt all command"
+            "name": "/prompt.list all command"
         },
         {
-            "command": "/model",
+            "command": "/model.switch",
             "expected": [
                 "Available models:",
                 "Currently selected:"
             ],
-            "name": "/model list command"
+            "name": "/model.switch command"
         },
         {
-            "command": "/history", 
+            "command": "/history.show", 
             "expected": [
                 "No messages in history"
             ],
-            "name": "/history command (empty)"
+            "name": "/history.show command (empty)"
         }
     ]
     

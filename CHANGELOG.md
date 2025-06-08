@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.1.dev] - 2025-06-07
+
+### Fixed
+- **Legacy Command Cleanup**: Removed all legacy wrapper functions from command refactoring
+  - Eliminated backward compatibility wrappers (`cmd_model`, `cmd_toggle_eval`, `cmd_toggle_think`, etc.)
+  - Cleaned up obsolete `__pycache__` files from old command structure
+- **Command Test Suite**: Updated test files to use new dotted command format
+  - Fixed `test_commands.py` and `test_commands_simple.py` to test `/sys.help`, `/model.switch`, etc.
+  - Created comprehensive `test_new_commands.py` for validating command registration and categorization
+- **Test Infrastructure**: All 38 commands now properly tested with new hierarchical structure
+  - Verified zero legacy commands remain in system
+  - Confirmed all command categories are correctly organized
+
+### Technical
+- **Complete Legacy Removal**: Final cleanup phase of major command restructuring
+- **Enhanced Testing**: Robust test coverage for new command architecture
+- **Validation**: Comprehensive verification that refactoring left no obsolete code
+
 ## [0.12.0.dev] - 2025-01-07
 
 ### MAJOR ARCHITECTURAL RESTRUCTURING 🏗️

@@ -62,10 +62,3 @@ def cmd_alias_list(handler) -> CommandResult:
         AliasFormatter.print_no_aliases()
     
     return CommandResult(ActionType.CONTINUE)
-
-
-@registry.register("alias", "Show alias command help", category=CommandCategory.GENERAL)
-def cmd_alias_help(handler) -> CommandResult:
-    """Show alias command usage help."""
-    AliasFormatter.print_alias_help()
-    return CommandResult(ActionType.CONTINUE)
