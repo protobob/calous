@@ -10,11 +10,11 @@ from .unified_logger import unified_logger
 
 # Use TYPE_CHECKING to avoid circular import
 if TYPE_CHECKING:
-    from .app import HiOllamaChat
+    from .app import Chat
 
 class ChatSessionManager:    
     def __init__(self, num_chats: Optional[int] = None):  # Remove hardcoded default
-        self.chats: List['HiOllamaChat'] = []
+        self.chats: List['Chat'] = []
         self.active_chat_index = 0
         # Use constant for default
         self.num_chats = num_chats if num_chats is not None else DEFAULT_NUM_CHATS
@@ -41,10 +41,9 @@ class ChatSessionManager:
         self.plugin_manager.discover_and_load_plugins(plugin_dir)
     
     def _initialize_chats(self):
-        """Initialize all chat instances."""
-        # Import here to avoid circular import
-        from .app import HiOllamaChat
-        self.chats = [HiOllamaChat(i) for i in range(self.num_chats)]  # Use parameter
+        """Initialize all chat instances."""        # Import here to avoid circular import
+        from .app import Chat
+        self.chats = [Chat(i) for i in range(self.num_chats)]  # Use parameter
         
         # Configure chat instances - REMOVED CIRCULAR REFERENCE
         for i, chat in enumerate(self.chats):
@@ -52,11 +51,11 @@ class ChatSessionManager:
             chat.session_manager = self  # Give chats reference to session manager only
             chat.plugin_manager = self.plugin_manager  # Inject shared plugin manager
     
-    def get_active_chat(self) -> 'HiOllamaChat':
+    def get_active_chat(self) -> 'Chat':
         """Get the currently active chat instance."""
         return self.chats[self.active_chat_index]
     
-    def get_all_chats(self) -> List['HiOllamaChat']:
+    def get_all_chats(self) -> List['Chat']:
         """Get all chat instances - for use by other components."""
         return self.chats
     def switch_to_chat(self, target_index: Optional[int] = None) -> bool:
@@ -157,11 +156,11 @@ class ChatSessionManager:
         return updated_count
     
     def add_chat(self) -> bool:
-        """Add a new chat session dynamically."""
-        from .app import HiOllamaChat
+        """Add a new chat session dynamically."""        
+        from .app import Chat
           # Create new chat instance
         new_chat_index = self.num_chats
-        new_chat = HiOllamaChat(new_chat_index)
+        new_chat = Chat(new_chat_index)
         new_chat.session_manager = self
         
         # Inject shared plugin manager

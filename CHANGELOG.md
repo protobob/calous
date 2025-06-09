@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.5.dev] - 2025-06-09
+
+### Changed
+- Renamed main class from `HiOllamaChat` to `Chat` for cleaner, more concise naming
+- Updated all imports and type annotations to reflect the new class name
+
 ## [0.12.4.dev] - 2025-06-09
 
 ### Fixed

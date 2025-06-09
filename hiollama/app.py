@@ -15,7 +15,7 @@ from typing import Dict, Any, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from .session_manager import ChatSessionManager
 
-class HiOllamaChat:
+class Chat:
     
     def __init__(self, instance_index):
         self.instance_index = instance_index
