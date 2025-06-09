@@ -145,7 +145,6 @@ class ChatSessionManager:
         """Update the context window globally across all instances."""
         # Update global config
         ConfigManager.set_global_num_ctx(new_num_ctx)
-        
         # Update all chat instances
         updated_count = 0
         for chat in self.chats:
@@ -153,11 +152,7 @@ class ChatSessionManager:
             updated_count += 1
         
         # Log the context window change
-        unified_logger.log_system_event(f"Global context window changed to {new_num_ctx} tokens", {
-            "action": "global_ctx_change",
-            "new_value": new_num_ctx,
-            "updated_instances": updated_count
-        })
+        unified_logger._write_log_entry("CONTEXT_CHANGE", f"Global context window changed to {new_num_ctx} tokens (affecting {updated_count} chats)")
         
         return updated_count
     

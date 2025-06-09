@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.4.dev] - 2025-06-09
+
+### Fixed
+- Fixed `/model.setctx` command crash caused by missing `log_system_event` method in UnifiedLogger
+- Corrected success message for `/model.setctx` to properly indicate global scope instead of "for this chat"
+
 ## [0.12.3.dev] - 2025-06-09
 
 ### Added

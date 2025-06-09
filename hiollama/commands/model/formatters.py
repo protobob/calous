@@ -68,10 +68,9 @@ class ModelFormatter:
             print(f"  • Some models may become less coherent with very long contexts")
         elif result.warning_level == "notice":  # 8k+
             print(f"\n[yellow]Notice:[/yellow] Moderate context window ({result.context_size:,}){vram_warning}")
-            print(f"  • Good balance of memory and performance for most use cases")
-        
+            print(f"  • Good balance of memory and performance for most use cases")        
         # Success message
-        print(f"\n[green]Context window set to {result.context_size:,} tokens for this chat[/green]")
+        print(f"\n[green]Context window set to {result.context_size:,} tokens globally[/green]")
         print("[grey50]This will take effect on the next message to the model[/grey50]")
     
     @staticmethod
