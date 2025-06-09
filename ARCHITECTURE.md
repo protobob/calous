@@ -32,7 +32,7 @@
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        APPLICATION ENTRY                        │
-│  __main__.py → ChatSessionManager → Chat instances (1-14)      │
+│  __main__.py → ChatSessionManager → Chat instances (1-14)       │
 └─────────────────────────────────────────────────────────────────┘
                                     │
                 ┌───────────────────┼───────────────────┐
@@ -44,7 +44,7 @@
         │   action       │ │ • Rich Console  │ │ • Registry     │
         │ • ChatHistory  │ │ • Formatters    │ │ • Services     │
         │ • ConfigMgr    │ │ • Display Logic │ │ • 38 Commands  │
-        │ • Persona      │ │                 │ │   (9 categories)│
+        │ • Persona      │ │                 │ │  (9 categories)│
         └────────────────┘ └─────────────────┘ └────────────────┘
                 │                   │                   │
         ┌───────▼────────┐ ┌────────▼────────┐ ┌───────▼────────┐

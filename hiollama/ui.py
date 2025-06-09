@@ -14,14 +14,57 @@ class UIManager:
     def __init__(self, app):
         self.app = app
         self.console = Console()
-      
+        
     def help_menu(self):
-        """Display the help menu with available commands."""        # Define the command color as a variable
+        """Display the new streamlined help menu."""
+        command_color = "grey50"
+        
+        print(f"\n[bold white]GLOBAL HELP[/bold white]\n")
+        
+        print(f"[white]Hi, Ollama! is a multi-channel chat interface for local LLM models. Each chat[/white]")
+        print(f"[white]channel (1-14) maintains its own conversation history and persona, allowing you[/white]")
+        print(f"[white]to quickly switch between different AI contexts and personalities.[/white]\n")
+        
+        print(f"[white]GETTING STARTED[/white]\n")
+        
+        print(f"[white]First time? Try these commands:[/white]\n")
+        
+        print(f"[white]Choose a model:      [/white][bold {command_color}]/model.switch[/bold {command_color}]")
+        print(f"[white]Switch channels:     [/white][bold {command_color}]/chat.switch 2[/bold {command_color}]")
+        print(f"[white]Name your AI:        [/white][bold {command_color}]/persona.name Assistant[/bold {command_color}]")
+        print(f"[white]Set a system prompt: [/white][bold {command_color}]/persona.set 0 You are a helpful coding assistant[/bold {command_color}]")
+        print(f"[white]Try twist feature:   [/white][bold {command_color}]/chat.twist 3[/bold {command_color}]")
+        print(f"[white]View chat history:   [/white][bold {command_color}]/history.show[/bold {command_color}]")
+        print(f"[white]Add a command alias: [/white][bold {command_color}]/alias.add h sys.help[/bold {command_color}]")
+        print()
+        print(f"[white]CATEGORY HELP[/white]\n")
+        print(f"[white]Chat Management      (7 commands)   [/white][bold {command_color}]/sys.help chat[/bold {command_color}]")
+        print(f"[white]Model Operations     (7 commands)   [/white][bold {command_color}]/sys.help model[/bold {command_color}]")
+        print(f"[white]Persona Management  (11 commands)   [/white][bold {command_color}]/sys.help persona[/bold {command_color}]")
+        print(f"[white]History Management   (3 commands)   [/white][bold {command_color}]/sys.help history[/bold {command_color}]")
+        print(f"[white]Logging Operations   (5 commands)   [/white][bold {command_color}]/sys.help log[/bold {command_color}]")
+        print(f"[white]Prompt Management    (4 commands)   [/white][bold {command_color}]/sys.help prompt[/bold {command_color}]")
+        print(f"[white]File Operations      (1 command)    [/white][bold {command_color}]/sys.help file[/bold {command_color}]")
+        print(f"[white]System Commands      (2 commands)   [/white][bold {command_color}]/sys.help sys[/bold {command_color}]")
+        print(f"[white]Alias Management     (4 commands)   [/white][bold {command_color}]/sys.help alias[/bold {command_color}]")
+        print(f"[white]Plugin System        (4 commands)   [/white][bold {command_color}]/sys.help plugin[/bold {command_color}]")
+        print()
+        
+        print(f"[white]MORE HELP[/white]\n")
+        
+        print(f"[bold {command_color}]/sys.help [category][/bold {command_color}]     [white]Detailed commands for a category[/white]")
+        print(f"[bold {command_color}]/sys.help [command][/bold {command_color}]     [white]Specific help for any command[/white]")
+        print(f"[bold {command_color}]/sys.help all[/bold {command_color}]  [white]List of all commands by category.[/white]")
+        print()
+
+    def help_menu_all(self):
+        """Display the comprehensive help menu with all commands."""        # Define the command color as a variable
         command_color = "grey50"        # Create a table for the help menu
-        table = Table(show_header=False, box=None, padding=(0, 1))
+        table = Table(show_header=False, box=None, padding=(0, 1))        
         table.add_column("Command", no_wrap=True)
         table.add_column("Description")# System Commands
-        table.add_row(f"[bold {command_color}]/sys.help[/bold {command_color}]", "[white]Show this help menu.[/white]")
+        table.add_row(f"[bold {command_color}]/sys.help[/bold {command_color}]", "[white]Show streamlined help overview.[/white]")
+        table.add_row(f"[bold {command_color}]/sys.help all[/bold {command_color}]", "[white]Show this comprehensive help menu.[/white]")
         table.add_row(f"[bold {command_color}]/sys.quit[/bold {command_color}]", "[white]Exit the program and save the configuration.[/white]")
 
         table.add_row("", "")  # Empty row for spacing
@@ -72,12 +115,19 @@ class UIManager:
         table.add_row(f"[bold {command_color}]/log.vars[/bold {command_color}]", "[white]Display logging-related variables only.[/white]")
 
         table.add_row("", "")  # Empty row for spacing        # File Commands
-        table.add_row(f"[bold {command_color}]/file.load[/bold {command_color}]", f"[white]Load a file as a prompt. Usage: [bold {command_color}]/file.load FILENAME PROMPT[/bold {command_color}].[/white]")
-
+        table.add_row(f"[bold {command_color}]/file.load[/bold {command_color}]", f"[white]Load a file as a prompt. Usage: [bold {command_color}]/file.load FILENAME PROMPT[/bold {command_color}].[/white]")        
         table.add_row("", "")  # Empty row for spacing        # Plugin Commands
         table.add_row(f"[bold {command_color}]/plugin.list[/bold {command_color}]", "[white]List all available plugins.[/white]")
         table.add_row(f"[bold {command_color}]/plugin.info[/bold {command_color}]", "[white]Get information about a specific plugin.[/white]")
-        table.add_row(f"[bold {command_color}]/plugin.reload[/bold {command_color}]", "[white]Reload the plugin system.[/white]")        # Print the table
+        table.add_row(f"[bold {command_color}]/plugin.reload[/bold {command_color}]", "[white]Reload the plugin system.[/white]")
+
+        table.add_row("", "")  # Empty row for spacing        # Alias Commands
+        table.add_row(f"[bold {command_color}]/alias.add[/bold {command_color}]", "[white]Create a new command alias.[/white]")
+        table.add_row(f"[bold {command_color}]/alias.remove[/bold {command_color}]", "[white]Remove a command alias.[/white]")
+        table.add_row(f"[bold {command_color}]/alias.list[/bold {command_color}]", "[white]List all command aliases.[/white]")
+        table.add_row(f"[bold {command_color}]/alias.clear[/bold {command_color}]", "[white]Clear all command aliases.[/white]")
+
+        # Print the table
         print(f"\n[bold grey70]GLOBAL HELP MENU[/bold grey70]\n")
         print(table)
     
@@ -750,13 +800,12 @@ class UIManager:
         print(f"\n[bold white]SYS COMMANDS HELP[/bold white]\n")
         
         print(f"[white]The system commands provide core application control and help functionality. These essential commands allow you to access help documentation and safely exit the application while preserving your configurations and settings.[/white]\n")
-        
         print(f"[white]APPLICATION CONTROL[/white]\n")
         
         print(f" [bold {command_color}]/sys.help (aliases: help)[/bold {command_color}]  [white]Show this command reference[/white]")
+        print(f" [bold {command_color}]/sys.help all[/bold {command_color}]              [white]Show comprehensive help menu[/white]")
         print(f" [bold {command_color}]/sys.quit (aliases: quit)[/bold {command_color}]  [white]Exit and save configuration[/white]")
         print()
-        
         print(f"[white]MORE HELP[/white]\n")
         
         print(f" [bold {command_color}]/sys.help[/bold {command_color}]                  [white]shows this help screen[/white]")

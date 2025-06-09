@@ -2,7 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.12.6.dev] - 2025-01-XX
+## [0.12.7.dev] - 2025-01-09
+
+### Added
+- New streamlined `/sys.help` command showing concise getting-started guide
+- New `/sys.help all` command for comprehensive command reference
+- Improved help system architecture with better user experience for new users
+
+### Changed
+- Restructured main help screen to focus on essential first-time user commands
+- Updated help system to provide progressive disclosure (overview → categories → details)
+- Improved formatting and alignment in help screens
+- Enhanced sys category help to include both help commands
+
+### Technical
+- Refactored `UIManager.help_menu()` for streamlined experience
+- Added `UIManager.help_menu_all()` for comprehensive command listing
+- Updated help command routing in system services
+- Maintained backwards compatibility with existing help infrastructure
+
+## [0.12.6.dev] - 2025-01-08
 
 ### Added
 - Complete custom help system overhaul with organized, readable command documentation

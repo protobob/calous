@@ -38,3 +38,9 @@ def cmd_chat_vars(handler) -> CommandResult:
 def cmd_log_vars(handler) -> CommandResult:
     """Display logging-related variables and settings."""
     return SysService.show_log_variables(handler)
+
+
+@registry.register("sys.help.all", "List all commands by category", category=CommandCategory.GENERAL)
+def cmd_sys_help_all(handler) -> CommandResult:
+    """Show comprehensive list of all commands by category."""
+    return SysService.show_help_all(handler)

@@ -18,10 +18,14 @@ class SysService:
             # Show help for specific command
             handler.app.ui.show_command_help(command)
         elif category:
-            # Show help for specific category
-            handler.app.ui.show_category_help(category)
+            # Handle special "all" category to show comprehensive help
+            if category.lower() == "all":
+                handler.app.ui.help_menu_all()
+            else:
+                # Show help for specific category
+                handler.app.ui.show_category_help(category)
         else:
-            # Show full help menu
+            # Show streamlined help menu
             handler.app.ui.help_menu()
         return CommandResult(ActionType.CONTINUE)
     
@@ -46,4 +50,10 @@ class SysService:
     def show_log_variables(handler) -> CommandResult:
         """Display logging-related variables."""
         handler.app.ui.show_log_variables()
+        return CommandResult(ActionType.CONTINUE)
+    
+    @staticmethod
+    def show_help_all(handler) -> CommandResult:
+        """Display comprehensive help menu with all commands."""
+        handler.app.ui.help_menu_all()
         return CommandResult(ActionType.CONTINUE)
