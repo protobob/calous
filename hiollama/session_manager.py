@@ -123,7 +123,8 @@ class ChatSessionManager:
         # Send the content as a prompt (which will trigger AI response)
         target_chat.handle_regular_input(content)
 
-        return True
+        return True    
+        
     def update_global_model(self, new_model):
         """Update the selected model globally across all instances."""
         # Update global config
@@ -138,19 +139,41 @@ class ChatSessionManager:
         # Log the model change
         unified_logger.log_model_change(new_model, updated_count)
         
-        return updated_count    
+        return updated_count
+    
+    def update_global_num_ctx(self, new_num_ctx):
+        """Update the context window globally across all instances."""
+        # Update global config
+        ConfigManager.set_global_num_ctx(new_num_ctx)
+        
+        # Update all chat instances
+        updated_count = 0
+        for chat in self.chats:
+            chat.num_ctx = new_num_ctx
+            updated_count += 1
+        
+        # Log the context window change
+        unified_logger.log_system_event(f"Global context window changed to {new_num_ctx} tokens", {
+            "action": "global_ctx_change",
+            "new_value": new_num_ctx,
+            "updated_instances": updated_count
+        })
+        
+        return updated_count
     
     def add_chat(self) -> bool:
         """Add a new chat session dynamically."""
         from .app import HiOllamaChat
-        
-        # Create new chat instance
+          # Create new chat instance
         new_chat_index = self.num_chats
         new_chat = HiOllamaChat(new_chat_index)
         new_chat.session_manager = self
         
         # Inject shared plugin manager
         new_chat.plugin_manager = self.plugin_manager
+        
+        # Ensure new chat has global context window setting
+        new_chat.num_ctx = ConfigManager.get_global_num_ctx()
         
         # Add to chats list
         self.chats.append(new_chat)

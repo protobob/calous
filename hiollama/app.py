@@ -43,10 +43,9 @@ class HiOllamaChat:
             "role": "system", 
             "content": self.persona.get_combined_prompt()
         }
-        
         self.logging_enabled = self.config.get("logging_enabled", True)
         self.thinking_enabled = self.config.get("thinking_enabled", False)  # Default to False for clean output
-        self.num_ctx = self.config.get("num_ctx", DEFAULT_NUM_CTX)
+        self.num_ctx = ConfigManager.get_global_num_ctx()  # Use global context window
         self.temperature = self.config.get("temperature", DEFAULT_TEMPERATURE)
         self.prompts = self.config.get("prompts", {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)})# For multi-instance support (simplified - no circular references)
         self.active_chat_index = instance_index
@@ -71,20 +70,29 @@ class HiOllamaChat:
             # Fallback for standalone operation (shouldn't happen in normal use)
             ConfigManager.update_global_config({"selected_model": new_model})
             self.selected_model = new_model
-            return 1    
+            return 1
+    
+    def update_global_num_ctx(self, new_num_ctx):
+        """Update the context window globally across all instances via session manager."""
+        # Delegate to session manager which has access to all chats
+        if self.session_manager:
+            return self.session_manager.update_global_num_ctx(new_num_ctx)
+        else:
+            # Fallback for standalone operation (shouldn't happen in normal use)
+            ConfigManager.set_global_num_ctx(new_num_ctx)
+            self.num_ctx = new_num_ctx
+            return 1
     
     def save_config(self):
         """Save the current configuration."""        
         # Update system_prompt content from persona before saving
         self.system_prompt["content"] = self.persona.get_combined_prompt()
-        
-        # Update instance-specific config        
+          # Update instance-specific config        
         chat_config = {
             "verbosity": self.verbosity,
             "persona": self.persona.to_dict(),  # Save persona instead of system_prompt
             "logging_enabled": self.logging_enabled,
             "thinking_enabled": self.thinking_enabled,
-            "num_ctx": self.num_ctx,
             "temperature": self.temperature,
             "prompts": self.prompts
         }

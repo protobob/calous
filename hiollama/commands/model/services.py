@@ -35,10 +35,14 @@ class ModelService:
     def select_model(self) -> Optional[str]:
         """Select a model from available models."""
         return self.app.model.select_model()
-    
+      
     def update_global_model(self, model_name: str) -> int:
         """Update the model globally across all chats."""
         return self.app.update_global_model(model_name)
+    
+    def update_global_context(self, context_size: int) -> int:
+        """Update the context window globally across all chats."""
+        return self.app.update_global_num_ctx(context_size)
     
     def get_current_context(self) -> int:
         """Get the current context window size."""
@@ -77,9 +81,8 @@ class ModelService:
             warning_level = "warning"
         elif context_size > 8192:  # 8k+
             warning_level = "notice"
-        
-        # Set the context size
-        self.app.num_ctx = context_size
+          # Set the context size globally
+        updated_count = self.update_global_context(context_size)
         
         return ContextResult(
             success=True,

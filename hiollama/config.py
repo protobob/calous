@@ -12,7 +12,6 @@ class ConfigManager:
             "verbosity": True,
             "system_prompt": DEFAULT_SYSTEM_PROMPT,
             "logging_enabled": True,
-            "num_ctx": DEFAULT_NUM_CTX,
             "prompts": {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)}
         }
     
@@ -25,7 +24,8 @@ class ConfigManager:
         config = {
             "global": {
                 "selected_model": DEFAULT_MODEL,
-                "num_chats": num_chats
+                "num_chats": num_chats,
+                "num_ctx": DEFAULT_NUM_CTX
             },
             "chats": {}
         }
@@ -104,12 +104,23 @@ class ConfigManager:
                     unified_config["chats"][chat_key] = ConfigManager._generate_default_chat_config()
         
         ConfigManager.save_unified_config(unified_config)
-    
+      
     @staticmethod
     def get_global_config():
         """Get global configuration settings."""
         unified_config = ConfigManager.load_unified_config()
-        return unified_config.get("global", {"selected_model": DEFAULT_MODEL, "num_chats": DEFAULT_NUM_CHATS})
+        return unified_config.get("global", {"selected_model": DEFAULT_MODEL, "num_chats": DEFAULT_NUM_CHATS, "num_ctx": DEFAULT_NUM_CTX})
+    
+    @staticmethod
+    def get_global_num_ctx():
+        """Get the global context window setting."""
+        global_config = ConfigManager.get_global_config()
+        return global_config.get("num_ctx", DEFAULT_NUM_CTX)
+    
+    @staticmethod
+    def set_global_num_ctx(num_ctx):
+        """Set the global context window setting."""
+        ConfigManager.update_global_config({"num_ctx": num_ctx})
     
     @staticmethod
     def get_num_chats():

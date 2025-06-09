@@ -18,42 +18,47 @@ class UIManager:
     def help_menu(self):
         """Display the help menu with available commands."""
         # Define the command color as a variable
-        command_color = "grey70"
-
-        # Create a table for the help menu
+        command_color = "grey70"        # Create a table for the help menu
         table = Table(show_header=False, box=None, padding=(0, 1))
         table.add_column("Command", style=f"bold {command_color}", no_wrap=True)
-        table.add_column("Description", style="grey70")        # Add a header for System Commands
-        table.add_row("[bold white]System Commands:[/bold white]", "")
+        table.add_column("Description", style="grey70")
+
+        # System Commands
         table.add_row(f"[bold {command_color}]/sys.help[/bold {command_color}]", "Show this help menu.")
         table.add_row(f"[bold {command_color}]/sys.quit[/bold {command_color}]", "Exit the program and save the configuration.")
-        table.add_row(f"[bold {command_color}]/sys.vars[/bold {command_color}]", "Display current system variables.")
-        
+
+        table.add_row("", "")  # Empty row for spacing
+
         # Get num_chats dynamically from session manager
         num_chats = self.app.session_manager.num_chats if hasattr(self.app, 'session_manager') and self.app.session_manager else ConfigManager.get_num_chats()
-          # Add a header for Chat Session Management Commands
-        table.add_row("", "")  # Empty row for spacing
-        table.add_row("[bold white]Chat Session Management:[/bold white]", "")
+
+        # Chat Commands
         table.add_row(f"[bold {command_color}]/chat.switch [NUMBER][/bold {command_color}]", f"Switch between chats (1-{num_chats}). Default switches to next chat.")
         table.add_row(f"[bold {command_color}]/chat.twist [NUMBER][/bold {command_color}]", f"Copy AI's last response to target chat (1-{num_chats}). Default uses next chat.")
         table.add_row(f"[bold {command_color}]/chat.add[/bold {command_color}]", "Add a new chat session.")
         table.add_row(f"[bold {command_color}]/chat.remove[/bold {command_color}]", "Remove a chat session.")
-        table.add_row(f"[bold {command_color}]/chat.reset[/bold {command_color}]", "Reset chat to factory defaults.")        # Add a header for Model Control Commands        
+        table.add_row(f"[bold {command_color}]/chat.reset[/bold {command_color}]", "Reset chat to factory defaults.")
+        table.add_row(f"[bold {command_color}]/chat.vars[/bold {command_color}]", "Display chat-specific variables only.")
+
         table.add_row("", "")  # Empty row for spacing
-        table.add_row("[bold white]Model Control Commands:[/bold white]", "")          
+
+        # Model Commands
         table.add_row(f"[bold {command_color}]/model.switch[/bold {command_color}]", "Select a different model.")
         table.add_row(f"[bold {command_color}]/model.setctx[/bold {command_color}]", f"Set context window size. Usage: [bold {command_color}]/model.setctx NUMBER[/bold {command_color}] (2048-32768 tokens).")
         table.add_row(f"[bold {command_color}]/model.eval on/off[/bold {command_color}]", "Toggle evaluation data display after responses.")
-        table.add_row(f"[bold {command_color}]/model.think on/off[/bold {command_color}]", "Toggle thinking mode (show/hide model reasoning).")        # Add a header for Prompt Management Commands
+        table.add_row(f"[bold {command_color}]/model.think on/off[/bold {command_color}]", "Toggle thinking mode (show/hide model reasoning).")
+        table.add_row(f"[bold {command_color}]/model.vars[/bold {command_color}]", "Display model-related variables only.")
+
         table.add_row("", "")  # Empty row for spacing
-        table.add_row("[bold white]Prompt Management Commands:[/bold white]", "")        
+
+        # Prompt Commands
         table.add_row(f"[bold {command_color}]/prompt.set[/bold {command_color}]", f"Set a saved prompt. Usage: [bold {command_color}]/prompt.set NUMBER PROMPT_TEXT[/bold {command_color}].")
         table.add_row(f"[bold {command_color}]/prompt.use[/bold {command_color}]", f"Use a saved prompt. Usage: [bold {command_color}]/prompt.use NUMBER[/bold {command_color}].")
         table.add_row(f"[bold {command_color}]/prompt.list[/bold {command_color}]", f"Display saved prompts. Usage: [bold {command_color}]/prompt.list NUMBER[/bold {command_color}] or [bold {command_color}]/prompt.list all[/bold {command_color}].")
-        
-        # Add a header for Persona System Commands
+
         table.add_row("", "")  # Empty row for spacing
-        table.add_row("[bold white]Persona System Commands:[/bold white]", "")
+
+        # Persona Commands
         table.add_row(f"[bold {command_color}]/persona.set SLOT TEXT[/bold {command_color}]", "Set content for persona slot (0-9).")
         table.add_row(f"[bold {command_color}]/persona.get [SLOT][/bold {command_color}]", "Get content from persona slot or show all slots.")
         table.add_row(f"[bold {command_color}]/persona.clear [SLOT][/bold {command_color}]", "Clear persona slot or all slots.")
@@ -63,21 +68,30 @@ class UIManager:
         table.add_row(f"[bold {command_color}]/persona.save[/bold {command_color}]", "Save current persona to file.")
         table.add_row(f"[bold {command_color}]/persona.load NAME[/bold {command_color}]", "Load persona from file.")
         table.add_row(f"[bold {command_color}]/persona.list[/bold {command_color}]", "List all saved personas.")
-        table.add_row(f"[bold {command_color}]/persona.delete NAME[/bold {command_color}]", "Delete a saved persona file.")# Add a header for History & Logging Commands
+        table.add_row(f"[bold {command_color}]/persona.delete NAME[/bold {command_color}]", "Delete a saved persona file.")
+
         table.add_row("", "")  # Empty row for spacing
-        table.add_row("[bold white]History & Logging Commands:[/bold white]", "")        
+
+        # History Commands
         table.add_row(f"[bold {command_color}]/history.show[/bold {command_color}]", "Display the current chat history.")
         table.add_row(f"[bold {command_color}]/history.clear[/bold {command_color}]", "Clear the current chat history.")
+
+        table.add_row("", "")  # Empty row for spacing
+
+        # Log Commands
         table.add_row(f"[bold {command_color}]/log.on[/bold {command_color}]", "Enable logging of chat history.")
         table.add_row(f"[bold {command_color}]/log.off[/bold {command_color}]", "Disable logging of chat history.")
-        table.add_row(f"[bold {command_color}]/log.today[/bold {command_color}]", "View unified log for today.")        # Add a header for File Management Commands
+        table.add_row(f"[bold {command_color}]/log.today[/bold {command_color}]", "View unified log for today.")
+        table.add_row(f"[bold {command_color}]/log.vars[/bold {command_color}]", "Display logging-related variables only.")
+
         table.add_row("", "")  # Empty row for spacing
-        table.add_row("[bold white]File Management Commands:[/bold white]", "")
+
+        # File Commands
         table.add_row(f"[bold {command_color}]/file.load[/bold {command_color}]", f"Load a file as a prompt. Usage: [bold {command_color}]/file.load FILENAME PROMPT[/bold {command_color}].")
 
-        # Add a header for Plugin System Commands
         table.add_row("", "")  # Empty row for spacing
-        table.add_row("[bold white]Plugin System Commands:[/bold white]", "")
+
+        # Plugin Commands
         table.add_row(f"[bold {command_color}]/plugin.list[/bold {command_color}]", "List all available plugins.")
         table.add_row(f"[bold {command_color}]/plugin.info[/bold {command_color}]", "Get information about a specific plugin.")
         table.add_row(f"[bold {command_color}]/plugin.reload[/bold {command_color}]", "Reload the plugin system.")
@@ -153,15 +167,97 @@ class UIManager:
             f"[grey50] (/help for help)[/grey50]\n"
             f"{you_text}"
         )
-        
     def clear_screen(self):
         """Clear the terminal screen."""
         os.system('cls' if os.name == 'nt' else 'clear')
         
-    def show_variables(self):
-        """Display current system variables."""
+    def show_model_variables(self):
+        """Display model-related variables only."""
+        chat_color = get_chat_color(getattr(self.app, 'active_chat_index', 0))
+        
+        print(f"\n[bold]MODEL VARIABLES[/bold]\n")
+        
+        # Handle case where no model is selected
+        if not self.app.selected_model:
+            print(f"{'Selected Model:':<20} [red]None selected[/red]")
+            print(f"{'Status:':<20} [yellow]Use /model.switch to select a model[/yellow]")
+        else:
+            print(f"{'Selected Model:':<20} [green]{self.app.selected_model}[/green]")
+        
+        # Show model info
+        if self.app.selected_model:
+            context_info = self.app.model.get_context_window_info(self.app.selected_model)
+            if context_info:
+                # Show model info (without tokenizer details)
+                model_info = f"{context_info.architecture}"
+                if context_info.parameter_count != 'unknown':
+                    model_info += f" ({context_info.parameter_count}"
+                    if context_info.quantization != 'unknown':
+                        model_info += f", {context_info.quantization}"
+                        model_info += ")"                
+                    elif context_info.quantization != 'unknown':
+                        model_info += f" ({context_info.quantization})"
+                print(f"{'Model Info:':<20} [grey70]{model_info}[/grey70]")        # Context window information (now global)
+        from .config import ConfigManager
+        global_num_ctx = ConfigManager.get_global_num_ctx()
+        
+        # Always show global context window setting
+        print(f"{'Context Window:':<20} [bold cyan]{global_num_ctx:,} tokens[/bold cyan]")
+        
+        if self.app.selected_model:
+            context_info = self.app.model.get_context_window_info(self.app.selected_model)
+            usage_percentage = self.app.model.get_context_usage_percentage(self.app.selected_model)            
+            if context_info:
+                # Display context window with model's max context for reference
+                if global_num_ctx != context_info.max_context:
+                    print(f"{'Model Max Context:':<20} [grey70]{context_info.max_context:,} tokens[/grey70]")
+                
+                # Show usage percentage with visual indicator
+                if usage_percentage is not None:
+                    # Create visual progress bar
+                    bar_length = 10
+                    filled_length = int(bar_length * usage_percentage / 100)
+                    bar = "█" * filled_length + "░" * (bar_length - filled_length)
+                    # Color the percentage based on usage level
+                    if usage_percentage <= 24:
+                        percentage_color = "green"
+                    elif usage_percentage <= 49:
+                        percentage_color = "yellow"
+                    elif usage_percentage <= 74:
+                        percentage_color = "orange1"
+                    else:  # 75-100
+                        percentage_color = "red"
+                    
+                    print(f"{'Context Usage:':<20} [{percentage_color}]{bar} {usage_percentage:.1f}%[/{percentage_color}]")
+                  # Show estimated VRAM usage for global context window
+                user_context_info = context_info._replace(actual_context=global_num_ctx)
+                vram_estimate = self.app.model.estimate_context_vram_usage(user_context_info)                
+                if vram_estimate != "unknown":
+                    print(f"{'Context VRAM:':<20} [yellow]{vram_estimate}[/yellow] [grey50](est.)[/grey50]")
+        else:
+            # Show message when no model is selected
+            print(f"{'Context Usage:':<20} [grey50]N/A (no model selected)[/grey50]")
+            print(f"{'Context VRAM:':<20} [grey50]N/A (no model selected)[/grey50]")
+        
+        print()
+
+    def show_chat_variables(self):
+        """Display chat-specific variables only."""
         chat_color = get_chat_color(getattr(self.app, 'active_chat_index', 0))
         active_chat_index = getattr(self.app, 'active_chat_index', 0)
+        
+        print(f"\n[bold {chat_color}]CHAT {active_chat_index + 1} VARIABLES[/bold {chat_color}]\n")        # Chat-specific settings
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Verbosity:':<20} [bold][{'green' if self.app.verbosity else 'red'}]{self.app.verbosity}[/{'green' if self.app.verbosity else 'red'}][/bold]")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Thinking Mode:':<20} [bold][{'green' if self.app.thinking_enabled else 'red'}]{self.app.thinking_enabled}[/{'green' if self.app.thinking_enabled else 'red'}][/bold]")
+        # Temperature (chat-specific)
+        temp_color = "blue" if self.app.temperature == 0.0 else "green" if self.app.temperature < 0.7 else "yellow" if self.app.temperature <= 1.0 else "orange1" if self.app.temperature <= 1.5 else "red"
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Temperature:':<20} [bold {temp_color}]{self.app.temperature}[/bold {temp_color}]")
+        
+        print()
+
+    def show_log_variables(self):
+        """Display logging-related variables only."""
+        chat_color = get_chat_color(getattr(self.app, 'active_chat_index', 0))
         
         # Get the actual paths from constants and objects
         from .constants import CONFIG_PATH, LOG_DIR
@@ -176,88 +272,28 @@ class UIManager:
             log_dir = str(LOG_DIR.relative_to(LOG_DIR.home()))
         except ValueError:
             log_dir = str(LOG_DIR)
-
-        # GLOBAL SETTINGS Section
-        print(f"\n[bold]GLOBAL SETTINGS[/bold]\n")
-        print(f"{'Selected Model:':<20} {self.app.selected_model}")
         
-        # Show model info in global section
-        if self.app.selected_model:
-            context_info = self.app.model.get_context_window_info(self.app.selected_model)
-            if context_info:
-                # Show model info (without tokenizer details)
-                model_info = f"{context_info.architecture}"
-                if context_info.parameter_count != 'unknown':
-                    model_info += f" ({context_info.parameter_count}"
-                    if context_info.quantization != 'unknown':
-                        model_info += f", {context_info.quantization}"
-                        model_info += ")"                
-                    elif context_info.quantization != 'unknown':
-                        model_info += f" ({context_info.quantization})"
-                print(f"{'Model Info:':<20} [grey70]{model_info}[/grey70]")
+        print(f"\n[bold]LOGGING VARIABLES[/bold]\n")
         
-        # CHAT VARIABLES Section
-        print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]CHAT {active_chat_index + 1} VARIABLES[/bold {chat_color}]\n")
-
-        # Context window information        # Context window information
-        if self.app.selected_model:
-            context_info = self.app.model.get_context_window_info(self.app.selected_model)
-            usage_percentage = self.app.model.get_context_usage_percentage(self.app.selected_model)
-            if context_info:
-                # Display user-set context window with model's max context for reference
-                if self.app.num_ctx != context_info.max_context:
-                    context_display = f"{self.app.num_ctx:,} tokens (Model Max: {context_info.max_context:,})"
-                else:
-                    context_display = f"{self.app.num_ctx:,} tokens"
-                
-                print(f"[bold {chat_color}]|[/bold {chat_color}] {'Context Window:':<20} [bold cyan]{context_display}[/bold cyan]")
-                
-                # Show usage percentage with visual indicator
-                if usage_percentage is not None:
-                    # Create visual progress bar
-                    bar_length = 10
-                    filled_length = int(bar_length * usage_percentage / 100)
-                    bar = "█" * filled_length + "░" * (bar_length - filled_length)
-                      # Color the percentage based on usage level
-                    if usage_percentage <= 24:
-                        percentage_color = "green"
-                    elif usage_percentage <= 49:
-                        percentage_color = "yellow"
-                    elif usage_percentage <= 74:
-                        percentage_color = "orange1"
-                    else:  # 75-100
-                        percentage_color = "red"
-                    
-                    print(f"[bold {chat_color}]|[/bold {chat_color}] {'Context Usage:':<20} [{percentage_color}]{bar} {usage_percentage:.1f}%[/{percentage_color}]")
-                
-                # Show estimated VRAM usage for user-set context window
-                # Create a modified context info that uses the user's num_ctx setting
-                user_context_info = context_info._replace(actual_context=self.app.num_ctx)
-                vram_estimate = self.app.model.estimate_context_vram_usage(user_context_info)
-                if vram_estimate != "unknown":
-                    print(f"[bold {chat_color}]|[/bold {chat_color}] {'Context VRAM:':<20} [yellow]{vram_estimate}[/yellow] [grey50](est.)[/grey50]")
+        print(f"{'Logging Enabled:':<20} [bold][{'green' if self.app.logging_enabled else 'red'}]{self.app.logging_enabled}[/{'green' if self.app.logging_enabled else 'red'}][/bold]")
+        print(f"{'Config Path:':<20} [grey70]~/{config_path}[/grey70]")        
+        print(f"{'Log Directory:':<20} [grey70]~/{log_dir}[/grey70]")
         
-        # Display temperature with color coding based on value
-        temp_color = "blue" if self.app.temperature == 0.0 else "green" if self.app.temperature < 0.7 else "yellow" if self.app.temperature <= 1.0 else "orange1" if self.app.temperature <= 1.5 else "red"
-        print(f"\n[bold {chat_color}]|[/bold {chat_color}] {'Temperature:':<20} [bold {temp_color}]{self.app.temperature}[/bold {temp_color}]")
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Thinking Mode:':<20} [bold][{'green' if self.app.thinking_enabled else 'red'}]{self.app.thinking_enabled}[/{'green' if self.app.thinking_enabled else 'red'}][/bold]")
+        # Show log file sizes if available
+        try:
+            from pathlib import Path
+            log_path = Path(LOG_DIR)
+            if log_path.exists():
+                log_files = list(log_path.glob("*.log"))
+                if log_files:
+                    print(f"{'Log Files:':<20} [cyan]{len(log_files)}[/cyan] files found")
+                    # Show most recent log file
+                    most_recent = max(log_files, key=lambda f: f.stat().st_mtime)
+                    size_kb = most_recent.stat().st_size / 1024
+                    print(f"{'Latest Log:':<20} [grey70]{most_recent.name}[/grey70] ([yellow]{size_kb:.1f} KB[/yellow])")
+        except Exception:
+            pass  # Ignore errors when checking log files
         
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Verbosity:':<20} [bold][{'green' if self.app.verbosity else 'red'}]{self.app.verbosity}[/{'green' if self.app.verbosity else 'red'}][/bold]")
-        print(f"\n[bold {chat_color}]|[/bold {chat_color}] {'Logging Enabled:':<20} [bold][{'green' if self.app.logging_enabled else 'red'}]{self.app.logging_enabled}[/{'green' if self.app.logging_enabled else 'red'}][/bold]")        
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Config Path:':<20} [grey70]~/{config_path}[/grey70]")
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Log Directory:':<20} [grey70]~/{log_dir}[/grey70]")
-        
-        # Show persona information instead of system prompt
-        if hasattr(self.app, 'persona') and self.app.persona:
-            persona_name = self.app.persona.name or "Unnamed"
-            persona_content = self.app.persona.get_combined_prompt()
-            if not persona_content:
-                persona_content = "[No persona set]"
-            print(f"[bold {chat_color}]|[/bold {chat_color}] {'Persona Name:':<20} [grey70]{persona_name}[/grey70]")
-            print(f"[bold {chat_color}]|[/bold {chat_color}] {'Persona Content:':<20} [grey70]{persona_content}[/grey70]")
-        else:
-            # Fallback to old system prompt
-            print(f"[bold {chat_color}]|[/bold {chat_color}] {'System Prompt:':<20} [grey70]{self.app.system_prompt['content']}[/grey70]")
         print()
 
     def display_chat_context(self, chat_color: str) -> None:

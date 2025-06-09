@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.3.dev] - 2025-06-09
+
+### Added
+- Split `/sys.vars` into focused commands: `/model.vars`, `/chat.vars`, `/log.vars`
+- Global context window management across all chat instances
+
+### Changed
+- Context window (`num_ctx`) is now a global setting instead of per-chat
+- New chat instances automatically inherit current global context window
+- Reorganized help menu: removed headers, moved vars commands to end of sections
+- Cleaned up variable displays by removing excessive "*GLOBAL*" indicators
+- Moved evaluation mode (verbosity) from model variables to chat variables
+
+### Removed
+- `/sys.vars` command (replaced by specific variable commands)
+
+### Technical
+- Updated `ConfigManager` to handle global `num_ctx` setting
+- Modified `SessionManager` to propagate context window changes to all chats
+- Refactored `ModelService.set_context_size()` to operate globally
+- Updated UI methods for cleaner, focused variable displays
+
 ## [0.12.2.dev] - 2025-06-09
 
 ### Fixed

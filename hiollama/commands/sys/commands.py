@@ -17,7 +17,19 @@ def cmd_sys_quit(handler) -> CommandResult:
     return SysService.quit_application(handler)
 
 
-@registry.register("sys.vars", "Show current system variables", category=CommandCategory.GENERAL)
-def cmd_sys_vars(handler) -> CommandResult:
-    """Display system variables and settings."""
-    return SysService.show_variables(handler)
+@registry.register("model.vars", "Show model-related variables", category=CommandCategory.MODEL)
+def cmd_model_vars(handler) -> CommandResult:
+    """Display model-related variables and settings."""
+    return SysService.show_model_variables(handler)
+
+
+@registry.register("chat.vars", "Show chat-specific variables", category=CommandCategory.NAVIGATION)
+def cmd_chat_vars(handler) -> CommandResult:
+    """Display chat-specific variables and settings."""
+    return SysService.show_chat_variables(handler)
+
+
+@registry.register("log.vars", "Show logging-related variables", category=CommandCategory.HISTORY)
+def cmd_log_vars(handler) -> CommandResult:
+    """Display logging-related variables and settings."""
+    return SysService.show_log_variables(handler)

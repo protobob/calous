@@ -17,7 +17,19 @@ class SysService:
         return CommandResult(ActionType.QUIT)
     
     @staticmethod
-    def show_variables(handler) -> CommandResult:
-        """Display application variables."""
-        handler.app.ui.show_variables()
+    def show_model_variables(handler) -> CommandResult:
+        """Display model-related variables."""
+        handler.app.ui.show_model_variables()
+        return CommandResult(ActionType.CONTINUE)
+    
+    @staticmethod
+    def show_chat_variables(handler) -> CommandResult:
+        """Display chat-specific variables."""
+        handler.app.ui.show_chat_variables()
+        return CommandResult(ActionType.CONTINUE)
+    
+    @staticmethod
+    def show_log_variables(handler) -> CommandResult:
+        """Display logging-related variables."""
+        handler.app.ui.show_log_variables()
         return CommandResult(ActionType.CONTINUE)
