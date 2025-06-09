@@ -31,8 +31,8 @@ class UIManager:
         
         print(f"[white]Choose a model:      [/white][bold {command_color}]/model.switch[/bold {command_color}]")
         print(f"[white]Switch channels:     [/white][bold {command_color}]/chat.switch 2[/bold {command_color}]")
-        print(f"[white]Name your AI:        [/white][bold {command_color}]/persona.name Assistant[/bold {command_color}]")
         print(f"[white]Set a system prompt: [/white][bold {command_color}]/persona.set 0 You are a helpful coding assistant[/bold {command_color}]")
+        print(f"[white]Name your AI:        [/white][bold {command_color}]/persona.name Assistant[/bold {command_color}]")
         print(f"[white]Try twist feature:   [/white][bold {command_color}]/chat.twist 3[/bold {command_color}]")
         print(f"[white]View chat history:   [/white][bold {command_color}]/history.show[/bold {command_color}]")
         print(f"[white]Add a command alias: [/white][bold {command_color}]/alias.add h sys.help[/bold {command_color}]")
@@ -52,9 +52,9 @@ class UIManager:
         
         print(f"[white]MORE HELP[/white]\n")
         
-        print(f"[bold {command_color}]/sys.help [category][/bold {command_color}]     [white]Detailed commands for a category[/white]")
-        print(f"[bold {command_color}]/sys.help [command][/bold {command_color}]     [white]Specific help for any command[/white]")
-        print(f"[bold {command_color}]/sys.help all[/bold {command_color}]  [white]List of all commands by category.[/white]")
+        print(f"[bold {command_color}]/sys.help category[/bold {command_color}]     [white]Detailed commands for a category[/white]")
+        print(f"[bold {command_color}]/sys.help command[/bold {command_color}]      [white]Specific help for any command[/white]")
+        print(f"[bold {command_color}]/sys.help all[/bold {command_color}]          [white]List of all commands[/white]")
         print()
 
     def help_menu_all(self):
