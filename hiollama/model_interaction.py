@@ -378,15 +378,24 @@ class ModelInteraction:
             # Add tools if available
             if tools:
                 chat_options['tools'] = tools
-            
-            # Try to use native thinking API, fall back to without think parameter
+              # Try to use native thinking API, fall back to without think parameter
             try:
                 chat_options['think'] = self.app.thinking_enabled
                 chunks = ollama.chat(**chat_options)
-            except TypeError:
-                # Fallback for older ollama client that doesn't support think parameter
-                chat_options.pop('think', None)
-                chunks = ollama.chat(**chat_options)
+            except (TypeError, ollama.ResponseError) as e:
+                # Handle both unsupported client versions and unsupported models
+                if isinstance(e, ollama.ResponseError) and "thinking" in str(e).lower():
+                    if self.app.thinking_enabled:
+                        print(f"\n[yellow]⚠️  Model '{self.app.selected_model}' doesn't support thinking mode.[/yellow]")
+                        print(f"[grey50]Try updating the model with: ollama pull {self.app.selected_model}[/grey50]")
+                        print(f"[grey50]Continuing without thinking mode...[/grey50]\n")
+                    # Disable thinking for this request and continue
+                    chat_options.pop('think', None)
+                    chunks = ollama.chat(**chat_options)
+                else:
+                    # Fallback for older ollama client that doesn't support think parameter
+                    chat_options.pop('think', None)
+                    chunks = ollama.chat(**chat_options)
             
             for chunk in chunks:
                 # Handle both content and thinking from the new API

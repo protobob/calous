@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.2.dev] - 2025-06-09
+
+### Fixed
+- **Model Thinking API**: Improved error handling for unsupported thinking models
+  - Enhanced exception handling in `_handle_streaming` method to catch both `TypeError` (older ollama client) and `ollama.ResponseError` (unsupported model versions)
+  - Added helpful error messaging suggesting model updates with `ollama pull {model_name}` when thinking is not supported
+  - Resolved issue where thinking content was displayed even when `model.think` was set to "off"
+  - Fixed API errors for models that don't support thinking mode without proper fallback
+
+### Technical
+- **Exception Handling**: More robust error detection for Ollama thinking API compatibility
+- **User Experience**: Better guidance for users when models need updates to support new features
+
 ## [0.12.1.dev] - 2025-06-07
 
 ### Fixed
