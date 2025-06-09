@@ -7,7 +7,7 @@ from .services import AliasService
 from .formatters import AliasFormatter
 
 
-@registry.register("alias.add", "Create a new command alias", category=CommandCategory.GENERAL)
+@registry.register("alias.add", "Create a new command alias", category=CommandCategory.ALIAS)
 def cmd_alias_add(handler, alias: str, command: str) -> CommandResult:
     """Add a new command alias."""
     # Check if alias already exists and get confirmation if needed
@@ -35,7 +35,7 @@ def cmd_alias_add(handler, alias: str, command: str) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("alias.remove", "Remove a command alias", category=CommandCategory.GENERAL)
+@registry.register("alias.remove", "Remove a command alias", category=CommandCategory.ALIAS)
 def cmd_alias_remove(handler, alias: str) -> CommandResult:
     """Remove a command alias."""
     result = AliasService.remove_alias(alias)
@@ -51,7 +51,7 @@ def cmd_alias_remove(handler, alias: str) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("alias.list", "List all command aliases", category=CommandCategory.GENERAL)
+@registry.register("alias.list", "List all command aliases", category=CommandCategory.ALIAS)
 def cmd_alias_list(handler) -> CommandResult:
     """List all user-defined command aliases."""
     result = AliasService.list_aliases()
@@ -61,4 +61,11 @@ def cmd_alias_list(handler) -> CommandResult:
     else:
         AliasFormatter.print_no_aliases()
     
+    return CommandResult(ActionType.CONTINUE)
+
+
+@registry.register("alias.help", "Show help for alias commands", category=CommandCategory.ALIAS)
+def cmd_alias_help(handler) -> CommandResult:
+    """Show help for alias commands - alias for /sys.help alias."""
+    handler.app.ui.show_category_help("alias")
     return CommandResult(ActionType.CONTINUE)

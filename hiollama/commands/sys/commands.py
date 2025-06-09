@@ -6,9 +6,14 @@ from ..types import CommandCategory
 
 
 @registry.register("sys.help", "Show this command reference", aliases=["help"], category=CommandCategory.GENERAL)
-def cmd_sys_help(handler) -> CommandResult:
-    """Show comprehensive command help."""
-    return SysService.show_help(handler)
+def cmd_sys_help(handler, category: str = None, command: str = None) -> CommandResult:
+    """Show comprehensive command help.
+    
+    Args:
+        category: Optional category name (e.g., 'chat', 'model', 'prompt')
+        command: Optional specific command name (e.g., 'chat.switch', 'model.setctx')
+    """
+    return SysService.show_help(handler, category, command)
 
 
 @registry.register("sys.quit", "Exit and save configuration", aliases=["quit"], category=CommandCategory.GENERAL)
@@ -29,7 +34,7 @@ def cmd_chat_vars(handler) -> CommandResult:
     return SysService.show_chat_variables(handler)
 
 
-@registry.register("log.vars", "Show logging-related variables", category=CommandCategory.HISTORY)
+@registry.register("log.vars", "Show logging-related variables", category=CommandCategory.LOGGING)
 def cmd_log_vars(handler) -> CommandResult:
     """Display logging-related variables and settings."""
     return SysService.show_log_variables(handler)

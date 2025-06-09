@@ -81,3 +81,10 @@ def cmd_model_settemp(handler, temperature: Optional[float] = None) -> CommandRe
     return CommandResult(ActionType.CONTINUE)
 
 
+@registry.register("model.help", "Show help for model commands", category=CommandCategory.MODEL)
+def cmd_model_help(handler) -> CommandResult:
+    """Show help for model commands - alias for /sys.help model."""
+    handler.app.ui.show_category_help("model")
+    return CommandResult(ActionType.CONTINUE)
+
+

@@ -9,7 +9,7 @@ from .services import PluginService
 from .formatters import PluginFormatter
 
 
-@registry.register("plugin.list", "List all available plugins", category=CommandCategory.GENERAL)
+@registry.register("plugin.list", "List all available plugins", category=CommandCategory.PLUGIN)
 def cmd_plugin_list(handler) -> CommandResult:
     """List all available plugins and their status."""
     formatter = PluginFormatter()
@@ -55,7 +55,7 @@ def cmd_plugin_list(handler) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("plugin.info", "Get details for a specific plugin", category=CommandCategory.GENERAL)
+@registry.register("plugin.info", "Get details for a specific plugin", category=CommandCategory.PLUGIN)
 def cmd_plugin_info(handler, name: str) -> CommandResult:
     """Get detailed information about a specific plugin."""
     formatter = PluginFormatter()
@@ -91,7 +91,7 @@ def cmd_plugin_info(handler, name: str) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("plugin.reload", "Reload all plugins (for development)", category=CommandCategory.GENERAL)
+@registry.register("plugin.reload", "Reload all plugins (for development)", category=CommandCategory.PLUGIN)
 def cmd_plugin_reload(handler) -> CommandResult:
     """Reload all plugins from disk."""
     formatter = PluginFormatter()
@@ -121,4 +121,11 @@ def cmd_plugin_reload(handler) -> CommandResult:
     else:
         formatter.reload_cancelled()
     
+    return CommandResult(ActionType.CONTINUE)
+
+
+@registry.register("plugin.help", "Show help for plugin commands", category=CommandCategory.PLUGIN)
+def cmd_plugin_help(handler) -> CommandResult:
+    """Show help for plugin commands - alias for /sys.help plugin."""
+    handler.app.ui.show_category_help("plugin")
     return CommandResult(ActionType.CONTINUE)

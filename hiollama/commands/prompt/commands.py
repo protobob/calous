@@ -94,3 +94,10 @@ def cmd_prompt_list(handler, slot: Optional[int] = None) -> CommandResult:
         print()  # Add spacing after output
     
     return CommandResult(ActionType.CONTINUE)
+
+
+@registry.register("prompt.help", "Show help for prompt commands", category=CommandCategory.PROMPT)
+def cmd_prompt_help(handler) -> CommandResult:
+    """Show help for prompt commands - alias for /sys.help prompt."""
+    handler.app.ui.show_category_help("prompt")
+    return CommandResult(ActionType.CONTINUE)

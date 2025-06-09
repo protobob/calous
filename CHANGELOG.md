@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.6.dev] - 2025-01-XX
+
+### Added
+- Complete custom help system overhaul with organized, readable command documentation
+- Custom help screens for all major command categories (persona, model, alias, chat, log, history, plugin, sys, file, prompt)
+- Descriptive introductions for each command category explaining their purpose and functionality
+- Logical command grouping with section headers (e.g., "SESSION MANAGEMENT", "PLUGIN DISCOVERY", etc.)
+- Consistent Rich markup formatting with proper color schemes (grey50 commands, white descriptions)
+- Improved help navigation with category-specific help commands (e.g., `/persona.help`, `/model.help`)
+
+### Changed
+- Replaced auto-generated table-based help with custom formatted help screens for better readability
+- Updated help text colors from grey to white for improved visibility
+- Reorganized command displays by logical functionality rather than alphabetical ordering
+- Enhanced help descriptions with specific details about file locations, persistence, and usage patterns
+
+### Fixed
+- Fixed help command access issues where category help commands were trying to access non-existent `ui_manager` attribute
+- Corrected all help commands to use proper `handler.app.ui` instead of `handler.app.ui_manager`
+- Resolved Rich markup processing issues by using `print()` instead of `self.console.print()` for help displays
+
 ## [0.12.5.dev] - 2025-06-09
 
 ### Changed

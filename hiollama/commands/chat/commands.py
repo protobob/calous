@@ -88,4 +88,11 @@ def cmd_chat_reset(handler) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-    
+@registry.register("chat.help", "Show help for chat commands", category=CommandCategory.NAVIGATION)
+def cmd_chat_help(handler) -> CommandResult:
+    """Show help for chat commands - alias for /sys.help chat."""
+    handler.app.ui.show_category_help("chat")
+    return CommandResult(ActionType.CONTINUE)
+
+
+

@@ -32,3 +32,10 @@ def cmd_history_show(handler) -> CommandResult:
     service = HistoryService(handler.app)
     service.display_history()
     return CommandResult(ActionType.CONTINUE)
+
+
+@registry.register("history.help", "Show help for history commands", category=CommandCategory.HISTORY)
+def cmd_history_help(handler) -> CommandResult:
+    """Show help for history commands - alias for /sys.help history."""
+    handler.app.ui.show_category_help("history")
+    return CommandResult(ActionType.CONTINUE)

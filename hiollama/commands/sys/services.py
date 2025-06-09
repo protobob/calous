@@ -1,14 +1,28 @@
 """System services for handling system-level operations."""
 from ...types import CommandResult, ActionType
+from ..registry import registry
 
 
 class SysService:
     """Service class for system operations."""
     
     @staticmethod
-    def show_help(handler) -> CommandResult:
-        """Display the help menu using the existing UI manager implementation."""
-        handler.app.ui.help_menu()
+    def show_help(handler, category: str = None, command: str = None) -> CommandResult:
+        """Display the help menu with optional category or command filtering.
+        
+        Args:
+            category: Optional category name for category-specific help
+            command: Optional command name for command-specific help
+        """
+        if command:
+            # Show help for specific command
+            handler.app.ui.show_command_help(command)
+        elif category:
+            # Show help for specific category
+            handler.app.ui.show_category_help(category)
+        else:
+            # Show full help menu
+            handler.app.ui.help_menu()
         return CommandResult(ActionType.CONTINUE)
     
     @staticmethod

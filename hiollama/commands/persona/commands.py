@@ -8,7 +8,7 @@ from .services import PersonaService
 from .formatters import PersonaFormatter
 
 
-@registry.register("persona.set", "Set a system prompt at slot 0-9", category=CommandCategory.PROMPT)
+@registry.register("persona.set", "Set a system prompt at slot 0-9", category=CommandCategory.PERSONA)
 def cmd_persona_set(handler, slot: int, content) -> CommandResult:
     """Set a system prompt at slot 0-9."""
     formatter = PersonaFormatter()
@@ -38,7 +38,7 @@ def cmd_persona_set(handler, slot: int, content) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("persona.get", "View contents of a specific slot", category=CommandCategory.PROMPT)
+@registry.register("persona.get", "View contents of a specific slot", category=CommandCategory.PERSONA)
 def cmd_persona_get(handler, slot: int) -> CommandResult:
     """View contents of a specific slot."""
     formatter = PersonaFormatter()
@@ -62,7 +62,7 @@ def cmd_persona_get(handler, slot: int) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("persona.clear", "Clear contents of a specific slot", category=CommandCategory.PROMPT)
+@registry.register("persona.clear", "Clear contents of a specific slot", category=CommandCategory.PERSONA)
 def cmd_persona_clear(handler, slot: int) -> CommandResult:
     """Clear contents of a specific slot."""
     formatter = PersonaFormatter()
@@ -89,7 +89,7 @@ def cmd_persona_clear(handler, slot: int) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("persona.name", "Set the persona name", category=CommandCategory.PROMPT)
+@registry.register("persona.name", "Set the persona name", category=CommandCategory.PERSONA)
 def cmd_persona_name(handler, name) -> CommandResult:
     """Set the persona name."""
     formatter = PersonaFormatter()
@@ -113,7 +113,7 @@ def cmd_persona_name(handler, name) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("persona.show", "Show current name + all slot contents", category=CommandCategory.PROMPT)
+@registry.register("persona.show", "Show current name + all slot contents", category=CommandCategory.PERSONA)
 def cmd_persona_show(handler) -> CommandResult:
     """Show current name + all slot contents."""
     formatter = PersonaFormatter()
@@ -131,7 +131,7 @@ def cmd_persona_show(handler) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("persona.reset", "Clear name and all slot contents", category=CommandCategory.PROMPT)
+@registry.register("persona.reset", "Clear name and all slot contents", category=CommandCategory.PERSONA)
 def cmd_persona_reset(handler) -> CommandResult:
     """Clear name and all slot contents (start fresh)."""
     formatter = PersonaFormatter()
@@ -164,7 +164,7 @@ def cmd_persona_reset(handler) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("persona.save", "Save current persona", category=CommandCategory.PROMPT)
+@registry.register("persona.save", "Save current persona", category=CommandCategory.PERSONA)
 def cmd_persona_save(handler) -> CommandResult:
     """Save current persona (uses name as filename)."""
     formatter = PersonaFormatter()
@@ -183,7 +183,7 @@ def cmd_persona_save(handler) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("persona.load", "Load a saved persona by name", category=CommandCategory.PROMPT)
+@registry.register("persona.load", "Load a saved persona by name", category=CommandCategory.PERSONA)
 def cmd_persona_load(handler, name) -> CommandResult:
     """Load a saved persona by name."""
     formatter = PersonaFormatter()
@@ -205,7 +205,7 @@ def cmd_persona_load(handler, name) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("persona.list", "List all saved personas", category=CommandCategory.PROMPT)
+@registry.register("persona.list", "List all saved personas", category=CommandCategory.PERSONA)
 def cmd_persona_list(handler) -> CommandResult:
     """List all saved personas."""
     formatter = PersonaFormatter()
@@ -223,7 +223,7 @@ def cmd_persona_list(handler) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
-@registry.register("persona.delete", "Delete a saved persona file", category=CommandCategory.PROMPT)
+@registry.register("persona.delete", "Delete a saved persona file", category=CommandCategory.PERSONA)
 def cmd_persona_delete(handler, name) -> CommandResult:
     """Delete a saved persona."""
     formatter = PersonaFormatter()
@@ -245,4 +245,11 @@ def cmd_persona_delete(handler, name) -> CommandResult:
     else:
         formatter.delete_cancelled()
     
+    return CommandResult(ActionType.CONTINUE)
+
+
+@registry.register("persona.help", "Show help for persona commands", category=CommandCategory.PERSONA)
+def cmd_persona_help(handler) -> CommandResult:
+    """Show help for persona commands - alias for /sys.help persona."""
+    handler.app.ui.show_category_help("persona")
     return CommandResult(ActionType.CONTINUE)
