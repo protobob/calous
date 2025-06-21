@@ -1,0 +1,1119 @@
+========================================
+HIOLLAMA INDIVIDUAL COMMAND HELP MOCKUPS
+========================================
+
+These are mockups for individual command help screens that will be implemented
+in the UIManager class. Each follows the pattern established in the existing
+category help screens.
+
+========================================
+SYSTEM COMMANDS
+========================================
+
+--- /sys.help ---
+DETAILED HELP: /sys.help
+
+Command: /sys.help
+Aliases: /help
+Description: Show this command reference
+Category: General Commands
+Usage: /sys.help [category] [command]
+
+Examples:
+  /sys.help                   - Show main help menu
+  /sys.help model             - Show all model commands
+  /sys.help model.switch      - Show detailed help for model.switch
+  /help all                   - Show comprehensive command list
+
+System Tips:
+  • Use category names to see groups of related commands
+  • Use specific command names for detailed usage information
+  • The 'all' option shows every command in a table format
+
+Use /sys.help sys to see all system commands
+
+--- /sys.quit ---
+DETAILED HELP: /sys.quit
+
+Command: /sys.quit
+Aliases: /quit
+Description: Exit and save configuration
+Category: General Commands
+Usage: /sys.quit
+
+The quit command safely exits Hi, Ollama! while preserving your:
+  • Chat configurations and personas
+  • User-defined aliases
+  • Global settings (model, context window)
+  • Logging preferences
+
+System Tips:
+  • All settings are automatically saved before exit
+  • Chat histories are preserved in individual files
+  • Configuration files are updated with current state
+
+Use /sys.help sys to see all system commands
+
+--- /sys.help.all ---
+DETAILED HELP: /sys.help.all
+
+Command: /sys.help.all
+Description: List all commands by category
+Category: General Commands
+Usage: /sys.help.all
+
+Displays a comprehensive table of all available commands organized by category.
+This provides a quick overview of the entire command system.
+
+System Tips:
+  • Use this for a complete overview of available functionality
+  • Commands are grouped logically for easy browsing
+  • Use specific category help for more detailed information
+
+Use /sys.help sys to see all system commands
+
+========================================
+MODEL COMMANDS
+========================================
+
+--- /model.switch ---
+DETAILED HELP: /model.switch
+
+Command: /model.switch
+Description: Change the current model
+Category: Model Management
+Usage: /model.switch
+
+Opens an interactive model selection menu showing all available Ollama models.
+The selected model applies globally to all chat sessions.
+
+Requirements:
+  • Ollama must be running
+  • At least one model must be available
+
+Model Tips:
+  • Model selection affects all chats simultaneously
+  • Larger models provide better quality but use more resources
+  • Use /model.vars to see current model information
+
+Use /sys.help model to see all model commands
+
+--- /model.setctx ---
+DETAILED HELP: /model.setctx
+
+Command: /model.setctx
+Description: Set max context window size
+Category: Model Management
+Usage: /model.setctx [context_size]
+
+Examples:
+  /model.setctx           - Show current context settings with guidance
+  /model.setctx 4096      - Set context to 4096 tokens
+  /model.setctx 8192      - Set context to 8192 tokens
+
+Valid range: 2048-32768 tokens
+
+Model Tips:
+  • Larger contexts use more VRAM and may slow performance
+  • 4096-8192 tokens work well for most conversations
+  • The command shows estimated VRAM usage for different sizes
+  • Setting applies globally to all chats
+
+Use /sys.help model to see all model commands
+
+--- /model.eval ---
+DETAILED HELP: /model.eval
+
+Command: /model.eval
+Description: Toggle evaluation display
+Category: Model Management
+Usage: /model.eval <on|off>
+
+Examples:
+  /model.eval on          - Enable evaluation metrics display
+  /model.eval off         - Disable evaluation metrics display
+
+When enabled, shows token counts and generation speed after each AI response.
+
+Model Tips:
+  • Evaluation data helps monitor performance
+  • Shows prompt/completion tokens and generation speed
+  • Per-chat setting (each chat can have different evaluation state)
+  • Useful for understanding model performance characteristics
+
+Use /sys.help model to see all model commands
+
+--- /model.think ---
+DETAILED HELP: /model.think
+
+Command: /model.think
+Description: Toggle thinking display
+Category: Model Management
+Usage: /model.think <on|off>
+
+Examples:
+  /model.think on         - Enable thinking mode display
+  /model.think off        - Disable thinking mode display
+
+When enabled, reveals the model's reasoning process if the model supports it.
+
+Model Tips:
+  • Not all models support thinking mode
+  • Shows the model's internal reasoning before the final response
+  • Per-chat setting (each chat can have different thinking state)
+  • Useful for understanding how the model approaches problems
+
+Use /sys.help model to see all model commands
+
+--- /model.settemp ---
+DETAILED HELP: /model.settemp
+
+Command: /model.settemp
+Description: Set temperature parameter
+Category: Model Management
+Usage: /model.settemp [temperature]
+
+Examples:
+  /model.settemp          - Show current temperature setting
+  /model.settemp 0.0      - Set to deterministic (most predictable)
+  /model.settemp 0.7      - Set to balanced creativity
+  /model.settemp 1.0      - Set to creative (more random)
+
+Valid range: 0.0-2.0
+
+Model Tips:
+  • Lower values = more predictable, focused responses
+  • Higher values = more creative, varied responses
+  • 0.7-0.8 is often optimal for most tasks
+  • Per-chat setting (each chat can have different temperature)
+
+Use /sys.help model to see all model commands
+
+--- /model.vars ---
+DETAILED HELP: /model.vars
+
+Command: /model.vars
+Description: Show model-related variables
+Category: Model Management
+Usage: /model.vars
+
+Displays comprehensive model information including:
+  • Currently selected model
+  • Context window size and usage
+  • Estimated VRAM requirements
+  • Model capabilities and metadata
+
+Model Tips:
+  • Use this to check current model configuration
+  • Shows context usage as both tokens and percentage
+  • VRAM estimates help with resource planning
+  • Context info updates dynamically based on conversation length
+
+Use /sys.help model to see all model commands
+
+--- /model.help ---
+DETAILED HELP: /model.help
+
+Command: /model.help
+Description: Show help for model commands
+Category: Model Management
+Usage: /model.help
+
+Displays the model commands category help screen with descriptions of all
+model-related functionality.
+
+Use /sys.help model to see all model commands
+
+========================================
+CHAT COMMANDS
+========================================
+
+--- /chat.add ---
+DETAILED HELP: /chat.add
+
+Command: /chat.add
+Description: Add a new chat session
+Category: Chat Navigation
+Usage: /chat.add
+
+Creates a new chat session with:
+  • Empty conversation history
+  • Default persona (can be customized)
+  • Inherited global settings (model, context window)
+  • Per-chat settings at defaults (temperature, evaluation, thinking)
+
+Chat Tips:
+  • New chats start with clean slate
+  • Each chat maintains independent conversation history
+  • Use /persona commands to customize the new chat's behavior
+  • Maximum number of chats is configurable
+
+Use /sys.help chat to see all chat commands
+
+--- /chat.switch ---
+DETAILED HELP: /chat.switch
+
+Command: /chat.switch
+Description: Switch between chat sessions
+Category: Chat Navigation
+Usage: /chat.switch [chat_number]
+
+Examples:
+  /chat.switch 2          - Switch to chat session 2
+  /chat.switch            - Cycle to next available chat
+
+Chat Tips:
+  • Current chat is marked with '>' in the chat overview
+  • Switching preserves the state of the previous chat
+  • Each chat has independent history and persona
+  • Chat numbers start from 1
+
+Use /sys.help chat to see all chat commands
+
+--- /chat.remove ---
+DETAILED HELP: /chat.remove
+
+Command: /chat.remove
+Description: Remove a chat session
+Category: Chat Navigation
+Usage: /chat.remove [chat_number]
+
+Examples:
+  /chat.remove 3          - Remove chat session 3
+  /chat.remove            - Remove the last chat session
+
+WARNING: Removing a chat permanently deletes its conversation history.
+
+Chat Tips:
+  • Cannot remove the last remaining chat
+  • Consider saving important conversations before removing
+  • Removing active chat automatically switches to another chat
+  • Use /log.today to backup conversations before removal
+
+Use /sys.help chat to see all chat commands
+
+--- /chat.twist ---
+DETAILED HELP: /chat.twist
+
+Command: /chat.twist
+Description: Copy AI response to another chat
+Category: Chat Navigation
+Usage: /chat.twist [target_chat]
+
+Examples:
+  /chat.twist 2           - Send last AI response to chat 2
+  /chat.twist             - Send to next available chat
+
+This powerful feature allows continuing conversations across different personas
+or contexts by taking the AI's most recent response and using it as a new
+prompt in another chat.
+
+Chat Tips:
+  • Copies the AI's last response, not your prompt
+  • Useful for exploring different perspectives on the same topic
+  • Each chat processes the response according to its own persona
+  • Creates seamless conversation flow between different contexts
+
+Use /sys.help chat to see all chat commands
+
+--- /chat.reset ---
+DETAILED HELP: /chat.reset
+
+Command: /chat.reset
+Description: Reset current chat to factory defaults
+Category: Chat Navigation
+Usage: /chat.reset
+
+Resets the current chat to factory defaults with confirmation prompt:
+  • Clears conversation history
+  • Resets persona to default state
+  • Resets per-chat settings (temperature, evaluation, thinking)
+  • Preserves global settings (model, context window)
+
+WARNING: This action cannot be undone.
+
+Chat Tips:
+  • Use this for a fresh start while keeping the same chat slot
+  • Alternative to removing and adding a new chat
+  • Confirmation prompt prevents accidental resets
+  • Consider saving important conversations first
+
+Use /sys.help chat to see all chat commands
+
+--- /chat.vars ---
+DETAILED HELP: /chat.vars
+
+Command: /chat.vars
+Description: Show chat-specific variables
+Category: Chat Navigation
+Usage: /chat.vars
+
+Displays current chat's configuration including:
+  • Verbosity setting
+  • Thinking mode state
+  • Temperature setting
+  • Chat-specific preferences
+
+Chat Tips:
+  • Each chat maintains independent settings
+  • Settings persist when switching between chats
+  • Use this to check current chat configuration
+  • Chat-specific settings override global defaults where applicable
+
+Use /sys.help chat to see all chat commands
+
+--- /chat.help ---
+DETAILED HELP: /chat.help
+
+Command: /chat.help
+Description: Show help for chat commands
+Category: Chat Navigation
+Usage: /chat.help
+
+Displays the chat commands category help screen with descriptions of all
+chat navigation and management functionality.
+
+Use /sys.help chat to see all chat commands
+
+========================================
+PERSONA COMMANDS
+========================================
+
+--- /persona.set ---
+DETAILED HELP: /persona.set
+
+Command: /persona.set
+Description: Set a system prompt at slot 0-9
+Category: Persona Management
+Usage: /persona.set <slot> <content>
+
+Examples:
+  /persona.set 0 You are a helpful coding assistant
+  /persona.set 1 Focus on Python best practices
+  /persona.set 2 Explain concepts simply
+
+Slots 0-9 are combined to form the complete system prompt sent to the AI.
+Slot 0 is typically used for the main persona definition.
+
+Persona Tips:
+  • Slots allow modular persona construction
+  • Lower numbered slots are processed first
+  • Content can span multiple sentences
+  • No quotes needed for multi-word content
+
+Use /sys.help persona to see all persona commands
+
+--- /persona.get ---
+DETAILED HELP: /persona.get
+
+Command: /persona.get
+Description: View contents of a specific slot
+Category: Persona Management
+Usage: /persona.get [slot]
+
+Examples:
+  /persona.get 0          - Show contents of slot 0
+  /persona.get            - Show all non-empty slots
+
+Persona Tips:
+  • Use this to review current persona configuration
+  • Empty slots are not displayed when showing all
+  • Helps verify persona setup before saving
+  • Useful for troubleshooting persona behavior
+
+Use /sys.help persona to see all persona commands
+
+--- /persona.clear ---
+DETAILED HELP: /persona.clear
+
+Command: /persona.clear
+Description: Clear contents of a specific slot
+Category: Persona Management
+Usage: /persona.clear <slot>
+
+Examples:
+  /persona.clear 0        - Clear slot 0 contents
+  /persona.clear 5        - Clear slot 5 contents
+
+Persona Tips:
+  • Clearing a slot removes its content from the persona
+  • Other slots remain unchanged
+  • Use /persona.reset to clear all slots at once
+  • Changes take effect immediately
+
+Use /sys.help persona to see all persona commands
+
+--- /persona.name ---
+DETAILED HELP: /persona.name
+
+Command: /persona.name
+Description: Set the persona name
+Category: Persona Management
+Usage: /persona.name [name]
+
+Examples:
+  /persona.name Assistant - Set persona name to "Assistant"
+  /persona.name Coding Helper - Set name to "Coding Helper"
+  /persona.name           - Show current persona name
+
+The persona name is used for identification and file operations.
+
+Persona Tips:
+  • Names help identify saved personas
+  • Used as filename when saving (spaces converted to underscores)
+  • Descriptive names make persona management easier
+  • Name is separate from the actual prompt content
+
+Use /sys.help persona to see all persona commands
+
+--- /persona.show ---
+DETAILED HELP: /persona.show
+
+Command: /persona.show
+Description: Show current name + all slot contents
+Category: Persona Management
+Usage: /persona.show
+
+Displays complete persona information:
+  • Current persona name
+  • Contents of all non-empty slots (0-9)
+  • Combined system prompt as it would be sent to the AI
+
+Persona Tips:
+  • Use this to review complete persona configuration
+  • Shows exactly what the AI will receive as system prompt
+  • Helpful before saving personas to ensure they're complete
+  • Empty slots are not displayed
+
+Use /sys.help persona to see all persona commands
+
+--- /persona.reset ---
+DETAILED HELP: /persona.reset
+
+Command: /persona.reset
+Description: Reset persona to default state
+Category: Persona Management
+Usage: /persona.reset
+
+Clears all persona data:
+  • Removes persona name
+  • Clears all slot contents (0-9)
+  • Returns to default "no persona" state
+
+WARNING: This action cannot be undone.
+
+Persona Tips:
+  • Use this for a completely fresh persona start
+  • Consider saving current persona first if it might be useful later
+  • Reset applies only to current chat
+  • Alternative to clearing slots individually
+
+Use /sys.help persona to see all persona commands
+
+--- /persona.save ---
+DETAILED HELP: /persona.save
+
+Command: /persona.save
+Description: Save current persona to file
+Category: Persona Management
+Usage: /persona.save
+
+Saves the current persona (name + all slots) to a file for later use.
+The filename is derived from the persona name, or you'll be prompted if no name is set.
+
+Saved personas include:
+  • Persona name
+  • All slot contents (0-9)
+  • Metadata (creation date, etc.)
+
+Persona Tips:
+  • Set a persona name first for easier identification
+  • Saved personas can be loaded into any chat
+  • Files are stored in the user's home directory
+  • Useful for sharing personas between different setups
+
+Use /sys.help persona to see all persona commands
+
+--- /persona.load ---
+DETAILED HELP: /persona.load
+
+Command: /persona.load
+Description: Load persona from file
+Category: Persona Management
+Usage: /persona.load <name>
+
+Examples:
+  /persona.load Assistant - Load "Assistant" persona
+  /persona.load Coding Helper - Load "Coding Helper" persona
+
+Replaces current persona with the saved one, including:
+  • Persona name
+  • All slot contents
+  • Complete system prompt configuration
+
+Persona Tips:
+  • Loading overwrites current persona completely
+  • Use /persona.save to backup current persona first
+  • Persona names with spaces work correctly
+  • Use /persona.list to see available personas
+
+Use /sys.help persona to see all persona commands
+
+--- /persona.list ---
+DETAILED HELP: /persona.list
+
+Command: /persona.list
+Description: List all saved personas
+Category: Persona Management
+Usage: /persona.list
+
+Shows all saved persona files with:
+  • Persona names
+  • File sizes
+  • Creation/modification dates
+  • Brief description if available
+
+Persona Tips:
+  • Use this to browse available personas before loading
+  • Files are stored in ~/.hiollama/personas/
+  • Persona names are derived from filenames
+  • Helpful for persona library management
+
+Use /sys.help persona to see all persona commands
+
+--- /persona.delete ---
+DETAILED HELP: /persona.delete
+
+Command: /persona.delete
+Description: Delete a saved persona file
+Category: Persona Management
+Usage: /persona.delete <name>
+
+Examples:
+  /persona.delete Assistant - Delete "Assistant" persona file
+  /persona.delete Old Helper - Delete "Old Helper" persona file
+
+WARNING: This permanently deletes the persona file from disk.
+
+Persona Tips:
+  • Deletion is permanent and cannot be undone
+  • Does not affect currently loaded persona in memory
+  • Use /persona.list to see available personas first
+  • Consider backing up important personas
+
+Use /sys.help persona to see all persona commands
+
+--- /persona.help ---
+DETAILED HELP: /persona.help
+
+Command: /persona.help
+Description: Show help for persona commands
+Category: Persona Management
+Usage: /persona.help
+
+Displays the persona commands category help screen with descriptions of all
+persona management functionality.
+
+Use /sys.help persona to see all persona commands
+
+========================================
+PROMPT COMMANDS
+========================================
+
+--- /prompt.set ---
+DETAILED HELP: /prompt.set
+
+Command: /prompt.set
+Description: Save a prompt to a numbered slot (0-9)
+Category: Prompt Management
+Usage: /prompt.set <slot> <prompt_text>
+
+Examples:
+  /prompt.set 1 Explain this code clearly and concisely
+  /prompt.set 2 Write a professional email about this topic
+  /prompt.set 0 You are a helpful assistant
+
+Prompt slots persist between sessions and can be reused with /prompt.use.
+
+Prompt Tips:
+  • 10 slots available (0-9) for different prompt templates
+  • Prompts are saved automatically and persist between sessions
+  • No quotes needed for multi-word prompts
+  • Slot 0 is often used for general-purpose prompts
+
+Use /sys.help prompt to see all prompt commands
+
+--- /prompt.use ---
+DETAILED HELP: /prompt.use
+
+Command: /prompt.use
+Description: Apply a saved prompt from a slot
+Category: Prompt Management
+Usage: /prompt.use <slot>
+
+Examples:
+  /prompt.use 1           - Apply prompt saved in slot 1
+  /prompt.use 0           - Apply prompt saved in slot 0
+
+Sends the saved prompt to the AI as if you had typed it manually.
+
+Prompt Tips:
+  • Quick way to reuse frequently used instructions
+  • Prompts can be used in any chat session
+  • Use /prompt.list to see what's saved in each slot
+  • Combine with other text by using the prompt as a starting point
+
+Use /sys.help prompt to see all prompt commands
+
+--- /prompt.list ---
+DETAILED HELP: /prompt.list
+
+Command: /prompt.list
+Description: Display saved prompts by slot number
+Category: Prompt Management
+Usage: /prompt.list [slot]
+
+Examples:
+  /prompt.list            - Show all saved prompts
+  /prompt.list 1          - Show only prompt in slot 1
+
+Shows slot numbers, prompt content, and character counts.
+
+Prompt Tips:
+  • Use this to review your saved prompt library
+  • Character counts help gauge prompt length
+  • Empty slots are clearly marked
+  • Helpful for organizing and managing your prompt templates
+
+Use /sys.help prompt to see all prompt commands
+
+--- /prompt.help ---
+DETAILED HELP: /prompt.help
+
+Command: /prompt.help
+Description: Show help for prompt commands
+Category: Prompt Management
+Usage: /prompt.help
+
+Displays the prompt commands category help screen with descriptions of all
+prompt management functionality.
+
+Use /sys.help prompt to see all prompt commands
+
+========================================
+HISTORY COMMANDS
+========================================
+
+--- /history.show ---
+DETAILED HELP: /history.show
+
+Command: /history.show
+Description: View the current chat history
+Category: Chat History
+Usage: /history.show
+
+Displays the complete conversation history for the current chat session,
+including:
+  • User messages
+  • AI responses
+  • Timestamps
+  • Message formatting
+
+History Tips:
+  • Shows only the current chat's history
+  • Each chat maintains separate history
+  • Use /log.today to see unified history across all chats
+  • History is automatically saved to files
+
+Use /sys.help history to see all history commands
+
+--- /history.clear ---
+DETAILED HELP: /history.clear
+
+Command: /history.clear
+Description: Clear the current chat history
+Category: Chat History
+Usage: /history.clear
+
+Clears all conversation history for the current chat with confirmation prompt.
+
+WARNING: This action permanently deletes the chat history and cannot be undone.
+
+History Tips:
+  • Only affects the current chat session
+  • Other chats' histories remain intact
+  • Consider using /log.today to backup important conversations
+  • History files are deleted from disk
+
+Use /sys.help history to see all history commands
+
+--- /history.help ---
+DETAILED HELP: /history.help
+
+Command: /history.help
+Description: Show help for history commands
+Category: Chat History
+Usage: /history.help
+
+Displays the history commands category help screen with descriptions of all
+chat history management functionality.
+
+Use /sys.help history to see all history commands
+
+========================================
+LOG COMMANDS
+========================================
+
+--- /log.on ---
+DETAILED HELP: /log.on
+
+Command: /log.on
+Description: Enable unified logging
+Category: Logging Operations
+Usage: /log.on
+
+Enables unified logging of all chat activities to daily log files.
+When enabled, all conversations from all chat sessions are logged to
+~/.hiollama/logs/ with filenames based on the date.
+
+Logging Tips:
+  • Creates new log file each day
+  • Captures conversations from all chat sessions
+  • Useful for reviewing past conversations
+  • Log files persist independently of chat histories
+
+Use /sys.help log to see all logging commands
+
+--- /log.off ---
+DETAILED HELP: /log.off
+
+Command: /log.off
+Description: Disable unified logging
+Category: Logging Operations
+Usage: /log.off
+
+Disables unified logging while preserving existing log files.
+New conversations will not be logged until logging is re-enabled.
+
+Logging Tips:
+  • Existing log files are not affected
+  • Can be re-enabled at any time with /log.on
+  • Per-chat histories continue independently of unified logging
+  • Useful for privacy when needed
+
+Use /sys.help log to see all logging commands
+
+--- /log.today ---
+DETAILED HELP: /log.today
+
+Command: /log.today
+Description: View today's unified log
+Category: Logging Operations
+Usage: /log.today
+
+Displays the unified log file for the current date, showing conversations
+from all chat sessions throughout the day.
+
+Features:
+  • Chronological order across all chats
+  • Chat session indicators
+  • Timestamps for each message
+  • Complete conversation context
+
+Logging Tips:
+  • Requires unified logging to have been enabled
+  • Shows activity from all chat sessions
+  • Useful for reviewing day's conversations
+  • Log files are organized by date
+
+Use /sys.help log to see all logging commands
+
+--- /log.vars ---
+DETAILED HELP: /log.vars
+
+Command: /log.vars
+Description: Show logging-related variables
+Category: Logging Operations
+Usage: /log.vars
+
+Displays logging system information including:
+  • Current logging state (enabled/disabled)
+  • Log directory location
+  • Configuration file paths
+  • Available log files and sizes
+
+Logging Tips:
+  • Use this to check current logging configuration
+  • Shows file system paths for log management
+  • Helpful for troubleshooting logging issues
+  • Displays log file sizes for space management
+
+Use /sys.help log to see all logging commands
+
+--- /log.help ---
+DETAILED HELP: /log.help
+
+Command: /log.help
+Description: Show help for logging commands
+Category: Logging Operations
+Usage: /log.help
+
+Displays the logging commands category help screen with descriptions of all
+unified logging functionality.
+
+Use /sys.help log to see all logging commands
+
+========================================
+FILE COMMANDS
+========================================
+
+--- /file.load ---
+DETAILED HELP: /file.load
+
+Command: /file.load
+Description: Load a file and send it with a prompt
+Category: File Operations
+Usage: /file.load <filepath> [prompt]
+
+Examples:
+  /file.load script.py Explain this code
+  /file.load document.txt Summarize this
+  /file.load image.jpg What do you see in this image?
+
+Supported file types:
+  • Text files (.txt, .md, .py, .js, .html, etc.)
+  • Images (.jpg, .png, .gif, .bmp, .webp) - requires vision model
+  • Code files (most programming languages)
+  • Documents (.csv, .json, .xml, etc.)
+
+WARNING: Large files or vision features may be slow on local setups.
+
+File Tips:
+  • Drag and drop files for quick path input
+  • Image processing requires vision-capable models
+  • File content is validated before processing
+  • Large files show preview with confirmation prompt
+
+Use /sys.help file to see all file commands
+
+--- /file.help ---
+DETAILED HELP: /file.help
+
+Command: /file.help
+Description: Show help for file commands
+Category: File Operations
+Usage: /file.help
+
+Displays the file commands category help screen with descriptions of all
+file loading and processing functionality.
+
+Use /sys.help file to see all file commands
+
+========================================
+PLUGIN COMMANDS
+========================================
+
+--- /plugin.list ---
+DETAILED HELP: /plugin.list
+
+Command: /plugin.list
+Description: List all available plugins
+Category: Plugin Management
+Usage: /plugin.list
+
+Shows all loaded plugins with:
+  • Plugin names and versions
+  • Status (Active/Inactive)
+  • Capabilities (commands, functions, etc.)
+  • Brief descriptions
+
+Includes both built-in and user-defined plugins.
+
+Plugin Tips:
+  • Built-in plugins provide core extended functionality
+  • User plugins can be added to ~/.hiollama/plugins/user/
+  • Plugin status indicates whether they're currently functional
+  • Use /plugin.info for detailed information about specific plugins
+
+Use /sys.help plugin to see all plugin commands
+
+--- /plugin.info ---
+DETAILED HELP: /plugin.info
+
+Command: /plugin.info
+Description: Get details for a specific plugin
+Category: Plugin Management
+Usage: /plugin.info <plugin_name>
+
+Examples:
+  /plugin.info calculator  - Show calculator plugin details
+  /plugin.info weather     - Show weather plugin details
+
+Displays comprehensive information including:
+  • Plugin description and version
+  • Available commands and functions
+  • Configuration options
+  • Usage examples
+  • Dependencies and requirements
+
+Plugin Tips:
+  • Use /plugin.list first to see available plugin names
+  • Plugin names are case-sensitive
+  • Detailed info helps understand plugin capabilities
+  • Some plugins may require additional setup
+
+Use /sys.help plugin to see all plugin commands
+
+--- /plugin.reload ---
+DETAILED HELP: /plugin.reload
+
+Command: /plugin.reload
+Description: Reload all plugins (for development)
+Category: Plugin Management
+Usage: /plugin.reload
+
+Reloads all plugins from disk, useful for:
+  • Plugin development and testing
+  • Loading newly added user plugins
+  • Refreshing plugin configurations
+  • Recovering from plugin errors
+
+Plugin Tips:
+  • Primarily intended for plugin developers
+  • Reloads both built-in and user plugins
+  • May temporarily disable plugin functionality during reload
+  • Use when adding new plugins without restarting Hi, Ollama!
+
+Use /sys.help plugin to see all plugin commands
+
+--- /plugin.help ---
+DETAILED HELP: /plugin.help
+
+Command: /plugin.help
+Description: Show help for plugin commands
+Category: Plugin Management
+Usage: /plugin.help
+
+Displays the plugin commands category help screen with descriptions of all
+plugin management functionality.
+
+Use /sys.help plugin to see all plugin commands
+
+========================================
+ALIAS COMMANDS
+========================================
+
+--- /alias.add ---
+DETAILED HELP: /alias.add
+
+Command: /alias.add
+Description: Create a new command alias
+Category: Alias Management
+Usage: /alias.add <alias> <command>
+
+Examples:
+  /alias.add t chat.twist  - Create "t" shortcut for twist
+  /alias.add s chat.switch - Create "s" shortcut for switch
+  /alias.add quit sys.quit - Create "quit" as alternative to sys.quit
+
+Creates custom shortcuts for frequently used commands.
+
+Alias Tips:
+  • Aliases persist between sessions
+  • Cannot override existing command names
+  • Short aliases save typing for frequent commands
+  • Use descriptive but brief alias names
+
+Use /sys.help alias to see all alias commands
+
+--- /alias.remove ---
+DETAILED HELP: /alias.remove
+
+Command: /alias.remove
+Description: Remove a command alias
+Category: Alias Management
+Usage: /alias.remove <alias>
+
+Examples:
+  /alias.remove t          - Remove the "t" alias
+  /alias.remove shortcut   - Remove the "shortcut" alias
+
+Permanently removes a user-defined alias.
+
+Alias Tips:
+  • Only removes user-defined aliases
+  • Built-in aliases (like help, quit) cannot be removed
+  • Use /alias.list to see current aliases before removing
+  • Removal is immediate and persistent
+
+Use /sys.help alias to see all alias commands
+
+--- /alias.list ---
+DETAILED HELP: /alias.list
+
+Command: /alias.list
+Description: List all command aliases
+Category: Alias Management
+Usage: /alias.list
+
+Shows all available aliases including:
+  • User-defined aliases
+  • Built-in aliases (help, quit)
+  • Target commands for each alias
+  • Usage examples
+
+Alias Tips:
+  • Built-in aliases are marked differently from user aliases
+  • Shows the full command each alias maps to
+  • Useful for reviewing your custom shortcuts
+  • Helps avoid conflicts when creating new aliases
+
+Use /sys.help alias to see all alias commands
+
+--- /alias.help ---
+DETAILED HELP: /alias.help
+
+Command: /alias.help
+Description: Show help for alias commands
+Category: Alias Management
+Usage: /alias.help
+
+Displays the alias commands category help screen with descriptions of all
+alias management functionality.
+
+Use /sys.help alias to see all alias commands
+
+========================================
+CATEGORY HELP COMMANDS
+========================================
+
+Each category also has its own help command that shows the category help screen:
+
+/chat.help    - Shows chat commands help
+/model.help   - Shows model commands help
+/persona.help - Shows persona commands help
+/prompt.help  - Shows prompt commands help
+/history.help - Shows history commands help
+/log.help     - Shows log commands help
+/file.help    - Shows file commands help
+/plugin.help  - Shows plugin commands help
+/alias.help   - Shows alias commands help
+
+These are convenience aliases for /sys.help <category>.
+
+========================================
+END OF MOCKUPS
+========================================
+
+Total individual command help screens: 44
+Categories: 9
+Built-in aliases: help, quit
+
+These mockups follow the established patterns from the category help screens
+and include:
+- Command name and aliases
+- Description and category
+- Usage syntax with examples
+- Relevant tips and warnings
+- Cross-references to related commands
+- Consistent formatting and tone
