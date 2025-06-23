@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.8.dev] - 2025-06-23
+
+### Changed
+- Moved config file from `~/.hiollama_config_unified.json` to `~/hiollama/config.json` for better containerization support
+- All HiOllama files now centralized in `~/hiollama/` directory (config, logs, history, personas)
+
+### Technical
+- Updated CONFIG_PATH in constants.py to use HIOLLAMA_DIR consistently
+- Improves deployment and data management for containerized environments
+
 ## [0.12.7.dev] - 2025-01-09
 
 ### Added
