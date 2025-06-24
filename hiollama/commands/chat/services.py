@@ -14,7 +14,7 @@ class ChatOperationResult(NamedTuple):
 class ChatInfo(NamedTuple):
     number: int
     color: str
-    index: int
+    chat_index: int
 
 
 class ChatService:
@@ -136,7 +136,7 @@ class ChatService:
         return ChatInfo(
             number=chat_number,
             color=chat_color,
-            index=self.app.instance_index
+            chat_index=self.app.instance_index
         )
     
     def reset_to_defaults(self) -> bool:
@@ -159,6 +159,9 @@ class ChatService:
             
             # Clear chat history
             self.app.chat_history.clear()
+            
+            # Reset persona to default empty state
+            self.app.persona.reset()
             
             # Save the updated configuration
             self.app.save_config()

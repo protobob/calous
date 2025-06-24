@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.9.dev] - 2025-06-24
+
+### Fixed
+- Fixed `/chat.reset` command not properly resetting persona data
+- The command now correctly calls `self.app.persona.reset()` to clear persona name and all slot contents
+- Chat reset functionality now works as intended, clearing both chat history and persona system
+
 ## [0.12.8.dev] - 2025-06-23
 
 ### Changed
@@ -44,7 +51,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Replaced auto-generated table-based help with custom formatted help screens for better readability
 - Updated help text colors from grey to white for improved visibility
-- Reorganized command displays by logical functionality rather than alphabetical ordering
+- Reorganized command displays to be more intuitive and user-friendly
 - Enhanced help descriptions with specific details about file locations, persistence, and usage patterns
 
 ### Fixed
