@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.10.dev] - 2025-06-24
+
+### Added
+- `/history.on` and `/history.off` commands to enable/disable chat history recording per chat.
+- Updated help system to document new history control commands in both global and category-specific help.
+- History command count in help now reflects new commands.
+
+### Changed
+- Bumped version to 0.12.19.dev.
+
 ## [0.12.9.dev] - 2025-06-24
 
 ### Fixed

@@ -85,13 +85,21 @@ class ChatHistory:
     
     def add_message(self, role, content):
         """Add a message to the chat history."""
+        # Check if history is enabled for this chat
+        if not getattr(self.app, 'history_enabled', True):
+            # History is disabled, skip adding to history and file
+            # Still log to unified logger if logging is enabled
+            model = getattr(self.app, 'selected_model', None) or ""
+            unified_logger.log_conversation(self.instance_index, role, content, model)
+            return
+            
         self.history.append({"role": role, "content": content})
         
         # Save message to history file immediately
         self._save_message_to_file(role, content)
         
         # Log to unified logger
-        model = getattr(self.app, 'selected_model', None)
+        model = getattr(self.app, 'selected_model', None) or ""
         unified_logger.log_conversation(self.instance_index, role, content, model)
 
     def print_history(self):

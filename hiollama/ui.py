@@ -41,7 +41,7 @@ class UIManager:
         print(f"[white]Chat Management      (7 commands)   [/white][bold {command_color}]/sys.help chat[/bold {command_color}]")
         print(f"[white]Model Operations     (7 commands)   [/white][bold {command_color}]/sys.help model[/bold {command_color}]")
         print(f"[white]Persona Management  (11 commands)   [/white][bold {command_color}]/sys.help persona[/bold {command_color}]")
-        print(f"[white]History Management   (3 commands)   [/white][bold {command_color}]/sys.help history[/bold {command_color}]")
+        print(f"[white]History Management   (5 commands)   [/white][bold {command_color}]/sys.help history[/bold {command_color}]")
         print(f"[white]Logging Operations   (5 commands)   [/white][bold {command_color}]/sys.help log[/bold {command_color}]")
         print(f"[white]Prompt Management    (4 commands)   [/white][bold {command_color}]/sys.help prompt[/bold {command_color}]")
         print(f"[white]File Operations      (1 command)    [/white][bold {command_color}]/sys.help file[/bold {command_color}]")
@@ -107,6 +107,8 @@ class UIManager:
         table.add_row("", "")  # Empty row for spacing        # History Commands
         table.add_row(f"[bold {command_color}]/history.show[/bold {command_color}]", "[white]Display the current chat history.[/white]")
         table.add_row(f"[bold {command_color}]/history.clear[/bold {command_color}]", "[white]Clear the current chat history.[/white]")
+        table.add_row(f"[bold {command_color}]/history.on[/bold {command_color}]", "[white]Enable chat history recording.[/white]")
+        table.add_row(f"[bold {command_color}]/history.off[/bold {command_color}]", "[white]Disable chat history recording.[/white]")
 
         table.add_row("", "")  # Empty row for spacing        # Log Commands
         table.add_row(f"[bold {command_color}]/log.on[/bold {command_color}]", "[white]Enable logging of chat history.[/white]")
@@ -750,12 +752,18 @@ class UIManager:
         
         print(f"\n[bold white]HISTORY COMMANDS HELP[/bold white]\n")
         
-        print(f"[white]The chat history system manages conversation records for individual chat sessions. Each chat maintains its own separate history that is automatically saved to file, ensuring your conversations persist between sessions and are not lost when you close and reopen the application. These files are only deleted if you clear the chat history.[/white]\n")
+        print(f"[white]The chat history system manages conversation records for individual chat sessions. Each chat maintains its own separate history that is automatically saved to file, ensuring your conversations persist between sessions and are not lost when you close and reopen the application. You can also control whether history recording is enabled or disabled per chat - useful for conversations with smaller models that have limited context capacity.[/white]\n")
         
         print(f"[white]HISTORY MANAGEMENT[/white]\n")
         
         print(f" [bold {command_color}]/history.show[/bold {command_color}]   [white]View the current chat history[/white]")
         print(f" [bold {command_color}]/history.clear[/bold {command_color}]  [white]Clear the current chat history[/white]")
+        print()
+        
+        print(f"[white]HISTORY CONTROL[/white]\n")
+        
+        print(f" [bold {command_color}]/history.on[/bold {command_color}]     [white]Enable chat history recording[/white]")
+        print(f" [bold {command_color}]/history.off[/bold {command_color}]    [white]Disable chat history recording[/white]")
         print()
         
         print(f"[white]MORE HELP[/white]\n")

@@ -29,3 +29,23 @@ class HistoryFormatter:
     def format_operation_cancelled():
         """Print operation cancelled message."""
         print(f"\n{Messages.OPERATION_CANCELLED}")
+    
+    @staticmethod
+    def format_history_enabled(chat_info):
+        """Print history enabled message."""
+        print(f"[bold {chat_info.color}]CHAT {chat_info.number}[/bold {chat_info.color}] history recording [bold green]ENABLED[/bold green]")
+    
+    @staticmethod
+    def format_history_disabled(chat_info):
+        """Print history disabled message."""
+        print(f"[bold {chat_info.color}]CHAT {chat_info.number}[/bold {chat_info.color}] history recording [bold red]DISABLED[/bold red]")
+    
+    @staticmethod
+    def format_history_already_enabled(chat_info):
+        """Print history already enabled message."""
+        print(f"[bold {chat_info.color}]CHAT {chat_info.number}[/bold {chat_info.color}] history recording is already [bold green]ENABLED[/bold green]")
+    
+    @staticmethod
+    def format_history_already_disabled(chat_info):
+        """Print history already disabled message."""
+        print(f"[bold {chat_info.color}]CHAT {chat_info.number}[/bold {chat_info.color}] history recording is already [bold red]DISABLED[/bold red]")

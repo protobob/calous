@@ -36,7 +36,7 @@ class UnifiedLogger:
         except Exception as e:
             print(f"Failed to write unified log: {e}")
     
-    def log_conversation(self, chat_index: int, role: str, content: str, model: str = None):
+    def log_conversation(self, chat_index: int, role: str, content: str, model: Optional[str] = None):
         """Log a conversation message."""
         if role.lower() == "user":
             self._write_log_entry("USER", content, chat_index)
@@ -64,7 +64,7 @@ class UnifiedLogger:
             preview = preview[:100] + "..."
         self._write_log_entry("SYSTEM_PROMPT", f"\"{preview}\"", chat_index)
     
-    def log_command_execution(self, chat_index: int, command: str, result: str = None):
+    def log_command_execution(self, chat_index: int, command: str, result: Optional[str] = None):
         """Log command execution."""
         if result:
             self._write_log_entry("COMMAND", f"{command} -> {result}", chat_index)
@@ -97,7 +97,7 @@ class UnifiedLogger:
         self._write_log_entry("LOGGING_TOGGLE", f"Logging {'enabled' if self.enabled else 'disabled'}")
         return self.enabled
     
-    def add_separator(self, label: str = None):
+    def add_separator(self, label: Optional[str] = None):
         """Add a visual separator to the log file."""
         if not self.enabled:
             return
