@@ -169,14 +169,39 @@ Ask these questions:
 - Focus on user-facing functionality
 - Avoid brittle tests that break on refactoring
 
-## Conclusion
+## Command Implementation Pattern
 
-**Hi, Ollama!** has evolved into a functional, feature-rich CLI tool. The architecture is not perfect, but it works. The greatest risk to the project is **architectural churn** - constant refactoring based on conflicting advice.
+To keep the codebase maintainable and consistent, commands are structured using three main components:
 
-### The Golden Rule
-**If it works, document why it works that way, then leave it alone.**
+- **Command Functions** (`commands.py`): Register the command, handle argument parsing, and coordinate the operation. Command functions should be concise and delegate logic and formatting.
+- **Service Classes** (`services.py`): Contain the business logic and data manipulation for the command. Service methods operate on the application state and perform actions like modifying history, saving files, etc.
+- **Formatter Classes** (`formatters.py`): Handle all user-facing output, prompts, and confirmation dialogs. This keeps UI logic separate from business logic.
 
-This architecture document serves as a reference for future development decisions and a shield against well-intentioned but disruptive "improvements."
+**Example Pattern:**
+
+```python
+@registry.register("history.purge", "Purge the most recent N entries from current chat history", category=CommandCategory.HISTORY)
+def cmd_history_purge(handler, num_entries: int) -> CommandResult:
+    service = HistoryService(handler.app)
+    chat_info = service.get_chat_info()
+    n = min(num_entries, len(handler.app.chat_history.history))
+    if n == 0:
+        HistoryFormatter.format_no_messages_to_purge()
+        return CommandResult(ActionType.CONTINUE)
+    HistoryFormatter.format_purge_warning(chat_info, n)
+    if not HistoryFormatter.confirm_purge():
+        return CommandResult(ActionType.CONTINUE)
+    purged = service.purge_history(n)
+    HistoryFormatter.format_purge_success(purged)
+    return CommandResult(ActionType.CONTINUE)
+```
+
+**Why this pattern?**
+- Keeps command files readable and focused on intent
+- Makes it easy to update UI or logic independently
+- Encourages code reuse and easier testing
+
+**When in doubt:** Follow this pattern for new commands, and document any intentional deviations.
 
 ---
 

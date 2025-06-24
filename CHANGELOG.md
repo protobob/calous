@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.12.dev] - 2025-06-24
+### Added
+- `/history.purge` command: Purge the most recent N entries from current chat history, with confirmation and permanent deletion.
+- Improved help screens for history commands, including usage explanations.
+- Updated `ARCHITECTURE.md` to document command implementation patterns for future maintainers.
+
+
 ## [0.12.11.dev] - 2025-06-24
 ### Added
 - New `/history.save` command to save current chat history to a file.

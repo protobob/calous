@@ -79,3 +79,22 @@ class HistoryService:
         except Exception as e:
             print(f"\n[red]Error loading history: {e}[/red]")
             return 0
+    
+    def purge_history(self, num_entries: int) -> int:
+        """Purge the most recent N entries from the current chat's history. Returns number purged."""
+        history = self.app.chat_history.history
+        total = len(history)
+        n = max(0, min(num_entries, total))
+        if n == 0:
+            return 0
+        del history[-n:]
+        self.app.chat_history.history = history
+        # Overwrite the history file with the new history
+        history_file = self.app.chat_history._get_history_filename()
+        try:
+            with open(history_file, 'w', encoding='utf-8') as f:
+                for msg in history:
+                    f.write(json.dumps(msg, ensure_ascii=False) + '\n')
+        except Exception as e:
+            print(f"[red]Error updating history file: {e}[/red]")
+        return n

@@ -181,3 +181,40 @@ def cmd_history_delete(handler, filename: str) -> CommandResult:
     except Exception as e:
         print(f"\n[red]Error deleting file: {e}[/red]")
     return CommandResult(ActionType.CONTINUE)
+
+@registry.register("history.purge", "Purge the most recent N entries from current chat history", category=CommandCategory.HISTORY)
+def cmd_history_purge(handler, num_entries: int) -> CommandResult:
+    """Purge the most recent N entries from the current chat's history after confirmation."""
+    service = HistoryService(handler.app)
+    chat_info = service.get_chat_info()
+    history = handler.app.chat_history.history
+    total = len(history)
+    n = max(0, min(num_entries, total))
+
+    if n == 0:
+        print(f"[yellow]No messages to purge.[/yellow]")
+        return CommandResult(ActionType.CONTINUE)
+
+    print(f"\n[bold yellow]Warning:[/bold yellow] This will [bold red]DELETE[/bold red] the [bold]{n}[/bold] most recent message(s) from [bold {chat_info.color}]CHAT {chat_info.number}[/bold {chat_info.color}] history.")
+    print("This cannot be undone.")
+    from rich.prompt import Prompt
+    response = Prompt.ask("Are you sure you want to continue?", choices=["y", "n"], default="n")
+    if response.lower() != "y":
+        # No feedback on cancel, per user request
+        return CommandResult(ActionType.CONTINUE)
+
+    # Remove from in-memory history
+    del history[-n:]
+    handler.app.chat_history.history = history
+
+    # Overwrite the history file with the new history
+    import json
+    history_file = handler.app.chat_history._get_history_filename()
+    try:
+        with open(history_file, 'w', encoding='utf-8') as f:
+            for msg in history:
+                f.write(json.dumps(msg, ensure_ascii=False) + '\n')
+        print(f"[green]Purged {n} message(s) from chat history.[/green]")
+    except Exception as e:
+        print(f"[red]Error updating history file: {e}[/red]")
+    return CommandResult(ActionType.CONTINUE)
