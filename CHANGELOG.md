@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.11.dev] - 2025-06-24
+### Added
+- New `/history.save` command to save current chat history to a file.
+- New `/history.load` command to load chat history from a file (overwrites current history).
+- New `/history.list` command to list all saved chat history files (shows base names only).
+- New `/history.delete` command to delete a saved chat history file with confirmation.
+- All new history commands are now documented in both the global and history-specific help menus.
+
+### Changed
+- `/history.save` now prompts for confirmation before overwriting existing files.
+- `/history.list` output now hides `.jsonl` extension for consistency with load/delete commands.
+
+### Fixed
+- Improved filename sanitization and user feedback for history file operations.
+
 ## [0.12.10.dev] - 2025-06-24
 
 ### Added

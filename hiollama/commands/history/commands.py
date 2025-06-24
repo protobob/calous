@@ -70,3 +70,114 @@ def cmd_history_off(handler) -> CommandResult:
         HistoryFormatter.format_history_disabled(chat_info)
         
     return CommandResult(ActionType.CONTINUE)
+
+
+@registry.register("history.save", "Save current chat history to a file", category=CommandCategory.HISTORY)
+def cmd_history_save(handler, filename: str) -> CommandResult:
+    """Save the current chat's history to a .jsonl file in ~/hiollama/chat_history."""
+    from pathlib import Path
+    import re
+    from ...constants import HIOLLAMA_DIR
+    from .services import HistoryService
+    from .formatters import HistoryFormatter
+    from rich.prompt import Confirm
+
+    # Sanitize filename: only allow alphanumeric, dash, underscore, strip after first dot
+    base = re.split(r"[.]", filename)[0]
+    safe = re.sub(r"[^a-zA-Z0-9_-]", "_", base)
+    save_dir = Path.home() / "hiollama" / "chat_history"
+    save_dir.mkdir(parents=True, exist_ok=True)
+    save_path = save_dir / f"{safe}.jsonl"
+
+    # Check for overwrite
+    if save_path.exists():
+        print(f"\n[yellow]File {save_path.name} already exists.[/yellow]")
+        if not Confirm.ask("Overwrite?", default=False):
+            print("\n[cyan]Operation cancelled.[/cyan]")
+            return CommandResult(ActionType.CONTINUE)
+
+    service = HistoryService(handler.app)
+    count = service.save_history_to_file(save_path)
+    if count > 0:
+        print(f"\n[green]Chat history saved to {save_path} ({count} messages).[/green]")
+    else:
+        print(f"\n[yellow]No messages to save. File not created.[/yellow]")
+    return CommandResult(ActionType.CONTINUE)
+
+@registry.register("history.load", "Load chat history from a file", category=CommandCategory.HISTORY)
+def cmd_history_load(handler, filename: str) -> CommandResult:
+    """Load chat history from a .jsonl file in ~/hiollama/chat_history, overwriting current history."""
+    from pathlib import Path
+    import re
+    from ...constants import HIOLLAMA_DIR
+    from .services import HistoryService
+    from .formatters import HistoryFormatter
+
+    # Sanitize filename
+    base = re.split(r"[.]", filename)[0]
+    safe = re.sub(r"[^a-zA-Z0-9_-]", "_", base)
+    load_dir = Path.home() / "hiollama" / "chat_history"
+    load_path = load_dir / f"{safe}.jsonl"
+
+    service = HistoryService(handler.app)
+    if not load_path.exists():
+        print(f"\n[red]File not found: {load_path}[/red]")
+        return CommandResult(ActionType.CONTINUE)
+
+    # Warn user about overwrite
+    print("\n[yellow]Warning: Loading will overwrite current chat history in memory.[/yellow]")
+    from rich.prompt import Confirm
+    if not Confirm.ask("Continue?", default=False):
+        print("\n[cyan]Operation cancelled.[/cyan]")
+        return CommandResult(ActionType.CONTINUE)
+
+    count = service.load_history_from_file(load_path)
+    print(f"\n[green]Loaded {count} messages from {load_path} into current chat history.[/green]")
+    return CommandResult(ActionType.CONTINUE)
+
+@registry.register("history.list", "List saved chat history files", category=CommandCategory.HISTORY)
+def cmd_history_list(handler) -> CommandResult:
+    """List all .jsonl files in ~/hiollama/chat_history, showing base names only."""
+    from pathlib import Path
+    list_dir = Path.home() / "hiollama" / "chat_history"
+    if not list_dir.exists():
+        print("\n[yellow]No saved chat history files found.[/yellow]")
+        return CommandResult(ActionType.CONTINUE)
+    files = sorted(list_dir.glob("*.jsonl"))
+    if not files:
+        print("\n[yellow]No saved chat history files found.[/yellow]")
+    else:
+        print("\n[bold]Saved chat history files:[/bold]")
+        for f in files:
+            base = f.stem  # filename without extension
+            print(f"  [cyan]{base}[/cyan]  ({f.stat().st_size} bytes)")
+    return CommandResult(ActionType.CONTINUE)
+
+@registry.register("history.delete", "Delete a saved chat history file", category=CommandCategory.HISTORY)
+def cmd_history_delete(handler, filename: str) -> CommandResult:
+    """Delete a .jsonl file in ~/hiollama/chat_history after Y/N confirmation."""
+    from pathlib import Path
+    import re
+    from rich.prompt import Confirm
+
+    # Sanitize filename
+    base = re.split(r"[.]+", filename)[0]
+    safe = re.sub(r"[^a-zA-Z0-9_-]", "_", base)
+    del_dir = Path.home() / "hiollama" / "chat_history"
+    del_path = del_dir / f"{safe}.jsonl"
+
+    if not del_path.exists():
+        print(f"\n[red]File not found: {del_path}[/red]")
+        return CommandResult(ActionType.CONTINUE)
+
+    print(f"\n[yellow]Are you sure you want to delete {del_path.name}? This cannot be undone.[/yellow]")
+    if not Confirm.ask("Delete?", default=False):
+        print("\n[cyan]Operation cancelled.[/cyan]")
+        return CommandResult(ActionType.CONTINUE)
+
+    try:
+        del_path.unlink()
+        print(f"\n[green]Deleted {del_path.name}.[/green]")
+    except Exception as e:
+        print(f"\n[red]Error deleting file: {e}[/red]")
+    return CommandResult(ActionType.CONTINUE)

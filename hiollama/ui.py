@@ -41,7 +41,7 @@ class UIManager:
         print(f"[white]Chat Management      (7 commands)   [/white][bold {command_color}]/sys.help chat[/bold {command_color}]")
         print(f"[white]Model Operations     (7 commands)   [/white][bold {command_color}]/sys.help model[/bold {command_color}]")
         print(f"[white]Persona Management  (11 commands)   [/white][bold {command_color}]/sys.help persona[/bold {command_color}]")
-        print(f"[white]History Management   (5 commands)   [/white][bold {command_color}]/sys.help history[/bold {command_color}]")
+        print(f"[white]History Management   (9 commands)   [/white][bold {command_color}]/sys.help history[/bold {command_color}]")
         print(f"[white]Logging Operations   (5 commands)   [/white][bold {command_color}]/sys.help log[/bold {command_color}]")
         print(f"[white]Prompt Management    (4 commands)   [/white][bold {command_color}]/sys.help prompt[/bold {command_color}]")
         print(f"[white]File Operations      (1 command)    [/white][bold {command_color}]/sys.help file[/bold {command_color}]")
@@ -109,7 +109,10 @@ class UIManager:
         table.add_row(f"[bold {command_color}]/history.clear[/bold {command_color}]", "[white]Clear the current chat history.[/white]")
         table.add_row(f"[bold {command_color}]/history.on[/bold {command_color}]", "[white]Enable chat history recording.[/white]")
         table.add_row(f"[bold {command_color}]/history.off[/bold {command_color}]", "[white]Disable chat history recording.[/white]")
-
+        table.add_row(f"[bold {command_color}]/history.save FILENAME[/bold {command_color}]", "[white]Save current chat history to a file.[/white]")
+        table.add_row(f"[bold {command_color}]/history.load FILENAME[/bold {command_color}]", "[white]Load chat history from a file (overwrites current history).[/white]")
+        table.add_row(f"[bold {command_color}]/history.list[/bold {command_color}]", "[white]List all saved chat history files.[/white]")
+        table.add_row(f"[bold {command_color}]/history.delete FILENAME[/bold {command_color}]", "[white]Delete a saved chat history file.[/white]")
         table.add_row("", "")  # Empty row for spacing        # Log Commands
         table.add_row(f"[bold {command_color}]/log.on[/bold {command_color}]", "[white]Enable logging of chat history.[/white]")
         table.add_row(f"[bold {command_color}]/log.off[/bold {command_color}]", "[white]Disable logging of chat history.[/white]")
@@ -758,14 +761,15 @@ class UIManager:
         
         print(f" [bold {command_color}]/history.show[/bold {command_color}]   [white]View the current chat history[/white]")
         print(f" [bold {command_color}]/history.clear[/bold {command_color}]  [white]Clear the current chat history[/white]")
+        print(f" [bold {command_color}]/history.save[/bold {command_color}]   [white]Save current chat history to a file[/white]")
+        print(f" [bold {command_color}]/history.load[/bold {command_color}]   [white]Load chat history from a file (overwrites current history)[/white]")
+        print(f" [bold {command_color}]/history.list[/bold {command_color}]   [white]List all saved chat history files[/white]")
+        print(f" [bold {command_color}]/history.delete[/bold {command_color}] [white]Delete a saved chat history file[/white]")
         print()
-        
         print(f"[white]HISTORY CONTROL[/white]\n")
-        
         print(f" [bold {command_color}]/history.on[/bold {command_color}]     [white]Enable chat history recording[/white]")
         print(f" [bold {command_color}]/history.off[/bold {command_color}]    [white]Disable chat history recording[/white]")
         print()
-        
         print(f"[white]MORE HELP[/white]\n")
         
         print(f" [bold {command_color}]/history.help[/bold {command_color}]   [white]shows this help screen[/white]")
