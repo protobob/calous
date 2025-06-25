@@ -108,9 +108,20 @@ class Chat:
         # Handle commands
         if user_input.startswith('/'):
             return self.commands.parse_and_execute(user_input)
-        
-        # Handle regular input
-        self.handle_regular_input(user_input)
+
+        # Apply pre-message hooks (e.g., for !shell commands)
+        if self.plugin_manager:
+            processed_input = self.plugin_manager.apply_pre_message_hooks(user_input, context={})
+        else:
+            processed_input = user_input
+
+        # If the processed input is different and starts with [shell:, display and skip LLM
+        if processed_input != user_input and processed_input.startswith("[shell:"):
+            self.ui.display_shell_output(processed_input)
+            return CommandResult(ActionType.CONTINUE)
+
+        # Handle regular input (send to LLM)
+        self.handle_regular_input(processed_input)
         return CommandResult(ActionType.CONTINUE)
     
     def handle_regular_input(self, user_input, images=None):

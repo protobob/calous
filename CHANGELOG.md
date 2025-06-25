@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this pr``ect will be documented in this file.
 
+## [0.12.15.dev] - 2025-06-25
+### Added
+- General-purpose shell command execution plugin (`!command`) for container debugging and other use cases.
+
 ## [0.12.14.dev] - 2025-06-25
 ### Changed
 - Bumped APP_VERSION to 0.12.14.dev in constants.py

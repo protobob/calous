@@ -911,3 +911,7 @@ class UIManager:
         
         print(f"[grey50]Use /sys.help <command> for detailed help on specific commands[/grey50]")
         print(f"[grey50]Example: /sys.help prompt.set[/grey50]")
+    
+    def display_shell_output(self, output: str):
+        """Display shell command output in a system-style message."""
+        print(f"[bold magenta][SHELL][/bold magenta] {output}")
