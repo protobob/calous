@@ -1,15 +1,22 @@
 # Changelog
+All notable changes to this pr``ect will be documented in this file.
+
+## [0.12.14.dev] - 2025-06-25
+### Changed
+- Bumped APP_VERSION to 0.12.14.dev in constants.py
+- Calculator plugin: separated LLM-facing and user-facing descriptions in function schema to prevent LLM prompt preamble from showing to users
+
+# ...existing changelog entries...
 
 ## [0.12.13.dev] - 2025-06-24
 
 ### Added
 - Improved CLI history and command completion using prompt_toolkit
 - Centralized CLI history file location using CLI_HISTORY_PATH constant
-
-All notable changes to this project will be documented in this file.
-
-## [0.12.12.dev] - 2025-06-24
-### Added
+``
+```
+## [0.12.12.dev] - 2025-06-24`
+### Added`
 - `/history.purge` command: Purge the most recent N entries from current chat history, with confirmation and permanent deletion.
 - Improved help screens for history commands, including usage explanations.
 - Updated `ARCHITECTURE.md` to document command implementation patterns for future maintainers.
