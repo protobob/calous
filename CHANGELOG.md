@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.12.13.dev] - 2025-06-24
+
+### Added
+- Improved CLI history and command completion using prompt_toolkit
+- Centralized CLI history file location using CLI_HISTORY_PATH constant
+
 All notable changes to this project will be documented in this file.
 
 ## [0.12.12.dev] - 2025-06-24

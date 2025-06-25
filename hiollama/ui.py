@@ -4,16 +4,51 @@ from rich.prompt import Prompt
 from rich import print
 from rich.table import Table
 from .utils import get_chat_color, print_message_with_bar, find_last_messages
-from .constants import APP_VERSION, MAX_PREVIEW_LENGTH
+from .constants import APP_VERSION, MAX_PREVIEW_LENGTH, CLI_HISTORY_PATH
 from .config import ConfigManager
 from typing import Dict, Any
 import os
+from prompt_toolkit import PromptSession
+from prompt_toolkit.history import FileHistory
+from prompt_toolkit.completion import Completer, Completion
+
+
+class CommandCompleter(Completer):
+    def __init__(self, commands):
+        self.commands = commands
+
+    def get_completions(self, document, complete_event):
+        text = document.text_before_cursor
+        for cmd in self.commands:
+            if cmd.startswith(text) and text:
+                # Only suggest if not an exact match
+                if cmd != text:
+                    yield Completion(cmd, start_position=-len(text))
 
 
 class UIManager:
     def __init__(self, app):
         self.app = app
         self.console = Console()
+        # Set up persistent command history using centralized constant
+        from pathlib import Path
+        import os
+        os.makedirs(CLI_HISTORY_PATH.parent, exist_ok=True)
+        self.session = PromptSession(history=FileHistory(str(CLI_HISTORY_PATH)))
+        # List of commands for tab completion (add more as needed)
+        self.commands = [
+            "/help", "/quit", "/chat.switch", "/chat.twist", "/chat.add", "/chat.remove", "/chat.reset", "/chat.vars",
+            "/model.switch", "/model.setctx", "/model.eval", "/model.think", "/model.vars",
+            "/prompt.set", "/prompt.use", "/prompt.list",
+            "/persona.set", "/persona.get", "/persona.clear", "/persona.name", "/persona.show", "/persona.reset", "/persona.save", "/persona.load", "/persona.list", "/persona.delete",
+            "/history.show", "/history.clear", "/history.on", "/history.off", "/history.save", "/history.load", "/history.list", "/history.delete", "/history.purge",
+            "/log.on", "/log.off", "/log.today", "/log.vars",
+            "/file.load",
+            "/plugin.list", "/plugin.info", "/plugin.reload",
+            "/alias.add", "/alias.remove", "/alias.list", "/alias.clear",
+            "/sys.help", "/sys.quit"
+        ]
+        self.completer = CommandCompleter(self.commands)
         
     def help_menu(self):
         """Display the new streamlined help menu."""
@@ -171,10 +206,6 @@ class UIManager:
         
         print()  # Add spacing after overview
     
-    def get_user_input(self):
-        """Get user input with formatted prompt."""
-        prompt_text = self.generate_prompt_text()
-        return Prompt.ask(prompt_text).strip()    
     def generate_prompt_text(self):
         """Generate the formatted prompt text shown before user input."""
         # Determine color based on chat index
@@ -196,14 +227,23 @@ class UIManager:
                     percentage_color = "red"
                 
                 context_display = f"Context: [{percentage_color}]{usage_percentage:.0f}%[/{percentage_color}]"
-        # Prepare the 'YOU:' part
-        you_text = f"[bold {chat_color}]|[/bold {chat_color}] [bold]YOU[/bold]"        
+        # Remove the YOU: prompt entirely
         return (
             f"\n"
-            f"[bold {chat_color}]|[/bold {chat_color}] [italic][white]{context_display}[/white][/italic]"
-            f"[grey50] (/help for help)[/grey50]\n"
-            f"{you_text}"
+            f"[grey50](type /help for help)[/grey50]\n"
+            f"[bold {chat_color}]|[/bold {chat_color}] [italic][white]{context_display}[/white][/italic] - YOU:"
         )
+
+    def get_user_input(self):
+        """Get user input with formatted prompt using Rich for display and prompt_toolkit for input, with history and tab completion."""
+        prompt_text = self.generate_prompt_text()
+        lines = prompt_text.splitlines()
+        for line in lines:
+            self.console.print(line)
+        self.console.file.flush()
+        # Use prompt_toolkit session for history and completion
+        user_input = self.session.prompt("", completer=self.completer)
+        return user_input.strip()    
     def clear_screen(self):
         """Clear the terminal screen."""
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -674,6 +714,7 @@ class UIManager:
         print(f" [bold {command_color}]/alias.add[/bold {command_color}]     [white]Create a new command alias[/white]")
         print(f" [bold {command_color}]/alias.remove[/bold {command_color}]  [white]Remove a command alias[/white]")
         print(f" [bold {command_color}]/alias.list[/bold {command_color}]    [white]List all command aliases[/white]")
+        print(f" [bold {command_color}]/alias.clear[/bold {command_color}]   [white]Clear all command aliases[/white]")
         print()
         
         print(f"[white]MORE HELP[/white]\n")

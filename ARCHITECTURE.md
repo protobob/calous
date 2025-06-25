@@ -1,31 +1,97 @@
-# Hi, Ollama! Architecture Vision
+Hi, Ollama! Architecture Vision
 
-## Executive Summary
+Executive Summary
 
-**Hi, Ollama!** is a multi-chat CLI interface for Ollama language models. This document establishes the architectural vision to prevent conflicting refactoring approaches and maintain consistency as the codebase evolves.
+Hi, Ollama! is a multi-chat CLI interface for Ollama language models. This document establishes the architectural vision to prevent conflicting refactoring approaches and maintain consistency as the codebase evolves.
 
-## Core Principles
+🧠 Copilot / AI Agent Compliance Section (Read First!)
 
-### 1. **Pragmatic Simplicity Over Academic Purity**
-- Favor working solutions over theoretical perfection
-- Monolithic cohesive code is preferable to hyper-fragmented architecture
-- If a file is large but logically coherent, leave it alone
-- **Avoid refactoring for refactoring's sake**
+❗ Hard Rules for AI Agents
 
-### 2. **UI Centralization**
-- All display/formatting logic should be concentrated in the `UIManager` class
-- Avoid scattering UI logic across multiple command formatter files
-- Rich console formatting should be managed centrally, not distributed
+These rules apply to GitHub Copilot, GPT, and any other automated AI coding assistant used with this repository.
 
-### 3. **Command System Stability**
-- The current command architecture is **feature-complete and stable**
-- Do not suggest major architectural changes to the command system
-- Focus on bug fixes and minor enhancements, not restructuring
+Do not suggest or generate changes unless you have seen the actual source code being referenced.
 
-### 4. **Configuration Management**
-- Global settings (model, context window) managed via `ConfigManager`
-- Chat-specific settings remain in individual `Chat` instances
-- Persona system replaces old system_prompt approach
+Do not suggest architectural restructuring or code movement based on best practices or assumptions.
+
+DO NOT REFACTOR the following files:
+
+model_interaction.py (586 lines): Large but cohesive
+
+ui.py (320+ lines): All display logic belongs here
+
+app.py (~150 lines): Entry point and coordination logic
+
+Do not move UI logic into command formatters. It belongs in UIManager only.
+
+Do not break or alter the Command System architecture. It is feature-complete.
+
+Do not suggest abstract base classes, microservice-style fragmentation, or 'separation of concerns' where the code is already cleanly structured.
+
+Do not assume that the human user will be making code changes. Suggestions should be framed assuming the AI is responsible for implementation and modification unless explicitly stated otherwise.
+
+☑️ Safe Suggestions
+
+You may suggest bug fixes.
+
+You may suggest small enhancements to commands or UI, but must localize changes to relevant files.
+
+You may recommend new commands using the existing pattern (Registry → Service → Formatter).
+
+You may propose plugin-based extensions that do not affect core architecture.
+
+✅ Enforcement
+
+Violating these rules will cause your suggestions to be rejected.
+If you're unsure whether a change violates a rule, ASK FIRST.
+
+Core Principles
+
+1. Pragmatic Simplicity Over Academic Purity
+
+Favor working solutions over theoretical perfection
+
+Monolithic cohesive code is preferable to hyper-fragmented architecture
+
+If a file is large but logically coherent, leave it alone
+
+Avoid refactoring for refactoring's sake
+
+2. UI Centralization
+
+All display/formatting logic should be concentrated in the UIManager class
+
+Avoid scattering UI logic across multiple command formatter files
+
+Rich console formatting should be managed centrally, not distributed
+
+3. Command System Stability
+
+The current command architecture is feature-complete and stable
+
+Do not suggest major architectural changes to the command system
+
+Focus on bug fixes and minor enhancements, not restructuring
+
+4. Configuration Management
+
+Global settings (model, context window) managed via ConfigManager
+
+Chat-specific settings remain in individual Chat instances
+
+Persona system replaces old system_prompt approach
+
+5. File Path Consistency
+
+All file paths, such as those for saved histories or configurations, should follow centralized patterns defined in constants.py.
+
+Do not hardcode file paths in service, command, or formatter logic — always use the constant values.
+
+Architecture Overview
+
+[unchanged – diagram and rest of content continues here...]
+
+
 
 ## Architecture Overview
 

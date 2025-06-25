@@ -7,7 +7,8 @@ RUN pip install --no-cache-dir \
     ollama>=0.5.2 \
     rich \
     pydantic \
-    asteval
+    asteval \
+    prompt_toolkit
 
 # Create the hiollama directory for data persistence
 RUN mkdir -p /root/hiollama

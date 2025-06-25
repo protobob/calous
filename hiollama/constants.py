@@ -39,6 +39,7 @@ LOG_DIR = HIOLLAMA_DIR / "logs"
 HISTORY_DIR = HIOLLAMA_DIR / ".history"
 PERSONA_DIR = HIOLLAMA_DIR / "persona"
 CONFIG_PATH = HIOLLAMA_DIR / "config.json"  # Changed from Path.home() / ".hiollama_config_unified.json"
+CLI_HISTORY_PATH = HIOLLAMA_DIR / ".cli_history"
 
 # File size limits (in bytes)
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
@@ -71,7 +72,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "0.12.12.dev"
+APP_VERSION = "0.12.13.dev"
 
 # Multi-chat configuration
 DEFAULT_NUM_CHATS = 4  # default if no config
