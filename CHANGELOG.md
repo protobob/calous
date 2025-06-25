@@ -1,5 +1,10 @@
 # Changelog
-All notable changes to this pr``ect will be documented in this file.
+All notable changes to this project will be documented in this file.
+
+## [0.12.16.dev] - 2025-06-25
+
+### Added
+- MCPClientPlugin for Model Control Protocol client support (but not tested)
 
 ## [0.12.15.dev] - 2025-06-25
 ### Added

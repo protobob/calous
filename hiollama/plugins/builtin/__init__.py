@@ -11,7 +11,7 @@ To control which plugins are enabled:
 4. Set ENABLED_PLUGINS = set() to disable all plugins completely
 
 The classes below are primarily for reference and direct imports when needed.
-"""
+
 
 from .dice_roller import DiceRollerPlugin
 
@@ -20,3 +20,4 @@ __all__ = [
     'DiceRollerPlugin',
     # Add other plugin class names here as they're created
 ]
+"""

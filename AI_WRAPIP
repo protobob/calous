@@ -1,0 +1,102 @@
+# AI\_WRAPUP.md
+
+READ THE ENTIRE FILE
+
+## Purpose
+
+This file defines strict rules for version bumps, changelogs, and commit message formatting.
+If you're writing or editing a changelog or commit message, read and follow these instructions exactly.
+Do not assume or invent behavior not described here.
+
+---
+
+## 🔢 APP\_VERSION Rules
+
+* The project version is defined in `constants.py`.
+* Follow semantic versioning: `major.minor.patch`
+* Do NOT invent a version number. Use the one specified or ask the user directly.
+
+---
+
+## 📝 Changelog Guidelines
+
+* The changelog must **only include things that happened in this version.**
+* If a feature or plugin was **introduced** in this version, list it under `Added`.
+  Do **not** describe changes to it—there was nothing to change before now.
+
+### ✅ Good Example
+
+```
+## [1.2.0] - 2025-06-25
+
+### Added
+- CalculatorPlugin for safe math evaluation
+- `/history.save` and `/history.load` CLI commands
+
+### Fixed
+- Bug in file path handling when saving context
+```
+
+### ❌ Bad Example
+
+```
+## [1.2.0] - 2025-06-25
+
+### Changed
+- Improved CalculatorPlugin expression parsing  ❌ (It was just added)
+```
+
+---
+
+## 🚫 DO NOT:
+
+* List imaginary "improvements" to brand-new features
+* Write vague lines like "Updated version" or "Misc. changes"
+* Reuse old changelog entries
+* Describe changes from earlier versions unless they occurred in this version
+
+---
+
+## 🧾 Commit Message Format
+
+Use conventional commits format:
+
+```
+<type>: <summary>
+
+[optional body]
+```
+
+### Valid types:
+
+* `feat:` → New features
+* `fix:` → Bug fixes
+* `chore:` → Non-functional changes (e.g., version bump)
+* `docs:` → Documentation or changelog changes
+* `refactor:` → Code improvements with no behavior change
+
+### Examples:
+
+* `feat: Add CalculatorPlugin for safe math evaluation`
+* `chore: Bump APP_VERSION to 1.2.0`
+* `fix: Correct file path bug in /history.save`
+
+---
+
+## 💡 Suggestions
+
+* Use conversation history to determine what was changed, but follow these guidelines.
+* If unsure what was added vs changed, ask the user
+* If the user asks for a changelog or commit message, assume they want **accuracy, not filler**
+
+---
+
+## ✅ Wrap-Up Checklist:
+
+If the user asked you to read this file, create the following ouput:
+
+1. \*\*Update \*\***`APP_VERSION`** in `constants.py` following the semantic versioning rules above.
+2. **Write a changelog entry** in `CHANGELOG.md` that strictly follows the formatting and guidelines outlined in this document.
+3. **Write a short commit message** using the valid types and format specified in the commit message section.
+
+Be precise, truthful, and scoped to only what happened this version.

@@ -20,6 +20,6 @@ Examples:
 # Set to None to enable all plugins
 # Set to empty set() to disable all plugins
 #ENABLED_PLUGINS = None  # {"dice_roller"}
-#ENABLED_PLUGINS = set()
-ENABLED_PLUGINS = {"calculator_plugin", "shell_command_plugin"}
+ENABLED_PLUGINS = set()
+#NABLED_PLUGINS = {"calculator_plugin", "shell_command_plugin", "mcp_client_plugin"}
 
