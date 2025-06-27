@@ -27,7 +27,8 @@ def main():
     parser = argparse.ArgumentParser(description="HiOllama Test Runner")
     parser.add_argument('suite', nargs='?', default='all', 
                        choices=['all', 'cli', 'config', 'integration', 'quick'],
-                       help='Test suite to run')    parser.add_argument('--quick', action='store_true', 
+                       help='Test suite to run')
+    parser.add_argument('--quick', action='store_true', 
                        help='Run only quick tests')
     
     args = parser.parse_args()

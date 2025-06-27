@@ -38,3 +38,9 @@ def cmd_log_help(handler) -> CommandResult:
     """Show help for logging commands - alias for /sys.help log."""
     handler.app.ui.show_category_help("log")
     return CommandResult(ActionType.CONTINUE)
+
+
+@registry.register("log.vars", "Show logging-related variables", category=CommandCategory.LOGGING)
+def cmd_log_vars(handler) -> CommandResult:
+    """Display logging-related variables and settings."""
+    return LogService.show_log_variables(handler)

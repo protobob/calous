@@ -1,6 +1,8 @@
 """Log management services."""
 from typing import NamedTuple
 
+from ...types import CommandResult, ActionType
+
 
 class LogOperationResult(NamedTuple):
     """Result of log operations."""
@@ -70,3 +72,10 @@ class LogService:
                 success=False,
                 message=f"Error reading unified log: {e}"
             )
+    
+    @staticmethod
+    def show_log_variables(handler):
+        """Handle log.vars command."""
+        # Logic to fetch and return logging-related variables
+        handler.app.ui.show_log_variables()
+        return CommandResult(ActionType.CONTINUE)

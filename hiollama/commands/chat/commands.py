@@ -74,7 +74,7 @@ def cmd_chat_reset(handler) -> CommandResult:
     # Show warning and ask for confirmation
     ChatFormatter.format_reset_warning(chat_info)
     
-    if ChatFormatter.confirm_reset():
+    if handler.app.confirm("Are you sure you want to reset this chat to factory defaults?"):
         # Perform the reset
         success = service.reset_to_defaults()
         
@@ -94,5 +94,10 @@ def cmd_chat_help(handler) -> CommandResult:
     handler.app.ui.show_category_help("chat")
     return CommandResult(ActionType.CONTINUE)
 
-
+@registry.register("chat.vars", "Show chat-specific variables", category=CommandCategory.NAVIGATION)
+def cmd_chat_vars(handler) -> CommandResult:
+    """Display chat-specific variables and settings."""
+    service = ChatService(handler.app)
+    service.show_chat_variables()
+    return CommandResult(ActionType.CONTINUE)
 

@@ -3,8 +3,11 @@ from rich.prompt import Prompt
 from rich import print
 
 import socket
+import sys
 import os
 import json
+import signal
+from datetime import datetime
 
 from .config import ConfigManager
 from .commands.handler import AdvancedCommandHandler  # Fixed import path
@@ -102,7 +105,7 @@ class Chat:
         if processed_input != user_input and processed_input.startswith("[shell:"):
             self.ui.display_shell_output(processed_input)
             return CommandResult(ActionType.CONTINUE)
-        self.handle_regular_input(processed_input)
+        # Avoid calling handle_regular_input for commands
         return CommandResult(ActionType.CONTINUE)
 
     def handle_regular_input(self, user_input, images=None):
@@ -118,35 +121,86 @@ class Chat:
         server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         server.bind(SOCKET_PATH)
         server.listen(1)
+
+        def handle_exit(signum, frame):
+            print("[hiollama] Shutting down socket server...")
+            self.save_config()
+            server.close()
+            exit(0)
+
+        signal.signal(signal.SIGINT, handle_exit)
+
         if interactive:
             print(f"[hiollama] Listening on {SOCKET_PATH}")
         while True:
-            conn, _ = server.accept()
+            conn, addr = server.accept()
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(f"[Debug] Connection accepted from {addr} at {timestamp}")
             data = conn.recv(8192)
+            print(f"[Debug] Raw data received: {data.decode().strip()} at {timestamp}")
             try:
                 req = json.loads(data)
                 msg_type = req.get("type")
                 content = req.get("data", "")
+                print(f"[Debug] Parsed request: type={msg_type}, data={content} at {timestamp}")
                 if msg_type == "prompt":
                     self.chat_history.add_message("user", content)
                     model_response = self.model.talk_to_model(content, stream=False)
                     response_text = model_response.get("message", {}).get("content", "")
                     response = {"response": response_text}
                 elif msg_type == "cmd":
-                    # Actually parse and execute the command
-                    cmd_result = self.process_input(content)
-                    # Prefer .message if present, else fallback to str
-                    result_str = getattr(cmd_result, "message", str(cmd_result))
-                    response = {"response": result_str}
+                    try:
+                        action = json.loads(content).get("action")
+                        print(f"[Debug] Extracted action: {action} at {timestamp}")
+                        if action:
+                            # Capture ALL output from command processing
+                            import io
+                            import re
+                            
+                            original_stdout = sys.stdout
+                            buffer = io.StringIO()
+                            
+                            try:
+                                # Set non-interactive mode for socket commands
+                                self.non_interactive = True
+                                sys.stdout = buffer
+                                cmd_result = self.process_input(f"{action}")
+                                
+                                # If there's a session manager, also process the command result
+                                # (this is where the additional output like ACTIVE CHATS comes from)
+                                if hasattr(self, 'session_manager') and self.session_manager:
+                                    self.session_manager.process_command_result(cmd_result)
+                                    
+                            finally:
+                                # Reset non-interactive mode
+                                self.non_interactive = False
+                                sys.stdout = original_stdout
+                            
+                            # Get captured output and strip Rich tags
+                            captured_output = buffer.getvalue()
+                            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+                            clean_output = ansi_escape.sub('', captured_output)
+                            
+                            # Print Rich output to terminal (so user sees it)
+                            if captured_output:
+                                print(captured_output, end='')
+                            
+                            # Send clean output to client
+                            response = {"response": clean_output.strip() if clean_output.strip() else (cmd_result.message if hasattr(cmd_result, "message") else str(cmd_result))}
+                        else:
+                            response = {"error": "Missing action in command."}
+                    except json.JSONDecodeError:
+                        response = {"error": "Invalid JSON in 'data' field for command."}
                 else:
-                    response = {"error": "unknown message type"}
+                    response = {"error": "Unknown message type."}
+            except json.JSONDecodeError:
+                response = {"error": "Invalid JSON in request."}
             except Exception as e:
                 response = {"error": f"model error: {str(e)}"}
             try:
                 conn.sendall(json.dumps(response).encode())
             except BrokenPipeError:
-                if interactive:
-                    print("[hiollama] Client closed connection before response was sent.")
+                print("[hiollama] Client closed connection before response was sent.")
             conn.close()
             if interactive:
                 print(f"[hiollama] Received: {data.decode().strip()} -> Sent: {json.dumps(response)}")

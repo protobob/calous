@@ -1,7 +1,13 @@
 """Command registry with decorator-based registration."""
 import argparse
 import inspect
-from typing import Dict, Optional, List, Union
+import io
+import re
+import sys
+from contextlib import redirect_stdout
+from typing import Dict, Optional, List, Union, get_origin, get_args
+from rich.console import Console
+from rich.text import Text
 from .types import CommandDefinition, CommandCategory
 
 
@@ -23,7 +29,12 @@ class CommandRegistry:
             # Fallback if config not available during import
             self.user_aliases = {}
     
-    def register(self, name: str, description: str = "", aliases: List[str] = None, 
+    def _strip_rich_tags(self, rich_output: str) -> str:
+        """Strip Rich tags and ANSI escape sequences from the output."""
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        return ansi_escape.sub('', rich_output)
+    
+    def register(self, name: str, description: str = "", aliases: List[str] = [], 
                 category: str = CommandCategory.GENERAL):
         """Decorator for registering commands."""
         def decorator(func):
@@ -65,10 +76,10 @@ class CommandRegistry:
                     else:
                         arg_type = str
                     
-                    # Handle Optional types
-                    if hasattr(arg_type, '__origin__') and arg_type.__origin__ is Union:
+                    origin = get_origin(arg_type)
+                    if origin is Union:
                         # This is Optional[SomeType]
-                        inner_type = arg_type.__args__[0]
+                        inner_type = get_args(arg_type)[0]
                         parser.add_argument(
                             param_name,
                             type=inner_type,
@@ -102,13 +113,45 @@ class CommandRegistry:
                             help=f"{param_name} (required)"
                         )
             
+            def wrapped_handler(*args, **kwargs):
+                # Store original stdout
+                original_stdout = sys.stdout
+                buffer = io.StringIO()
+                
+                try:
+                    # Redirect stdout to capture terminal output
+                    sys.stdout = buffer
+                    # Execute the original function and get its return value
+                    result = func(*args, **kwargs)
+                finally:
+                    # Restore original stdout
+                    sys.stdout = original_stdout
+                
+                # Get the captured output and strip Rich tags
+                rich_output = buffer.getvalue()
+                plain_output = self._strip_rich_tags(rich_output)
+                
+                # Print the Rich output to terminal (so user sees it)
+                if rich_output:
+                    print(rich_output, end='')
+                
+                # If the command returned a CommandResult, update its message with plain text
+                if hasattr(result, 'message') and hasattr(result, 'action'):
+                    # It's a CommandResult - update the message with plain output for client
+                    if plain_output.strip():
+                        result.message = plain_output.strip()
+                    return result
+                else:
+                    # Return original result if it's not a CommandResult
+                    return result
+
             # Store command definition
             cmd_def = CommandDefinition(
                 name=name,
-                handler=func,
+                handler=wrapped_handler,
                 description=description,
                 parser=parser,
-                aliases=aliases or [],
+                aliases=aliases,
                 category=category
             )
             

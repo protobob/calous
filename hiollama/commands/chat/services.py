@@ -47,9 +47,14 @@ class ChatService:
                     error_message="Chat number must be 1 or greater."
                 )
             target_index = chat_number - 1  # Convert to 0-based index
+            if target_index >= self.app.session_manager.num_chats:
+                return ChatOperationResult(
+                    success=False,
+                    error_message=f"Chat number {chat_number} does not exist. Available chats: 1-{self.app.session_manager.num_chats}."
+                )
         else:
             target_index = None
-        
+
         return ChatOperationResult(
             success=True,
             target_index=target_index
@@ -170,3 +175,7 @@ class ChatService:
             
         except Exception:
             return False
+    
+    def show_chat_variables(self):
+        """Display chat-specific variables."""
+        self.app.ui.show_chat_variables()

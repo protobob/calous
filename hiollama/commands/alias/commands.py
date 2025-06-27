@@ -13,13 +13,14 @@ def cmd_alias_add(handler, alias: str, command: str) -> CommandResult:
     # Check if alias already exists and get confirmation if needed
     exists, old_command = AliasService.check_existing_alias(alias)
     if exists:
-        if not AliasFormatter.confirm_alias_overwrite(alias, old_command):
+        AliasFormatter.print_warning(f"Alias '{alias}' already exists (points to '{old_command}')")
+        if not handler.app.confirm("Overwrite existing alias?"):
             return CommandResult(ActionType.CONTINUE)
     
     result = AliasService.add_alias(alias, command)
     
     if result.success:
-        if exists:
+        if exists and old_command:  # Ensure old_command is not None
             AliasFormatter.print_alias_updated(alias, command, old_command)
         else:
             AliasFormatter.print_alias_created(alias, command)

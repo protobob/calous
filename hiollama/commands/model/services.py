@@ -1,6 +1,7 @@
 """Model management services."""
 from typing import Optional, NamedTuple
 from ...constants import MIN_NUM_CTX, MAX_NUM_CTX, MIN_TEMPERATURE, MAX_TEMPERATURE
+from ...types import CommandResult, ActionType
 
 
 class ContextResult(NamedTuple):
@@ -146,3 +147,9 @@ class ModelService:
         changed = current != enabled
         self.app.thinking_enabled = enabled
         return ThinkingResult(enabled=enabled, changed=changed)
+    
+    @staticmethod
+    def show_model_variables(handler):
+        # Logic to fetch and return model-related variables
+        handler.app.ui.show_model_variables()
+        return CommandResult(ActionType.CONTINUE)

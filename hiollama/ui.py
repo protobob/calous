@@ -319,19 +319,21 @@ class UIManager:
         print()
 
     def show_chat_variables(self):
-        """Display chat-specific variables only."""
-        chat_color = get_chat_color(getattr(self.app, 'active_chat_index', 0))
+        """Display chat-specific variables."""
         active_chat_index = getattr(self.app, 'active_chat_index', 0)
-        
-        print(f"\n[bold {chat_color}]CHAT {active_chat_index + 1} VARIABLES[/bold {chat_color}]\n")        # Chat-specific settings
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Verbosity:':<20} [bold][{'green' if self.app.verbosity else 'red'}]{self.app.verbosity}[/{'green' if self.app.verbosity else 'red'}][/bold]")
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Thinking Mode:':<20} [bold][{'green' if self.app.thinking_enabled else 'red'}]{self.app.thinking_enabled}[/{'green' if self.app.thinking_enabled else 'red'}][/bold]")
-        # Temperature (chat-specific)
-        temp_color = "blue" if self.app.temperature == 0.0 else "green" if self.app.temperature < 0.7 else "yellow" if self.app.temperature <= 1.0 else "orange1" if self.app.temperature <= 1.5 else "red"
-        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Temperature:':<20} [bold {temp_color}]{self.app.temperature}[/bold {temp_color}]")
-        
-        print()
+        verbosity = self.app.verbosity
+        thinking_enabled = self.app.thinking_enabled
+        temperature = self.app.temperature
 
+        # Print Rich-formatted output for CLI
+        chat_color = get_chat_color(active_chat_index)
+        
+        print(f"\n[bold {chat_color}]CHAT {active_chat_index + 1} VARIABLES[/bold {chat_color}]\n")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Verbosity:':<20} [bold][{'green' if verbosity else 'red'}]{verbosity}[/{'green' if verbosity else 'red'}][/bold]")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Thinking Mode:':<20} [bold][{'green' if thinking_enabled else 'red'}]{thinking_enabled}[/{'green' if thinking_enabled else 'red'}][/bold]")
+        print(f"[bold {chat_color}]|[/bold {chat_color}] {'Temperature:':<20} [bold {'blue' if temperature == 0.0 else 'green' if temperature < 0.7 else 'yellow' if temperature <= 1.0 else 'orange1' if temperature <= 1.5 else 'red'}]{temperature}[/bold {'blue' if temperature == 0.0 else 'green' if temperature < 0.7 else 'yellow' if temperature <= 1.0 else 'orange1' if temperature <= 1.5 else 'red'}]")
+        print()
+    
     def show_log_variables(self):
         """Display logging-related variables only."""
         chat_color = get_chat_color(getattr(self.app, 'active_chat_index', 0))

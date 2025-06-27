@@ -88,3 +88,9 @@ def cmd_model_help(handler) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
+@registry.register("model.vars", "Show model-related variables", category=CommandCategory.MODEL)
+def cmd_model_vars(handler) -> CommandResult:
+    """Display model-related variables and settings."""
+    return ModelService.show_model_variables(handler)
+
+

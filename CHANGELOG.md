@@ -1,6 +1,39 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.12.18.dev] - 2025-06-27
+
+### Added
+
+- **Rust Client Integration**: `hi` - a lightweight Rust-based Unix tool client that communicates with the daemon mode via Unix sockets, providing seamless command-line integration.
+- **Global Output Capture**: Implemented system-wide capture and stripping of Rich/ANSI formatting tags for all command outputs, ensuring clean plain text delivery to socket clients.
+- **Enhanced Variable Display**: Added `/chat.vars` and improved `/model.vars` commands to output configuration variables in plain text format compatible with external clients.
+
+### Fixed
+
+- **CommandResult Consistency**: Resolved critical bugs where `CommandResult` objects were missing required `action` arguments across multiple service modules (`model/services.py`, `log/services.py`).
+- **Output Formatting**: Fixed Rich/ANSI tag stripping to work globally across all commands without requiring manual intervention in individual command handlers.
+- **Confirmation Prompts**: Standardized confirmation logic for destructive operations (`/chat.reset`, `/history.clear`, `/alias.add` overwrite) to auto-confirm in daemon mode while preserving interactive prompts in terminal mode.
+
+### Changed
+
+- **Command Registry**: Enhanced the command execution pipeline with automatic output capture and formatting, making all commands socket-client compatible by default.
+- **Socket Server Logic**: Improved daemon mode to capture and process all command outputs, including post-command context displays, ensuring complete plain text transmission.
+- **Confirmation System**: Refactored confirmation prompts to use `app.confirm()` method, which intelligently handles interactive vs non-interactive modes based on the `--socket` flag.
+
+### Technical Improvements
+
+- **Mode-Agnostic Design**: Commands now work seamlessly in both terminal and daemon modes without requiring mode-specific code paths.
+- **Output Pipeline**: Implemented stdout capture with Rich tag stripping in the command registry, ensuring consistent plain text output for all commands.
+- **Error Handling**: Enhanced robustness by ensuring all service methods properly construct `CommandResult` objects with required parameters.
+
+### Impact
+
+- **Universal Compatibility**: All existing commands now work flawlessly with external clients like the Rust `hi` tool without any Rich formatting interference.
+- **Streamlined Integration**: External tools can reliably parse and process command outputs, enabling better automation and scripting capabilities.
+- **Maintainability**: The global output capture system eliminates the need for manual Rich tag handling in individual commands, reducing maintenance overhead.
+
+
 ## [0.12.17.dev] - 2025-06-26
 
 ### Added

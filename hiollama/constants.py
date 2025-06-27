@@ -72,7 +72,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "0.12.17.dev"
+APP_VERSION = "0.12.18.dev"
 
 # Multi-chat configuration
 DEFAULT_NUM_CHATS = 4  # default if no config
@@ -81,6 +81,9 @@ DEFAULT_NUM_CHATS = 4  # default if no config
 MAX_CHATS = 14
 TWIST_PREVIEW_LENGTH = 100
 SWITCH_PREVIEW_LENGTH = 50
+
+# Added SOCKET_PATH for centralized configuration
+SOCKET_PATH = "/tmp/hiollama.sock"
 
 # UI Formatting Constants
 class Colors:

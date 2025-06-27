@@ -17,7 +17,7 @@ def cmd_history_clear(handler) -> CommandResult:
     # Show warning and ask for confirmation
     HistoryFormatter.format_clear_warning(chat_info)
     
-    if HistoryFormatter.confirm_clear():
+    if handler.app.confirm("Are you sure you want to clear all chat history?"):
         service.clear_history()
         HistoryFormatter.format_clear_success(chat_info)
     else:
