@@ -239,8 +239,8 @@ class ModelInteraction:
         except (ValueError, AttributeError) as e:
             return "unknown"      
             
-    def talk_to_model(self, user_prompt, images=None):
-        """Send a prompt to the selected model and return the streaming response."""
+    def talk_to_model(self, user_prompt, images=None, stream=False):
+        """Send a prompt to the selected model and return the model response (streaming or non-streaming)."""
         # Check if model is selected before making API call
         if not self.app.selected_model or self.app.selected_model.strip() == "":
             print(f"\n[bold red]No Model Selected:[/bold red] Please select a model first.")
@@ -261,8 +261,106 @@ class ModelInteraction:
         # Get available function tools from plugin system
         tools = self._get_function_tools()
         
-        return self._handle_streaming(messages, user_prompt, tools)
-    
+        return self._handle_model_response(messages, user_prompt, tools, stream=stream)
+
+    def _handle_model_response(self, messages, user_prompt, tools=None, stream=True):
+        """Handle model response from the model with optional function calling. Supports streaming and non-streaming."""
+        full_response = ""
+        thinking_content = ""
+        response_dict = None
+        tool_calls = []
+        try:
+            # Print the header before response starts
+            chat_index = getattr(self.app, 'active_chat_index', 0)
+            chat_color = get_chat_color(chat_index)
+            print(f"\n[bold {chat_color}]|[/bold {chat_color}][bold {chat_color}]{chat_index + 1})[/bold {chat_color}][underline]{self.app.selected_model}[/underline]:\n")
+            # Prepare chat options
+            chat_options = {
+                'model': self.app.selected_model,
+                'messages': messages,
+                'stream': stream,
+                'options': {'num_ctx': self.app.num_ctx, 'temperature': self.app.temperature}
+            }
+            if tools:
+                chat_options['tools'] = tools
+            # Try to use native thinking API, fall back to without think parameter
+            try:
+                chat_options['think'] = self.app.thinking_enabled
+                response = ollama.chat(**chat_options)
+            except (TypeError, ollama.ResponseError) as e:
+                if isinstance(e, ollama.ResponseError) and "thinking" in str(e).lower():
+                    if self.app.thinking_enabled:
+                        print(f"\n[yellow]⚠️  Model '{self.app.selected_model}' doesn't support thinking mode.[/yellow]")
+                        print(f"[grey50]Try updating the model with: ollama pull {self.app.selected_model}[/grey50]")
+                        print(f"[grey50]Continuing without thinking mode...[/grey50]\n")
+                    chat_options.pop('think', None)
+                    response = ollama.chat(**chat_options)
+                else:
+                    chat_options.pop('think', None)
+                    response = ollama.chat(**chat_options)
+            if stream:
+                # Streaming path (existing logic)
+                chunks = response
+                for chunk in chunks:
+                    if hasattr(chunk, 'message'):
+                        content = getattr(chunk.message, 'content', '')
+                        if content:
+                            full_response += content
+                            print(content, end='', flush=True)
+                        if hasattr(chunk.message, 'tool_calls') and chunk.message.tool_calls:
+                            tool_calls.extend(chunk.message.tool_calls)
+                        if self.app.thinking_enabled and hasattr(chunk.message, 'thinking'):
+                            thinking = getattr(chunk.message, 'thinking', '')
+                            if thinking:
+                                thinking_content += thinking
+                                print(f"[dim cyan]{thinking}[/dim cyan]", end='', flush=True)
+                    response_dict = chunk
+                print()  # newline after stream
+            else:
+                # Non-streaming path
+                print(f"[DEBUG] Non-streaming raw response: {response}")  # <--- Debug print
+                if hasattr(response, 'message'):
+                    content = getattr(response.message, 'content', '')
+                    if content:
+                        full_response += content
+                        print(content, end='', flush=True)
+                    if hasattr(response.message, 'tool_calls') and response.message.tool_calls:
+                        tool_calls.extend(response.message.tool_calls)
+                    if self.app.thinking_enabled and hasattr(response.message, 'thinking'):
+                        thinking = getattr(response.message, 'thinking', '')
+                        if thinking:
+                            thinking_content += thinking
+                            print(f"[dim cyan]{thinking}[/dim cyan]", end='', flush=True)
+                    response_dict = response
+                print()  # newline after response
+            # Handle function calls if present
+            if tool_calls:
+                tool_results = self._handle_function_calls(tool_calls)
+                if tool_results:
+                    messages.append({"role": "assistant", "content": full_response, "tool_calls": tool_calls})
+                    messages.extend(tool_results)
+                    print(f"[dim green]🔄 Processing function results...[/dim green]")
+                    # Make follow-up call without tools to get final response
+                    return self._handle_model_response(messages, user_prompt, tools=None, stream=stream)
+            clean_response = full_response
+            if not clean_response:
+                clean_response = "[No valid response received from the model.]"
+            final_response = {"message": {"content": clean_response}}
+            if response_dict and hasattr(response_dict, 'eval_count'):
+                final_response['eval_count'] = response_dict.eval_count
+            if response_dict and hasattr(response_dict, 'eval_duration'):
+                final_response['eval_duration'] = response_dict.eval_duration
+            self._process_response(user_prompt, final_response, full_response)
+            return final_response
+        except ollama.ResponseError as e:
+            return self._handle_response_error(e)
+        except ConnectionError as e:
+            return self._handle_connection_error(e)
+        except TimeoutError as e:
+            return self._handle_timeout_error(e)
+        except Exception as e:
+            return self._handle_unexpected_error(e)
+
     def _get_function_tools(self) -> List[Dict[str, Any]]:
         """Get function tools from the plugin system."""
         # Access plugin manager through the app if available

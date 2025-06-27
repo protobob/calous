@@ -1,6 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.12.17.dev] - 2025-06-26
+
+### Added
+- **Daemon Mode**: Introduced `--socket` daemon mode, allowing the app to run as a server that listens for input via Unix sockets. This enables seamless integration with lightweight tools like the Rust-based `hi` Unix utility.
+- **Debug Output**: Added `-i` flag to daemon mode for enhanced debug message output, providing better visibility into server operations.
+
+### Impact
+- **Enhanced Workflow**: Users can now send prompts and commands directly to the daemon using external tools, streamlining automation and scripting.
+- **Flexibility**: The app remains fully functional in non-daemon mode, ensuring backward compatibility and versatility for diverse use cases.
+
+### Technical
+- **Unix Socket Integration**: Implemented robust socket handling for reliable communication between the daemon and external clients.
+- **Debugging Enhancements**: Improved logging and debug output for daemon mode, aiding in troubleshooting and performance monitoring.
+
 ## [0.12.16.dev] - 2025-06-25
 
 ### Added
@@ -14,8 +28,6 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Bumped APP_VERSION to 0.12.14.dev in constants.py
 - Calculator plugin: separated LLM-facing and user-facing descriptions in function schema to prevent LLM prompt preamble from showing to users
-
-# ...existing changelog entries...
 
 ## [0.12.13.dev] - 2025-06-24
 

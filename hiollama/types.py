@@ -15,3 +15,4 @@ class ActionType(Enum):
 class CommandResult:
     action: ActionType
     data: Optional[Dict[str, Any]] = None
+    message: Optional[str] = None
