@@ -2,6 +2,8 @@
 import ollama
 import re
 import json
+import sys
+import os
 from typing import Optional, NamedTuple, Dict, Any, List
 from rich import print
 from .utils import get_chat_color
@@ -247,14 +249,25 @@ class ModelInteraction:
             print(f"[grey50]Use /model to choose an available model[/grey50]")
             return {"message": {"content": "[Error: No model selected. Use /model to choose a model.]"}}
         
-        messages = [self.app.system_prompt] + self.app.chat_history.history.copy()
+        messages = []
+        if self.app.system_prompt and self.app.system_prompt.get('content'):
+            messages.append(self.app.system_prompt)
+        messages.extend(self.app.chat_history.history.copy())
         
-        # If images are provided, add them to the last user message
-        if images and messages:
-            # Find the most recent user message (should be the last one in history)
+        # Handle the current user prompt and images
+        # When history is enabled, the user message should already be in chat_history
+        # When history is disabled, we need to add it to messages for this request only
+        if not getattr(self.app, 'history_enabled', True):
+            # History is disabled - add current user prompt to messages for this request
+            current_user_message = {"role": "user", "content": user_prompt}
+            if images:
+                current_user_message["images"] = images
+            messages.append(current_user_message)
+        elif images:
+            # History is enabled but we need to add images to the last user message
+            # Find the most recent user message (should be the current prompt)
             for i in range(len(messages) - 1, -1, -1):
                 if messages[i].get('role') == 'user':
-                    # Add images to this message
                     messages[i] = {**messages[i], 'images': images}
                     break
         
@@ -283,6 +296,28 @@ class ModelInteraction:
             }
             if tools:
                 chat_options['tools'] = tools
+            
+            # Debug message showing what's being sent to the model
+            # Show when in socket mode OR when debug env var is set
+            show_debug = (getattr(self.app, 'non_interactive', False) or 
+                         os.environ.get('HIOLLAMA_DEBUG', '').lower() in ['1', 'true', 'yes'])
+            
+            if show_debug:
+                print(f"[DEBUG] Sending to model {self.app.selected_model}:", file=sys.stderr)
+                print(f"[DEBUG] Messages: {len(messages)} messages", file=sys.stderr)
+                print(f"[DEBUG] Options: num_ctx={self.app.num_ctx}, temp={self.app.temperature}", file=sys.stderr)
+                if tools:
+                    print(f"[DEBUG] Tools: {len(tools)} available", file=sys.stderr)
+                
+                # Show all messages being sent
+                print(f"[DEBUG] Full conversation:", file=sys.stderr)
+                for i, msg in enumerate(messages):
+                    role = msg.get('role', 'unknown')
+                    content = msg.get('content', '')
+                    if len(content) > 300:
+                        content = content[:300] + "..."
+                    print(f"[DEBUG]   {i+1}. {role}: {content}", file=sys.stderr)
+            
             # Try to use native thinking API, fall back to without think parameter
             try:
                 chat_options['think'] = self.app.thinking_enabled

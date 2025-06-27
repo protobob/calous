@@ -32,6 +32,12 @@ class SysService:
     @staticmethod
     def quit_application(handler) -> CommandResult:
         """Save configuration and exit."""
+        # Prevent quit command in socket/non-interactive mode
+        if getattr(handler.app, 'non_interactive', False):
+            from rich import print
+            print(f"\n[bold red]Error:[/bold red] Quit command not available in socket mode")
+            return CommandResult(ActionType.CONTINUE)
+        
         return CommandResult(ActionType.QUIT)
     
     @staticmethod

@@ -1,6 +1,89 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+# Changelog
+
+## [0.12.20.dev] - 2025-06-27
+
+### Added - Python Server
+- Model debug output showing full conversation sent to models
+- Enhanced socket server handling for large payloads (>8KB)
+- Protection against `/quit` command execution in socket mode
+
+### Enhanced - Rust Client
+- Fixed piped input with prompt arguments (`ls | hi "analyze this"`)
+- Improved error handling for connection issues and large data
+- Better argument parsing to prioritize command-line prompts over stdin
+- Enhanced debug output and error messages
+
+### Fixed - Python Server
+- Socket buffer handling for commands with large piped input
+- Rich markup parsing errors in server debug output
+- User prompt inclusion in debug output when chat history disabled
+- JSON parsing errors with incomplete socket data
+
+### Fixed - Rust Client  
+- Connection reset issues when sending large piped data
+- Panic handling replaced with graceful error messages
+- Proper handling of mixed stdin and command-line arguments
+
+### Technical
+- Improved socket communication protocol for reliable large message transmission
+- Enhanced debug visibility for model interactions and data flow
+- Better separation of server vs client functionality in codebase
+
+## [0.12.19.dev] - 2025-06-27
+
+### Fixed
+- **model.switch**: Removed blocking interactive prompts that broke socket client compatibility
+- **model.switch**: Now supports both CLI and socket usage patterns with dual-format output
+
+### Changed
+- **model.switch**: Command now accepts optional model selection parameter
+- **model.switch**: Shows available models when used without arguments
+- **model.switch**: Supports selection by number, exact name, or partial name matching
+- **Help system**: Updated all help documentation to reflect new model.switch usage
+
+### Technical
+- Added `show_available_models()` method to UIManager with Rich and plain text output
+- Added `select_model_by_input()` method to ModelService for flexible model selection
+- Maintained backwards compatibility while fixing socket client issues
+
+## [0.12.18.dev] - 2025-06-27
+
+### Added
+
+- **Rust Client Integration**: `hi` - a lightweight Rust-based Unix tool client that communicates with the daemon mode via Unix sockets, providing seamless command-line integration.
+- **Global Output Capture**: Implemented system-wide capture and stripping of Rich/ANSI formatting tags for all command outputs, ensuring clean plain text delivery to socket clients.
+- **Enhanced Variable Display**: Added `/chat.vars` and improved `/model.vars` commands to output configuration variables in plain text format compatible with external clients.
+
+### Fixed
+
+- **CommandResult Consistency**: Resolved critical bugs where `CommandResult` objects were missing required `action` arguments across multiple service modules (`model/services.py`, `log/services.py`).
+- **Output Formatting**: Fixed Rich/ANSI tag stripping to work globally across all commands without requiring manual intervention in individual command handlers.
+- **Confirmation Prompts**: Standardized confirmation logic for destructive operations (`/chat.reset`, `/history.clear`, `/alias.add` overwrite) to auto-confirm in daemon mode while preserving interactive prompts in terminal mode.
+
+### Changed
+
+- **Command Registry**: Enhanced the command execution pipeline with automatic output capture and formatting, making all commands socket-client compatible by default.
+- **Socket Server Logic**: Improved daemon mode to capture and process all command outputs, including post-command context displays, ensuring complete plain text transmission.
+- **Confirmation System**: Refactored confirmation prompts to use `app.confirm()` method, which intelligently handles interactive vs non-interactive modes based on the `--socket` flag.
+
+### Technical Improvements
+
+- **Mode-Agnostic Design**: Commands now work seamlessly in both terminal and daemon modes without requiring mode-specific code paths.
+- **Output Pipeline**: Implemented stdout capture with Rich tag stripping in the command registry, ensuring consistent plain text output for all commands.
+- **Error Handling**: Enhanced robustness by ensuring all service methods properly construct `CommandResult` objects with required parameters.
+
+### Impact
+
+- **Universal Compatibility**: All existing commands now work flawlessly with external clients like the Rust `hi` tool without any Rich formatting interference.
+- **Streamlined Integration**: External tools can reliably parse and process command outputs, enabling better automation and scripting capabilities.
+- **Maintainability**: The global output capture system eliminates the need for manual Rich tag handling in individual commands, reducing maintenance overhead.
+
+## [Previous versions...]
+...existing changelog entries...
+
 ## [0.12.19.dev] - 2025-06-27
 
 ### Fixed

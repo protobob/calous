@@ -136,13 +136,41 @@ class Chat:
             conn, addr = server.accept()
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             print(f"[Debug] Connection accepted from {addr} at {timestamp}")
-            data = conn.recv(8192)
-            print(f"[Debug] Raw data received: {data.decode().strip()} at {timestamp}")
+            
+            # Read all data from the connection
+            data = b""
+            while True:
+                chunk = conn.recv(8192)
+                if not chunk:
+                    break
+                data += chunk
+                
+                # Try to decode and parse JSON to see if we have a complete message
+                try:
+                    decoded_data = data.decode('utf-8')
+                    json.loads(decoded_data)
+                    # If we get here, we have valid complete JSON
+                    break
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    # If the connection is closed and we have partial data, break
+                    if len(chunk) == 0:
+                        break
+                    # Otherwise continue reading
+                    continue
+            
+            if not data:
+                conn.close()
+                continue
+                
             try:
-                req = json.loads(data)
+                decoded_data = data.decode('utf-8')
+                print(f"[Debug] Raw data received: {decoded_data[:200]}{'...' if len(decoded_data) > 200 else ''} at {timestamp}")
+                print(f"[Debug] Total data size: {len(data)} bytes")
+                
+                req = json.loads(decoded_data)
                 msg_type = req.get("type")
                 content = req.get("data", "")
-                print(f"[Debug] Parsed request: type={msg_type}, data={content} at {timestamp}")
+                print(f"[Debug] Parsed request: type={msg_type}, data length={len(content)} chars at {timestamp}")
                 if msg_type == "prompt":
                     self.chat_history.add_message("user", content)
                     model_response = self.model.talk_to_model(content, stream=False)
@@ -193,17 +221,34 @@ class Chat:
                         response = {"error": "Invalid JSON in 'data' field for command."}
                 else:
                     response = {"error": "Unknown message type."}
-            except json.JSONDecodeError:
-                response = {"error": "Invalid JSON in request."}
+            except json.JSONDecodeError as e:
+                try:
+                    decoded_data = data.decode('utf-8', errors='replace')
+                    print(f"[Debug] JSON decode error: {e}")
+                    print(f"[Debug] Problematic data: {decoded_data[:500]}...")
+                except:
+                    print(f"[Debug] JSON decode error: {e}")
+                    print(f"[Debug] Raw bytes: {data[:100]}...")
+                response = {"error": f"Invalid JSON in request: {str(e)}"}
+            except UnicodeDecodeError as e:
+                print(f"[Debug] Unicode decode error: {e}")
+                print(f"[Debug] Raw bytes: {data[:100]}...")
+                response = {"error": f"Invalid UTF-8 in request: {str(e)}"}
             except Exception as e:
-                response = {"error": f"model error: {str(e)}"}
+                print(f"[Debug] Unexpected error: {e}")
+                response = {"error": f"Server error: {str(e)}"}
             try:
                 conn.sendall(json.dumps(response).encode())
             except BrokenPipeError:
                 print("[hiollama] Client closed connection before response was sent.")
             conn.close()
             if interactive:
-                print(f"[hiollama] Received: {data.decode().strip()} -> Sent: {json.dumps(response)}")
+                # Use sys.stderr to avoid Rich markup interpretation issues
+                try:
+                    display_data = data.decode('utf-8', errors='replace')[:100]
+                    print(f"[hiollama] Received: {display_data}{'...' if len(data) > 100 else ''} -> Sent: {json.dumps(response)}", file=sys.stderr)
+                except:
+                    print(f"[hiollama] Received: [binary data {len(data)} bytes] -> Sent: {json.dumps(response)}", file=sys.stderr)
 
     def confirm(self, question, default=True):
         """Auto-confirm if non_interactive, else prompt the user."""
