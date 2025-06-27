@@ -153,3 +153,35 @@ class ModelService:
         # Logic to fetch and return model-related variables
         handler.app.ui.show_model_variables()
         return CommandResult(ActionType.CONTINUE)
+    
+    def select_model_by_input(self, model_input: str) -> Optional[str]:
+        """Select a model by name or number input."""
+        models = self.app.model.list_ollama_models()
+        if not models:
+            return None
+        
+        # Try to parse as number (1-based index)
+        if model_input.isdigit():
+            index = int(model_input) - 1
+            if 0 <= index < len(models):
+                return models[index]
+            return None
+        
+        # Try to match by name (exact or partial)
+        model_input_lower = model_input.lower()
+        
+        # First try exact match
+        for model in models:
+            if model.lower() == model_input_lower:
+                return model
+        
+        # Then try partial match
+        matches = [model for model in models if model_input_lower in model.lower()]
+        if len(matches) == 1:
+            return matches[0]
+        
+        return None
+
+    def get_available_models(self) -> list:
+        """Get list of available models."""
+        return self.app.model.list_ollama_models()

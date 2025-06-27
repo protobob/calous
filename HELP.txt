@@ -82,9 +82,16 @@ DETAILED HELP: /model.switch
 Command: /model.switch
 Description: Change the current model
 Category: Model Management
-Usage: /model.switch
+Usage: /model.switch [model_selection]
 
-Opens an interactive model selection menu showing all available Ollama models.
+Examples:
+  /model.switch           - Show available models with selection options
+  /model.switch 1         - Select model #1 from the list
+  /model.switch llama3    - Select model by name (exact or partial match)
+  /model.switch code      - Select model by partial name match
+
+Shows available Ollama models when called without arguments. Accepts model 
+selection by number (from displayed list) or by model name (exact or partial match).
 The selected model applies globally to all chat sessions.
 
 Requirements:
@@ -95,6 +102,7 @@ Model Tips:
   • Model selection affects all chats simultaneously
   • Larger models provide better quality but use more resources
   • Use /model.vars to see current model information
+  • Socket clients can parse the plain text model list programmatically
 
 Use /sys.help model to see all model commands
 

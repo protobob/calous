@@ -116,8 +116,8 @@ class UIManager:
         table.add_row(f"[bold {command_color}]/chat.vars[/bold {command_color}]", "[white]Display chat-specific variables only.[/white]")
 
         table.add_row("", "")  # Empty row for spacing        # Model Commands
-        table.add_row(f"[bold {command_color}]/model.switch[/bold {command_color}]", "[white]Select a different model.[/white]")
-        table.add_row(f"[bold {command_color}]/model.setctx[/bold {command_color}]", f"[white]Set context window size. Usage: [bold {command_color}]/model.setctx NUMBER[/bold {command_color}] (2048-32768 tokens).[/white]")
+        table.add_row(f"[bold {command_color}]/model.switch [MODEL][/bold {command_color}]", "[white]Select a different model. Use without arguments to see available models, or specify model by number or name.[/white]")
+        table.add_row(f"[bold {command_color}]/model.setctx[/bold {command_color}]", f"[white]Set context window size. Usage: [bold {command_color}]/model.setctx NUMBER[/bold {command_color}].[/white]")
         table.add_row(f"[bold {command_color}]/model.eval on/off[/bold {command_color}]", "[white]Toggle evaluation data display after responses.[/white]")
         table.add_row(f"[bold {command_color}]/model.think on/off[/bold {command_color}]", "[white]Toggle thinking mode (show/hide model reasoning).[/white]")
         table.add_row(f"[bold {command_color}]/model.vars[/bold {command_color}]", "[white]Display model-related variables only.[/white]")
@@ -683,7 +683,7 @@ class UIManager:
         
         print(f"[white]GLOBAL[/white]\n")
         
-        print(f" [bold {command_color}]/model.switch[/bold {command_color}]   [white]Change the current model[/white]")
+        print(f" [bold {command_color}]/model.switch[/bold {command_color}]   [white]Change the current model (shows list or select by number/name)[/white]")
         print(f" [bold {command_color}]/model.setctx[/bold {command_color}]   [white]Set max context window size[/white]")
         print(f" [bold {command_color}]/model.vars[/bold {command_color}]     [white]Show model-related variables[/white]")
         print()
@@ -917,3 +917,40 @@ class UIManager:
     def display_shell_output(self, output: str):
         """Display shell command output in a system-style message."""
         print(f"[bold magenta][SHELL][/bold magenta] {output}")
+    
+    def show_available_models(self) -> str:
+        """Display available models with dual output format."""
+        models = self.app.model.list_ollama_models()
+        
+        if not models:
+            # Rich output
+            print("\n[bold red]No models installed.[/bold red]")
+            print("[grey50]Install a model with: 'ollama pull model-name'[/grey50]")
+            
+            # Plain text output
+            return "No models available. Install models with: ollama pull model-name"
+        
+        # Rich output
+        print("\n[bold]Available Ollama Models:[/bold]\n")
+        
+        plain_text_lines = ["Available Models:"]
+        
+        for i, model in enumerate(models, 1):
+            # Get context window info for display
+            context_info = self.app.model.get_context_window_info(model)
+            if context_info:
+                context_display = f"[cyan]{context_info.actual_context//1000}k[/cyan] ctx"
+                print(f"{i:2}. {model} [{context_display}]")
+                plain_text_lines.append(f"{i}. {model} ({context_info.actual_context//1000}k ctx)")
+            else:
+                print(f"{i:2}. {model}")
+                plain_text_lines.append(f"{i}. {model}")
+        
+        print(f"\n[grey50]Usage:[/grey50] [bold]/model.switch NUMBER[/bold] or [bold]/model.switch MODEL_NAME[/bold]")
+        print(f"[grey50]Example:[/grey50] [bold]/model.switch 1[/bold] or [bold]/model.switch llama3[/bold]")
+        
+        plain_text_lines.append("")
+        plain_text_lines.append("Usage: /model.switch NUMBER or /model.switch MODEL_NAME")
+        plain_text_lines.append("Example: /model.switch 1 or /model.switch llama3")
+        
+        return "\n".join(plain_text_lines)

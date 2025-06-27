@@ -1,6 +1,23 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.12.19.dev] - 2025-06-27
+
+### Fixed
+- **model.switch**: Removed blocking interactive prompts that broke socket client compatibility
+- **model.switch**: Now supports both CLI and socket usage patterns with dual-format output
+
+### Changed
+- **model.switch**: Command now accepts optional model selection parameter
+- **model.switch**: Shows available models when used without arguments
+- **model.switch**: Supports selection by number, exact name, or partial name matching
+- **Help system**: Updated all help documentation to reflect new model.switch usage
+
+### Technical
+- Added `show_available_models()` method to UIManager with Rich and plain text output
+- Added `select_model_by_input()` method to ModelService for flexible model selection
+- Maintained backwards compatibility while fixing socket client issues
+
 ## [0.12.18.dev] - 2025-06-27
 
 ### Added

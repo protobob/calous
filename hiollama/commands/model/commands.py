@@ -9,14 +9,26 @@ from .formatters import ModelFormatter
 
 
 @registry.register("model.switch", "Change the current model", category=CommandCategory.MODEL)
-def cmd_model_switch(handler) -> CommandResult:
+def cmd_model_switch(handler, model_selection: Optional[str] = None) -> CommandResult:
     """Select a different model globally."""
     service = ModelService(handler.app)
-    selected = service.select_model()
+    
+    # If no model selection provided, show available models
+    if model_selection is None:
+        plain_text = handler.app.ui.show_available_models()
+        return CommandResult(ActionType.CONTINUE, message=plain_text)
+    
+    # Handle model selection by number or name
+    selected = service.select_model_by_input(model_selection)
     if selected:
         updated_count = service.update_global_model(selected)
         ModelFormatter.format_model_changed(selected, updated_count)
-    return CommandResult(ActionType.CONTINUE)
+        plain_text = f"Model changed to: {selected}"
+        return CommandResult(ActionType.CONTINUE, message=plain_text)
+    else:
+        print(f"\n[bold red]Invalid model selection:[/bold red] {model_selection}")
+        print("[grey50]Use /model.switch to see available models[/grey50]")
+        return CommandResult(ActionType.CONTINUE, message="Error: Invalid model selection")
 
 
 @registry.register("model.setctx", "Set max context window size", category=CommandCategory.MODEL)
