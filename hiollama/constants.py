@@ -21,6 +21,9 @@ DEFAULT_SYSTEM_PROMPT = ""
 DEFAULT_NUM_CTX = 2048
 DEFAULT_TEMPERATURE = 0.8
 
+# VRAM Management
+DEFAULT_KEEP_ALIVE = "30m"  # Keep models loaded for 30 minutes (change to "5m" if switching models frequently)
+
 # Context window limits
 MIN_NUM_CTX = 2048
 MAX_NUM_CTX = 32768

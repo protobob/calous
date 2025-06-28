@@ -53,6 +53,7 @@ class Chat:
         self.history_enabled = self.config.get("history_enabled", True)
         self.num_ctx = ConfigManager.get_global_num_ctx()
         self.temperature = self.config.get("temperature", DEFAULT_TEMPERATURE)
+        self.keep_alive = ConfigManager.get_keep_alive()  # Load global keep_alive setting
         self.prompts = self.config.get("prompts", {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)})
         self.active_chat_index = instance_index
         self.session_manager = None
@@ -135,7 +136,8 @@ class Chat:
         while True:
             conn, addr = server.accept()
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            print(f"[Debug] Connection accepted from {addr} at {timestamp}")
+            if interactive:
+                print(f"[Debug] Connection accepted from {addr} at {timestamp}")
             
             # Read all data from the connection
             data = b""
@@ -164,13 +166,15 @@ class Chat:
                 
             try:
                 decoded_data = data.decode('utf-8')
-                print(f"[Debug] Raw data received: {decoded_data[:200]}{'...' if len(decoded_data) > 200 else ''} at {timestamp}")
-                print(f"[Debug] Total data size: {len(data)} bytes")
+                if interactive:
+                    print(f"[Debug] Raw data received: {decoded_data[:200]}{'...' if len(decoded_data) > 200 else ''} at {timestamp}")
+                    print(f"[Debug] Total data size: {len(data)} bytes")
                 
                 req = json.loads(decoded_data)
                 msg_type = req.get("type")
                 content = req.get("data", "")
-                print(f"[Debug] Parsed request: type={msg_type}, data length={len(content)} chars at {timestamp}")
+                if interactive:
+                    print(f"[Debug] Parsed request: type={msg_type}, data length={len(content)} chars at {timestamp}")
                 if msg_type == "prompt":
                     self.chat_history.add_message("user", content)
                     model_response = self.model.talk_to_model(content, stream=False)
@@ -179,7 +183,8 @@ class Chat:
                 elif msg_type == "cmd":
                     try:
                         action = json.loads(content).get("action")
-                        print(f"[Debug] Extracted action: {action} at {timestamp}")
+                        if interactive:
+                            print(f"[Debug] Extracted action: {action} at {timestamp}")
                         if action:
                             # Capture ALL output from command processing
                             import io
@@ -222,25 +227,29 @@ class Chat:
                 else:
                     response = {"error": "Unknown message type."}
             except json.JSONDecodeError as e:
-                try:
-                    decoded_data = data.decode('utf-8', errors='replace')
-                    print(f"[Debug] JSON decode error: {e}")
-                    print(f"[Debug] Problematic data: {decoded_data[:500]}...")
-                except:
-                    print(f"[Debug] JSON decode error: {e}")
-                    print(f"[Debug] Raw bytes: {data[:100]}...")
+                if interactive:
+                    try:
+                        decoded_data = data.decode('utf-8', errors='replace')
+                        print(f"[Debug] JSON decode error: {e}")
+                        print(f"[Debug] Problematic data: {decoded_data[:500]}...")
+                    except:
+                        print(f"[Debug] JSON decode error: {e}")
+                        print(f"[Debug] Raw bytes: {data[:100]}...")
                 response = {"error": f"Invalid JSON in request: {str(e)}"}
             except UnicodeDecodeError as e:
-                print(f"[Debug] Unicode decode error: {e}")
-                print(f"[Debug] Raw bytes: {data[:100]}...")
+                if interactive:
+                    print(f"[Debug] Unicode decode error: {e}")
+                    print(f"[Debug] Raw bytes: {data[:100]}...")
                 response = {"error": f"Invalid UTF-8 in request: {str(e)}"}
             except Exception as e:
-                print(f"[Debug] Unexpected error: {e}")
+                if interactive:
+                    print(f"[Debug] Unexpected error: {e}")
                 response = {"error": f"Server error: {str(e)}"}
             try:
                 conn.sendall(json.dumps(response).encode())
             except BrokenPipeError:
-                print("[hiollama] Client closed connection before response was sent.")
+                if interactive:
+                    print("[hiollama] Client closed connection before response was sent.")
             conn.close()
             if interactive:
                 # Use sys.stderr to avoid Rich markup interpretation issues

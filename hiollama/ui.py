@@ -281,6 +281,10 @@ class UIManager:
         # Always show global context window setting
         print(f"{'Context Window:':<20} [bold cyan]{global_num_ctx:,} tokens[/bold cyan]")
         
+        # Show VRAM management settings
+        keep_alive = ConfigManager.get_keep_alive()
+        print(f"{'Keep Alive:':<20} [bold magenta]{keep_alive}[/bold magenta]")
+        
         if self.app.selected_model:
             context_info = self.app.model.get_context_window_info(self.app.selected_model)
             usage_percentage = self.app.model.get_context_usage_percentage(self.app.selected_model)            

@@ -17,17 +17,24 @@ def main():
 
     args = parser.parse_args()
 
-    if args.num_chats is None:
-        num_chats = ConfigManager.get_num_chats()
+    # In socket mode, always use 14 chats (ignore num_chats argument and config)
+    if args.socket:
+        num_chats = 14
+        # Warn user if they specified a chat count that will be ignored
+        if args.num_chats is not None:
+            print(f"[Warning] Chat channel argument '{args.num_chats}' ignored in socket mode. Using 14 chat channels.")
     else:
-        num_chats = args.num_chats
+        if args.num_chats is None:
+            num_chats = ConfigManager.get_num_chats()
+        else:
+            num_chats = args.num_chats
 
-    if num_chats < 1:
-        print("Error: Number of chats must be at least 1")
-        sys.exit(1)
-    if num_chats > args.max_chats:
-        print(f"Error: Number of chats cannot exceed {args.max_chats}")
-        sys.exit(1)
+        if num_chats < 1:
+            print("Error: Number of chats must be at least 1")
+            sys.exit(1)
+        if num_chats > args.max_chats:
+            print(f"Error: Number of chats cannot exceed {args.max_chats}")
+            sys.exit(1)
 
     session_manager = ChatSessionManager(num_chats=num_chats)
     chat = session_manager.chats[0]

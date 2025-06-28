@@ -1,7 +1,48 @@
 # Changelog
-All notable changes to this project will be documented in this file.
 
-# Changelog
+All notable changes to HiOllama will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.12.21.dev] - 2025-06-27
+
+### Added
+- **VRAM Management**: Added `keep_alive` configuration for Ollama model persistence
+  - Default setting: 30 minutes to balance performance and memory usage
+  - Configurable via global config and visible in `/model.vars`
+  - Automatically sent with all Ollama API calls to keep models loaded longer
+- **Rust Client Chat Targeting**: Added `-n/--chat <NUM>` flag to target specific chat channels (1-14)
+  - Example: `hi -n 2 Hello` sends message to chat channel 2
+  - Example: `hi -n 3 -c chat.vars` shows variables for chat 3
+  - Updated help documentation with chat channel examples
+
+### Fixed
+- **Socket Mode Stability**: Fixed socket mode to always use 14 chat instances
+  - Ignores `num_chats` argument in socket mode for predictable behavior
+  - Shows warning when chat count argument is ignored
+  - Provides stable foundation for chat targeting features
+- **Debug Output Control**: Fixed debug messages to only appear with `-i` flag
+  - Socket mode now runs silently by default (`--socket`)
+  - Verbose debug output only with explicit flag (`--socket -i`)
+  - Fixed unconditional debug prints in both `app.py` and `model_interaction.py`
+
+### Changed
+- **Socket Mode Chat Management**: Disabled `/chat.add` and `/chat.remove` commands in socket mode
+  - Prevents dynamic chat changes that could break client targeting
+  - Matches existing pattern used for `/sys.quit` command blocking
+  - Maintains stable 14-chat architecture for socket clients
+
+### Technical
+- Updated Rust client dependencies and help documentation
+- Enhanced error handling for chat channel validation (1-14 range)
+- Improved socket mode initialization and configuration management
+- Added `keep_alive` parameter integration throughout the model interaction pipeline
+
+### Known Issues
+- Chat channel switching via Rust client requires architectural improvements
+- Socket connections don't persist chat state between separate commands
+- Multi-chat support in socket mode needs session manager integration
 
 ## [0.12.20.dev] - 2025-06-27
 
@@ -80,9 +121,6 @@ All notable changes to this project will be documented in this file.
 - **Universal Compatibility**: All existing commands now work flawlessly with external clients like the Rust `hi` tool without any Rich formatting interference.
 - **Streamlined Integration**: External tools can reliably parse and process command outputs, enabling better automation and scripting capabilities.
 - **Maintainability**: The global output capture system eliminates the need for manual Rich tag handling in individual commands, reducing maintenance overhead.
-
-## [Previous versions...]
-...existing changelog entries...
 
 ## [0.12.19.dev] - 2025-06-27
 

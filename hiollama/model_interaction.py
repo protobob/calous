@@ -292,15 +292,15 @@ class ModelInteraction:
                 'model': self.app.selected_model,
                 'messages': messages,
                 'stream': stream,
-                'options': {'num_ctx': self.app.num_ctx, 'temperature': self.app.temperature}
+                'options': {'num_ctx': self.app.num_ctx, 'temperature': self.app.temperature},
+                'keep_alive': self.app.keep_alive
             }
             if tools:
                 chat_options['tools'] = tools
             
             # Debug message showing what's being sent to the model
-            # Show when in socket mode OR when debug env var is set
-            show_debug = (getattr(self.app, 'non_interactive', False) or 
-                         os.environ.get('HIOLLAMA_DEBUG', '').lower() in ['1', 'true', 'yes'])
+            # Only show when debug env var is explicitly set
+            show_debug = os.environ.get('HIOLLAMA_DEBUG', '').lower() in ['1', 'true', 'yes']
             
             if show_debug:
                 print(f"[DEBUG] Sending to model {self.app.selected_model}:", file=sys.stderr)
@@ -353,7 +353,8 @@ class ModelInteraction:
                 print()  # newline after stream
             else:
                 # Non-streaming path
-                print(f"[DEBUG] Non-streaming raw response: {response}")  # <--- Debug print
+                if show_debug:
+                    print(f"[DEBUG] Non-streaming raw response: {response}")  # <--- Debug print
                 if hasattr(response, 'message'):
                     content = getattr(response.message, 'content', '')
                     if content:
@@ -505,7 +506,8 @@ class ModelInteraction:
                 'model': self.app.selected_model,
                 'messages': messages,
                 'stream': True,
-                'options': {'num_ctx': self.app.num_ctx, 'temperature': self.app.temperature}
+                'options': {'num_ctx': self.app.num_ctx, 'temperature': self.app.temperature},
+                'keep_alive': self.app.keep_alive
             }
             
             # Add tools if available

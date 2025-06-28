@@ -11,6 +11,11 @@ from .formatters import ChatFormatter
 @registry.register("chat.add", "Add a new chat session", category=CommandCategory.NAVIGATION)
 def cmd_chat_add(handler) -> CommandResult:
     """Add a new chat session."""
+    # Prevent chat.add command in socket/non-interactive mode
+    if getattr(handler.app, 'non_interactive', False):
+        print(f"\n[bold red]Error:[/bold red] Chat add command not available in socket mode")
+        return CommandResult(ActionType.CONTINUE)
+    
     service = ChatService(handler.app)
     result = service.add_chat()
     ChatFormatter.format_add_chat_result(result)
@@ -36,6 +41,11 @@ def cmd_chat_switch(handler, chat_number: Optional[int] = None) -> CommandResult
 @registry.register("chat.remove", "Remove a chat session", category=CommandCategory.NAVIGATION)
 def cmd_chat_remove(handler, chat_number: Optional[int] = None) -> CommandResult:
     """Remove a chat session."""
+    # Prevent chat.remove command in socket/non-interactive mode
+    if getattr(handler.app, 'non_interactive', False):
+        print(f"\n[bold red]Error:[/bold red] Chat remove command not available in socket mode")
+        return CommandResult(ActionType.CONTINUE)
+    
     service = ChatService(handler.app)
     result = service.validate_remove(chat_number)
     

@@ -22,11 +22,13 @@ fn main() {
     
     // Parse flags
     let mut debug = false;
+    let mut chat_channel: Option<u8> = None;
     let mut arg_start = 1;
     
     // Handle flags and special commands
-    if args.len() >= 2 {
-        match args[1].as_str() {
+    let mut i = 1;
+    while i < args.len() {
+        match args[i].as_str() {
             "-h" | "--help" => {
                 println!("hi - HiOllama client");
                 println!();
@@ -40,13 +42,23 @@ fn main() {
                 println!("    -d, --debug        Show debug output");
                 println!("    -h, --help         Show this help message");
                 println!("    -i, --interactive  Start interactive mode");
+                println!("    -n, --chat <NUM>   Switch to chat channel (1-14)");
                 println!("    -v, --version      Show version");
                 println!();
                 println!("EXAMPLES:");
-                println!("    hi \"What is Rust?\"");
+                println!("    hi What is Rust?");
+                println!("    hi Hello, world!");
                 println!("    hi -c sys.help");
                 println!("    hi -c persona.set 0 You are a helpful assistant");
-                println!("    cat file.txt | hi \"What's in this file?\"");
+                println!("    hi -n 2 How are you?           # Send to chat channel 2");
+                println!("    hi -n 3 -c chat.vars           # Show variables for chat 3");
+                println!("    cat file.txt | hi What's in this file?");
+                println!();
+                println!("CHAT COMMANDS:");
+                println!("    hi -c chat.switch 2            # Switch to chat 2");
+                println!("    hi -c chat.add                 # Add new chat");
+                println!("    hi -c chat.vars                # Show chat variables");
+                println!("    hi -c model.switch             # Change model");
                 std::process::exit(0);
             }
             "-v" | "--version" => {
@@ -55,13 +67,32 @@ fn main() {
             }
             "-d" | "--debug" => {
                 debug = true;
-                arg_start = 2;
+                i += 1;
             }
             "-i" | "--interactive" => {
                 interactive_mode(debug);
                 std::process::exit(0);
             }
-            _ => {}
+            "-n" | "--chat" => {
+                if i + 1 >= args.len() {
+                    eprintln!("Error: -n flag requires a chat number (1-14)");
+                    std::process::exit(1);
+                }
+                match args[i + 1].parse::<u8>() {
+                    Ok(n) if n >= 1 && n <= 14 => {
+                        chat_channel = Some(n);
+                        i += 2;
+                    }
+                    _ => {
+                        eprintln!("Error: Invalid chat number '{}'. Must be 1-14.", args[i + 1]);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            _ => {
+                arg_start = i;
+                break;
+            }
         }
     }
     
@@ -84,11 +115,11 @@ fn main() {
                 format!("/{}", cmd_parts.join(" "))
             }
         } else {
-            // Regular prompt from args
+            // Regular prompt from args - join ALL remaining arguments
             let prompt_text = args[arg_start..].join(" ");
             
-            // Check if it looks like an unrecognized flag
-            if prompt_text.starts_with('-') {
+            // Check if it looks like an unrecognized flag (only check first arg)
+            if args[arg_start].starts_with('-') {
                 eprintln!("Error: Unrecognized flag '{}'", args[arg_start]);
                 eprintln!("Try 'hi --help' for available options.");
                 std::process::exit(1);
@@ -125,6 +156,24 @@ fn main() {
         std::process::exit(1);
     }
 
+    // If chat channel is specified, switch to it first
+    if let Some(channel) = chat_channel {
+        if debug {
+            eprintln!("[Debug] Switching to chat channel {}", channel);
+        }
+        
+        // Send chat switch command first
+        let switch_cmd = HiCommand {
+            r#type: "cmd".to_string(),
+            data: serde_json::json!({"action": format!("/chat.switch {}", channel)}).to_string(),
+        };
+        
+        if let Err(e) = send_command(&switch_cmd, debug) {
+            eprintln!("Error switching to chat {}: {}", channel, e);
+            std::process::exit(1);
+        }
+    }
+
     let message_type = if prompt.starts_with("/") { "cmd" } else { "prompt" };
 
     let data = if message_type == "cmd" {
@@ -138,52 +187,56 @@ fn main() {
         data,
     };
 
-    let socket_path = "/tmp/hiollama.sock";
-    let mut stream = match UnixStream::connect(socket_path) {
-        Ok(stream) => stream,
+    match send_command(&cmd, debug) {
+        Ok(response) => {
+            let result: HiResponse = serde_json::from_str(&response).unwrap_or(HiResponse {
+                response: None,
+                result: None,
+                error: Some("Invalid response".to_string()),
+            });
+
+            if let Some(err) = result.error {
+                eprintln!("Error: {}", err);
+            } else if let Some(res) = result.response {
+                println!("{}", res);
+            } else if let Some(res) = result.result {
+                println!("{}", res);
+            } else {
+                println!("[No output]");
+            }
+        }
         Err(e) => {
-            eprintln!("Error: Failed to connect to socket: {}", e);
+            eprintln!("Error: {}", e);
             std::process::exit(1);
         }
-    };
+    }
+}
+
+fn send_command(cmd: &HiCommand, debug: bool) -> Result<String, String> {
+    let socket_path = "/tmp/hiollama.sock";
+    let mut stream = UnixStream::connect(socket_path)
+        .map_err(|e| format!("Failed to connect to socket: {}", e))?;
     
-    let request = serde_json::to_string(&cmd).expect("Failed to serialize request");
+    let request = serde_json::to_string(cmd)
+        .map_err(|e| format!("Failed to serialize request: {}", e))?;
     
     if debug {
         eprintln!("[Debug] Sending request: {}", request);
         eprintln!("[Debug] Request size: {} bytes", request.len());
     }
     
-    if let Err(e) = stream.write_all(request.as_bytes()) {
-        eprintln!("Error: Failed to write to socket: {}", e);
-        std::process::exit(1);
-    }
+    stream.write_all(request.as_bytes())
+        .map_err(|e| format!("Failed to write to socket: {}", e))?;
 
     let mut response = String::new();
-    if let Err(e) = stream.read_to_string(&mut response) {
-        eprintln!("Error: Failed to read from socket: {}", e);
-        std::process::exit(1);
-    }
+    stream.read_to_string(&mut response)
+        .map_err(|e| format!("Failed to read from socket: {}", e))?;
     
     if debug {
         eprintln!("[Debug] Received response: {}", response);
     }
 
-    let result: HiResponse = serde_json::from_str(&response).unwrap_or(HiResponse {
-        response: None,
-        result: None,
-        error: Some("Invalid response".to_string()),
-    });
-
-    if let Some(err) = result.error {
-        eprintln!("Error: {}", err);
-    } else if let Some(res) = result.response {
-        println!("{}", res);
-    } else if let Some(res) = result.result {
-        println!("{}", res);
-    } else {
-        println!("[No output]");
-    }
+    Ok(response)
 }
 
 fn interactive_mode(debug: bool) {
@@ -235,50 +288,26 @@ fn send_to_server(input: &str, debug: bool) {
         data,
     };
 
-    let socket_path = "/tmp/hiollama.sock";
-    
-    let mut stream = match UnixStream::connect(socket_path) {
-        Ok(stream) => stream,
-        Err(e) => {
-            eprintln!("Error: Failed to connect to socket: {}", e);
-            return;
+    match send_command(&cmd, debug) {
+        Ok(response) => {
+            let result: HiResponse = serde_json::from_str(&response).unwrap_or(HiResponse {
+                response: None,
+                result: None,
+                error: Some("Invalid response".to_string()),
+            });
+
+            if let Some(err) = result.error {
+                eprintln!("Error: {}", err);
+            } else if let Some(res) = result.response {
+                println!("{}", res);
+            } else if let Some(res) = result.result {
+                println!("{}", res);
+            } else {
+                println!("[No output]");
+            }
         }
-    };
-    
-    let request = serde_json::to_string(&cmd).expect("Failed to serialize request");
-    
-    if debug {
-        eprintln!("[Debug] Sending request: {}", request);
-    }
-    
-    if let Err(e) = stream.write_all(request.as_bytes()) {
-        eprintln!("Error: Failed to write to socket: {}", e);
-        return;
-    }
-
-    let mut response = String::new();
-    if let Err(e) = stream.read_to_string(&mut response) {
-        eprintln!("Error: Failed to read from socket: {}", e);
-        return;
-    }
-    
-    if debug {
-        eprintln!("[Debug] Received response: {}", response);
-    }
-
-    let result: HiResponse = serde_json::from_str(&response).unwrap_or(HiResponse {
-        response: None,
-        result: None,
-        error: Some("Invalid response".to_string()),
-    });
-
-    if let Some(err) = result.error {
-        eprintln!("Error: {}", err);
-    } else if let Some(res) = result.response {
-        println!("{}", res);
-    } else if let Some(res) = result.result {
-        println!("{}", res);
-    } else {
-        println!("[No output]");
+        Err(e) => {
+            eprintln!("Error: {}", e);
+        }
     }
 }
