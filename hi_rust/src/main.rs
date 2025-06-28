@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 struct HiCommand {
     r#type: String,
     data: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    chat: Option<u8>,
 }
 
 #[derive(Deserialize)]
@@ -156,21 +158,10 @@ fn main() {
         std::process::exit(1);
     }
 
-    // If chat channel is specified, switch to it first
+    // Chat channel targeting will be handled via protocol
     if let Some(channel) = chat_channel {
         if debug {
-            eprintln!("[Debug] Switching to chat channel {}", channel);
-        }
-        
-        // Send chat switch command first
-        let switch_cmd = HiCommand {
-            r#type: "cmd".to_string(),
-            data: serde_json::json!({"action": format!("/chat.switch {}", channel)}).to_string(),
-        };
-        
-        if let Err(e) = send_command(&switch_cmd, debug) {
-            eprintln!("Error switching to chat {}: {}", channel, e);
-            std::process::exit(1);
+            eprintln!("[Debug] Targeting chat channel {}", channel);
         }
     }
 
@@ -185,6 +176,7 @@ fn main() {
     let cmd = HiCommand {
         r#type: message_type.to_string(),
         data,
+        chat: chat_channel,
     };
 
     match send_command(&cmd, debug) {
@@ -286,6 +278,7 @@ fn send_to_server(input: &str, debug: bool) {
     let cmd = HiCommand {
         r#type: message_type.to_string(),
         data,
+        chat: None,  // Interactive mode doesn't support chat targeting
     };
 
     match send_command(&cmd, debug) {

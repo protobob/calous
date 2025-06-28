@@ -116,7 +116,9 @@ class Chat:
         except Exception as e:
             print(f"[bold red]Error processing input:[/bold red] {e}")
 
-    def listen_for_socket(self, interactive=False):
+    # DEPRECATED: Socket listener moved to ChatSessionManager
+    # This method is kept for reference but should not be used
+    def listen_for_socket_deprecated(self, interactive=False):
         if os.path.exists(SOCKET_PATH):
             os.remove(SOCKET_PATH)
         server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

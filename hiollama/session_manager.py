@@ -5,7 +5,7 @@ import os
 from .types import ActionType, CommandResult  # Import from types instead
 from .utils import get_chat_color, print_rainbow_header, format_message_preview
 from .config import ConfigManager
-from .constants import DEFAULT_NUM_CHATS, TWIST_PREVIEW_LENGTH, SWITCH_PREVIEW_LENGTH
+from .constants import DEFAULT_NUM_CHATS, TWIST_PREVIEW_LENGTH, SWITCH_PREVIEW_LENGTH, SOCKET_PATH
 from .unified_logger import unified_logger
 
 # Use TYPE_CHECKING to avoid circular import
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class ChatSessionManager:    
     def __init__(self, num_chats: Optional[int] = None):  # Remove hardcoded default
         self.chats: List['Chat'] = []
-        self.active_chat_index = 0
+        self.active_chat_index: int = 0
         # Use constant for default
         self.num_chats = num_chats if num_chats is not None else DEFAULT_NUM_CHATS
         
@@ -323,3 +323,195 @@ class ChatSessionManager:
         os.system('cls' if os.name == 'nt' else 'clear')
         from .utils import print_rainbow_header
         print_rainbow_header()
+    
+    def listen_for_socket(self, interactive=False):
+        """Listen for socket connections and handle multi-chat commands."""
+        import socket
+        import json
+        import signal
+        import sys
+        import os
+        from datetime import datetime
+        
+        # Remove existing socket file if it exists
+        if os.path.exists(SOCKET_PATH):
+            os.remove(SOCKET_PATH)
+        
+        # Create Unix socket
+        server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        server.bind(SOCKET_PATH)
+        server.listen(1)
+
+        def handle_exit(signum, frame):
+            print("[hiollama] Shutting down socket server...")
+            self.save_all_configs()
+            server.close()
+            exit(0)
+
+        signal.signal(signal.SIGINT, handle_exit)
+
+        if interactive:
+            print(f"[hiollama] Listening on {SOCKET_PATH}")
+            
+        while True:
+            conn, addr = server.accept()
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            if interactive:
+                print(f"[Debug] Connection accepted from {addr} at {timestamp}")
+            
+            # Read all data from the connection
+            data = b""
+            while True:
+                chunk = conn.recv(8192)
+                if not chunk:
+                    break
+                data += chunk
+                
+                # Try to decode and parse JSON to see if we have a complete message
+                try:
+                    decoded_data = data.decode('utf-8')
+                    json.loads(decoded_data)
+                    # If we get here, we have valid complete JSON
+                    break
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    # If the connection is closed and we have partial data, break
+                    if len(chunk) == 0:
+                        break
+                    # Otherwise continue reading
+                    continue
+            
+            if not data:
+                conn.close()
+                continue
+                
+            try:
+                decoded_data = data.decode('utf-8')
+                if interactive:
+                    print(f"[Debug] Raw data received: {decoded_data[:200]}{'...' if len(decoded_data) > 200 else ''} at {timestamp}")
+                    print(f"[Debug] Total data size: {len(data)} bytes")
+                
+                req = json.loads(decoded_data)
+                msg_type = req.get("type")
+                content = req.get("data", "")
+                target_chat = req.get("chat")  # Optional chat channel targeting
+                
+                if interactive:
+                    print(f"[Debug] Parsed request: type={msg_type}, data length={len(content)} chars, target_chat={target_chat} at {timestamp}")
+                
+                # Handle chat targeting
+                original_active_chat = self.active_chat_index
+                if target_chat is not None:
+                    # Convert to 0-based index and validate
+                    target_index = target_chat - 1
+                    if 0 <= target_index < self.num_chats:
+                        self.active_chat_index = target_index
+                        if interactive:
+                            print(f"[Debug] Switched to chat {target_chat} for this command")
+                    else:
+                        response = {"error": f"Invalid chat number: {target_chat}. Available chats: 1-{self.num_chats}"}
+                        conn.sendall(json.dumps(response).encode())
+                        conn.close()
+                        continue
+                
+                # Get the targeted chat for processing
+                active_chat = self.get_active_chat()
+                
+                # Initialize response
+                response: Dict[str, Any] = {"error": "Unknown error"}
+                
+                if msg_type == "prompt":
+                    # Handle prompt message
+                    active_chat.chat_history.add_message("user", content)
+                    model_response = active_chat.model.talk_to_model(content, stream=False)
+                    response_text = model_response.get("message", {}).get("content", "")
+                    response = {"response": response_text}
+                    
+                elif msg_type == "cmd":
+                    try:
+                        action = json.loads(content).get("action")
+                        if interactive:
+                            print(f"[Debug] Extracted action: {action} at {timestamp}")
+                        if action:
+                            # Capture ALL output from command processing
+                            import io
+                            import re
+                            
+                            original_stdout = sys.stdout
+                            buffer = io.StringIO()
+                            
+                            try:
+                                # Set non-interactive mode for socket commands
+                                active_chat.non_interactive = True
+                                sys.stdout = buffer
+                                
+                                # Process command using active chat
+                                cmd_result = active_chat.process_input(f"{action}")
+                                
+                                # Process the command result through session manager
+                                # This enables chat switching and other session-level operations
+                                self.process_command_result(cmd_result)
+                                    
+                            finally:
+                                # Reset non-interactive mode
+                                active_chat.non_interactive = False
+                                sys.stdout = original_stdout
+                            
+                            # Get captured output and strip Rich tags
+                            captured_output = buffer.getvalue()
+                            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+                            clean_output = ansi_escape.sub('', captured_output)
+                            
+                            # Print Rich output to terminal (so user sees it)
+                            if captured_output:
+                                print(captured_output, end='')
+                            
+                            # Send clean output to client
+                            response = {"response": clean_output.strip() if clean_output.strip() else (cmd_result.message if hasattr(cmd_result, "message") else str(cmd_result))}
+                        else:
+                            response = {"error": "Missing action in command."}
+                    except json.JSONDecodeError:
+                        response = {"error": "Invalid JSON in 'data' field for command."}
+                else:
+                    response = {"error": "Unknown message type."}
+                        
+                # Restore original active chat if we switched for targeting
+                if target_chat is not None and original_active_chat != self.active_chat_index:
+                    self.active_chat_index = original_active_chat
+                    if interactive:
+                        print(f"[Debug] Restored active chat to {original_active_chat + 1}")
+                    
+            except json.JSONDecodeError as e:
+                if interactive:
+                    try:
+                        decoded_data = data.decode('utf-8', errors='replace')
+                        print(f"[Debug] JSON decode error: {e}")
+                        print(f"[Debug] Problematic data: {decoded_data[:500]}...")
+                    except:
+                        print(f"[Debug] JSON decode error: {e}")
+                        print(f"[Debug] Raw bytes: {data[:100]}...")
+                response = {"error": f"Invalid JSON in request: {str(e)}"}
+            except UnicodeDecodeError as e:
+                if interactive:
+                    print(f"[Debug] Unicode decode error: {e}")
+                    print(f"[Debug] Raw bytes: {data[:100]}...")
+                response = {"error": f"Invalid UTF-8 in request: {str(e)}"}
+            except Exception as e:
+                if interactive:
+                    print(f"[Debug] Unexpected error: {e}")
+                response = {"error": f"Server error: {str(e)}"}
+                
+            # Send response back to client
+            try:
+                conn.sendall(json.dumps(response).encode())
+            except BrokenPipeError:
+                if interactive:
+                    print("[hiollama] Client closed connection before response was sent.")
+            conn.close()
+            
+            if interactive:
+                # Use sys.stderr to avoid Rich markup interpretation issues
+                try:
+                    display_data = data.decode('utf-8', errors='replace')[:100]
+                    print(f"[hiollama] Received: {display_data}{'...' if len(data) > 100 else ''} -> Sent: {json.dumps(response)}", file=sys.stderr)
+                except:
+                    print(f"[hiollama] Received: [binary data {len(data)} bytes] -> Sent: {json.dumps(response)}", file=sys.stderr)

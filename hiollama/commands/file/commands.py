@@ -25,7 +25,7 @@ def cmd_file_load(handler, filepath: str, prompt: str = "") -> CommandResult:
         file_path = path_result.file_path
         
         # Validate file type
-        type_result = FileService.validate_file_type(file_path)
+        type_result = FileService.validate_file_type(file_path, handler.app)
         if not type_result.success:
             if type_result.is_cancelled:
                 formatter.file_load_cancelled()
@@ -42,7 +42,7 @@ def cmd_file_load(handler, filepath: str, prompt: str = "") -> CommandResult:
             return CommandResult(ActionType.CONTINUE)
         
         # Handle text files
-        content_result = FileService.read_file_content(file_path)
+        content_result = FileService.read_file_content(file_path, handler.app)
         if not content_result.success:
             if content_result.is_cancelled:
                 formatter.file_load_cancelled()

@@ -40,7 +40,7 @@ class FileService:
             return FileResult(success=False, error_message=f"Invalid file path: {str(e)}")
     
     @staticmethod
-    def validate_file_type(file_path: Path) -> FileResult:
+    def validate_file_type(file_path: Path, app=None) -> FileResult:
         """Validate file type and get user confirmation for problematic files."""
         from .formatters import FileFormatter
         
@@ -59,9 +59,13 @@ class FileService:
         # Warn about binary files
         if extension in BINARY_EXTENSIONS:
             formatter.binary_file_warning(extension)
-            confirm = Prompt.ask("Continue loading this file?", choices=["y", "n"], default="n")
-            if confirm.lower() != "y":
-                return FileResult(success=False, is_cancelled=True)
+            if app and hasattr(app, 'confirm'):
+                if not app.confirm("Continue loading this file?", default=True):
+                    return FileResult(success=False, is_cancelled=True)
+            else:
+                confirm = Prompt.ask("Continue loading this file?", choices=["y", "n"], default="n")
+                if confirm.lower() != "y":
+                    return FileResult(success=False, is_cancelled=True)
         
         # Warn about unknown extensions
         if extension not in TEXT_EXTENSIONS:
@@ -70,7 +74,7 @@ class FileService:
         return FileResult(success=True, file_path=file_path)
     
     @staticmethod
-    def read_file_content(file_path: Path) -> FileResult:
+    def read_file_content(file_path: Path, app=None) -> FileResult:
         """Read file content with multiple encoding attempts and safety checks."""
         from .formatters import FileFormatter
         
@@ -85,9 +89,13 @@ class FileService:
             
             if file_size > LARGE_FILE_WARNING_SIZE:
                 formatter.large_file_warning(file_size)
-                confirm = Prompt.ask("Continue loading this large file?", choices=["y", "n"], default="n")
-                if confirm.lower() != "y":
-                    return FileResult(success=False, is_cancelled=True)
+                if app and hasattr(app, 'confirm'):
+                    if not app.confirm("Continue loading this large file?", default=True):
+                        return FileResult(success=False, is_cancelled=True)
+                else:
+                    confirm = Prompt.ask("Continue loading this large file?", choices=["y", "n"], default="n")
+                    if confirm.lower() != "y":
+                        return FileResult(success=False, is_cancelled=True)
             
             # Try multiple encodings
             encodings = ['utf-8', 'utf-8-sig', 'latin-1', 'cp1252', 'ascii']

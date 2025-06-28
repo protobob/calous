@@ -75,7 +75,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "0.12.20.dev"
+APP_VERSION = "0.13.0.dev"
 
 # Multi-chat configuration
 DEFAULT_NUM_CHATS = 4  # default if no config
@@ -109,3 +109,4 @@ class Confirmations:
     """Standard confirmation choices."""
     YES_NO = ["y", "n"]
     DEFAULT_NO = "n"
+    DEFAULT_YES = "y"

@@ -5,7 +5,35 @@ All notable changes to HiOllama will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.12.21.dev] - 2025-06-27
+## [0.13.0.dev] - 2025-06-27
+
+### Added
+- **Protocol-Level Chat Targeting**: Implemented server-side chat targeting for socket clients
+  - Socket server now accepts `"chat"` field in JSON messages to target specific channels
+  - Automatically switches to requested chat channel before processing messages
+  - Enables true multi-chat support for Rust client and other socket clients
+  - Example: `{"type": "message", "chat": 3, "content": "Hello"}` targets chat 3
+
+### Changed
+- **Socket Server Architecture**: Moved socket server logic from `Chat` class to `ChatSessionManager`
+  - Centralized socket handling in session manager for better multi-chat support
+  - Old `Chat.start_socket_server()` method deprecated in favor of manager-based approach
+  - Improved separation of concerns between chat instances and socket communication
+- **Rust Client Protocol**: Updated Rust client to use new chat targeting protocol
+  - Removed legacy chat switching commands from client-side logic
+  - Now sends `"chat"` field directly in socket messages for server-side targeting
+  - Cleaner protocol implementation with better error handling
+
+### Fixed
+- **Socket Mode Confirmations**: Fixed confirmation prompts to always default to "yes" in socket mode
+  - File operations, history clearing, and plugin management now auto-confirm
+  - Prevents socket clients from hanging on destructive operations
+  - Applies to history commands, file operations, and plugin management
+- **Socket Message Handling**: Fixed "Unknown message type" errors in socket server
+  - Corrected message type validation logic in socket server
+  - Improved error handling for malformed or unexpected message types
+
+## [0.12.21] - 2025-06-27
 
 ### Added
 - **VRAM Management**: Added `keep_alive` configuration for Ollama model persistence
@@ -34,10 +62,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Maintains stable 14-chat architecture for socket clients
 
 ### Technical
+- **Socket Server Architecture**: Migrated socket server logic from individual `Chat` instances to `ChatSessionManager`
+  - Enables true multi-chat support for socket clients and the Rust CLI tool
+  - Chat switching via socket commands (`/chat.switch`) now works reliably across all 14 channels
+  - Centralized socket command processing with proper session-level operations
+  - All chat instances remain synchronized during socket operations
 - Updated Rust client dependencies and help documentation
 - Enhanced error handling for chat channel validation (1-14 range)
 - Improved socket mode initialization and configuration management
 - Added `keep_alive` parameter integration throughout the model interaction pipeline
+- Fixed socket mode confirmation handling for destructive operations like `/history.purge`
 
 ### Known Issues
 - Chat channel switching via Rust client requires architectural improvements

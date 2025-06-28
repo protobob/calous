@@ -108,9 +108,8 @@ def cmd_plugin_reload(handler) -> CommandResult:
     
     # Ask for confirmation
     formatter.reload_warning()
-    confirm = Prompt.ask("\nAre you sure you want to continue?", choices=["y", "n"], default="n")
     
-    if confirm == 'y':
+    if handler.app.confirm("Are you sure you want to continue?", default=True):
         formatter.reload_starting()
         result = PluginService.reload_plugins(handler.app)
         

@@ -197,9 +197,10 @@ def cmd_history_purge(handler, num_entries: int) -> CommandResult:
 
     print(f"\n[bold yellow]Warning:[/bold yellow] This will [bold red]DELETE[/bold red] the [bold]{n}[/bold] most recent message(s) from [bold {chat_info.color}]CHAT {chat_info.number}[/bold {chat_info.color}] history.")
     print("This cannot be undone.")
-    from rich.prompt import Prompt
-    response = Prompt.ask("Are you sure you want to continue?", choices=["y", "n"], default="n")
-    if response.lower() != "y":
+    
+    # Use app.confirm() which handles socket mode properly
+    # In socket mode, auto-confirm destructive operations since they're intentional
+    if not handler.app.confirm("Are you sure you want to continue?", default=True):
         # No feedback on cancel, per user request
         return CommandResult(ActionType.CONTINUE)
 

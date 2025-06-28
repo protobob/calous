@@ -29,7 +29,7 @@ class CommandFormatter:
         print(f"\n{Colors.WARNING}Warning:{Colors.RESET} {message}")
     
     @staticmethod
-    def print_info(title: str, items: Dict[str, str] = None):
+    def print_info(title: str, items: Optional[Dict[str, str]] = None):
         """Print an info section with optional items."""
         print(f"\n{Colors.INFO}{title}:{Colors.RESET}")
         print()
@@ -38,10 +38,15 @@ class CommandFormatter:
                 print(f"  {Colors.SUCCESS}{key}{Colors.RESET} → {Colors.COMMAND}{value}{Colors.RESET}")
     
     @staticmethod
-    def confirm_action(message: str, default: str = Confirmations.DEFAULT_NO) -> bool:
+    def confirm_action(message: str, default: str = Confirmations.DEFAULT_NO, app=None) -> bool:
         """Ask for user confirmation."""
-        response = Prompt.ask(message, choices=Confirmations.YES_NO, default=default)
-        return response.lower() == "y"
+        if app and hasattr(app, 'confirm'):
+            # In socket mode, default to True (yes) unless explicitly specified
+            default_bool = default == "y" if default != Confirmations.DEFAULT_NO else True
+            return app.confirm(message, default=default_bool)
+        else:
+            response = Prompt.ask(message, choices=Confirmations.YES_NO, default=default)
+            return response.lower() == "y"
 
 
 class ChatFormatter(CommandFormatter):

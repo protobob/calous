@@ -37,11 +37,12 @@ def main():
             sys.exit(1)
 
     session_manager = ChatSessionManager(num_chats=num_chats)
-    chat = session_manager.chats[0]
 
     if args.socket:
-        chat.non_interactive = True  # Set auto-confirm mode for socket/server
-        chat.listen_for_socket(interactive=args.interactive)
+        # Set all chats to non-interactive mode for socket/server
+        for chat in session_manager.get_all_chats():
+            chat.non_interactive = True
+        session_manager.listen_for_socket(interactive=args.interactive)
     else:
         session_manager.run()
 
