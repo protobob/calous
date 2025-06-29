@@ -1,5 +1,5 @@
 """
-Dice Roller Plugin for HiOllama
+Dice Roller Plugin for CALOUS
 
 Provides D&D-style dice rolling functionality for LLM function calling.
 This plugin only provides function calling capabilities, not user commands.

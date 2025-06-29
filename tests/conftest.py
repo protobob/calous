@@ -1,13 +1,13 @@
 """
-Test configuration and shared utilities for HiOllama tests.
+Test configuration and shared utilities for CALOUS tests.
 """
 
 import subprocess
 import sys
 from pathlib import Path
 
-def run_hiollama_command(cmd, timeout=15):
-    """Helper function to run HiOllama commands in tests."""
+def run_calous_command(cmd, timeout=15):
+    """Helper function to run CALOUS commands in tests."""
     try:
         result = subprocess.run(
             cmd, 

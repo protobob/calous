@@ -1,7 +1,7 @@
 """
-HiOllama Plugin System
+CALOUS Plugin System
 
-This module provides a comprehensive plugin architecture for HiOllama,
+This module provides a comprehensive plugin architecture for CALOUS,
 enabling extensible functionality through various plugin types.
 """
 

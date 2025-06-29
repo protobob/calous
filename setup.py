@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
-from hiollama.constants import APP_VERSION
+from calous.constants import APP_VERSION
 
 setup(
-    name="hiollama",
+    name="calous",
     version=APP_VERSION,  # Use the centralized version constant
-    description="A friendly CLI for interacting with Ollama language models.",
+    description="Context Abstraction Layer Over Unix Sockets - A friendly CLI for interacting with Ollama language models.",
     author="Ollie McDaniel",
     packages=find_packages(),  # Automatically find all packages in the project
     install_requires=[
@@ -15,7 +15,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "hiollama=hiollama.__main__:main",
+            "calous=calous.__main__:main",
         ],
     },
 )

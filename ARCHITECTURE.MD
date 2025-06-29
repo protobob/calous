@@ -68,19 +68,19 @@
 
 ### Core Application (`app.py`)
 - **Chat Class**: Main application logic, handles user input routing
-- **Socket Server**: Implements Unix socket interface for external clients (hi-rust tool)
+- **Socket Server**: Implements Unix socket interface for external clients (cx-rust tool)
 - **Dual Output System**: Captures Rich output for CLI, strips ANSI for socket clients
 - **Single Responsibility**: Coordinate between UI, Model, Commands, and History
 - **Size**: ~258 lines - includes socket handling and output capture
 - **Status**: ✅ Well-structured, do not refactor
 
 ### Socket Interface Architecture
-- **Unix Socket**: `/tmp/hiollama.sock` enables external client communication
+- **Unix Socket**: `/tmp/calous.sock` enables external client communication
 - **Output Capture**: Global system captures all Rich console output
 - **Format Stripping**: ANSI/Rich tags automatically removed for socket responses
 - **Dual Format Support**: Same commands work in both CLI and socket modes
 - **Protocol**: JSON-based message protocol for universal client compatibility
-- **External Integration**: Any application can connect and interact with HiOllama
+- **External Integration**: Any application can connect and interact with CALOUS
 
 ### UI Management (`ui.py`)
 - **UIManager Class**: Centralized display logic and Rich console management
@@ -119,9 +119,9 @@
 - **Responsibilities**: Chat switching, global config updates, startup/shutdown
 - **Status**: ✅ Well-designed for multi-chat coordination
 
-### External Rust Client (`hi_rust/`)
-- **Rust Client**: Lightweight command-line tool (`hi`) for external interaction
-- **Socket Communication**: Connects to HiOllama via Unix socket interface
+### External Rust Client (`cx_rust/`)
+- **Rust Client**: Lightweight command-line tool (`cx`) for external interaction
+- **Socket Communication**: Connects to CALOUS via Unix socket interface
 - **Features**: 
   - Command mode (`-c`): Send commands directly
   - Interactive mode (`-i`): REPL-like interface
@@ -131,7 +131,7 @@
 - **Architecture Role**: Reference implementation and primary external client
 
 ### Socket API for External Integration
-- **Universal Interface**: Any application can connect to `/tmp/hiollama.sock`
+- **Universal Interface**: Any application can connect to `/tmp/calous.sock`
 - **JSON Protocol**: Standardized message format for interoperability
 - **Potential Clients**: 
   - IDE extensions (VS Code, Neovim, Emacs)
@@ -287,7 +287,7 @@ def cmd_history_purge(handler, num_entries: int) -> CommandResult:
 
 ### Socket Mode Flow  
 1. **Startup**: `__main__.py --socket` → Single chat instance → `listen_for_socket()`
-2. **Client Connection**: External clients connect via Unix socket (`/tmp/hiollama.sock`)
+2. **Client Connection**: External clients connect via Unix socket (`/tmp/calous.sock`)
 3. **Output Capture**: All Rich output redirected to buffer, ANSI tags stripped
 4. **Command Processing**: Same commands, but output cleaned for plain text
 5. **Response**: JSON-formatted responses sent back to client
@@ -358,9 +358,9 @@ Both channels maintain separate histories
 ```
 
 ### State Persistence
-- **Global Settings**: Saved to `~/.hiollama/config.json`
+- **Global Settings**: Saved to `~/.calous/config.json`
 - **Chat Configurations**: Saved per chat instance 
-- **Unified Logs**: Daily files in `~/.hiollama/logs/YYYY-MM-DD.txt`
+- **Unified Logs**: Daily files in `~/.calous/logs/YYYY-MM-DD.txt`
 - **Model Context**: Maintained in-memory per chat session
 - **Plugin State**: Managed by PluginManager, loaded at startup
 

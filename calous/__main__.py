@@ -11,7 +11,7 @@ def main():
     parser.add_argument('--max-chats', type=int, default=MAX_CHATS,
                        help=f'Maximum allowed chat channels (default: {MAX_CHATS})')
     parser.add_argument('--socket', action='store_true',
-                       help='Run HiOllama as a socket server daemon')
+                       help='Run CALOUS as a socket server daemon')
     parser.add_argument('-i', '--interactive', action='store_true',
                        help='Print debug output while running in socket mode')
 

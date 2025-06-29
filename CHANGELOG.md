@@ -1,9 +1,32 @@
 # Changelog
 
-All notable changes to HiOllama will be documented in this file.
+All notable changes to CALOUS will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.14.0.dev] - 2025-06-29
+
+### Changed
+- **BREAKING**: Complete project rebranding from HiOllama to CALOUS
+  - Renamed all references throughout codebase, documentation, and command outputs
+  - Updated environment variable from `HIOLLAMA_DEBUG` to `CALOUS_DEBUG`
+  - Changed all import paths from `hiollama.*` to `calous.*`
+  - Updated log messages from `[hiollama]` to `[calous]`
+  - Renamed Rust client command examples from `hi` to `cx`
+  - Updated plugin system references and documentation
+  - Changed directory references from `~/hiollama/` to `~/calous/`
+  - Updated container image name from `localhost/hiollama:latest` to `calous:latest`
+
+### Technical
+- Complete systematic renaming across 50+ files including Python modules, tests, scripts, and configuration
+- Updated all plugin import paths and service references
+- Modernized project identity while maintaining full backward compatibility of functionality
+- All features and commands remain identical, only names and references changed
+
+### License
+- **IMPORTANT**: Project is now licensed under GNU General Public License v3.0 (GPL3)
+- Updated LICENSE file with proper copyright notice and GPL3 terms
 
 ## [0.13.0.dev] - 2025-06-27
 

@@ -74,10 +74,10 @@ def cmd_history_off(handler) -> CommandResult:
 
 @registry.register("history.save", "Save current chat history to a file", category=CommandCategory.HISTORY)
 def cmd_history_save(handler, filename: str) -> CommandResult:
-    """Save the current chat's history to a .jsonl file in ~/hiollama/chat_history."""
+    """Save the current chat's history to a .jsonl file in ~/calous/chat_history."""
     from pathlib import Path
     import re
-    from ...constants import HIOLLAMA_DIR
+    from ...constants import CALOUS_DIR
     from .services import HistoryService
     from .formatters import HistoryFormatter
     from rich.prompt import Confirm
@@ -85,7 +85,7 @@ def cmd_history_save(handler, filename: str) -> CommandResult:
     # Sanitize filename: only allow alphanumeric, dash, underscore, strip after first dot
     base = re.split(r"[.]", filename)[0]
     safe = re.sub(r"[^a-zA-Z0-9_-]", "_", base)
-    save_dir = Path.home() / "hiollama" / "chat_history"
+    save_dir = Path.home() / "calous" / "chat_history"
     save_dir.mkdir(parents=True, exist_ok=True)
     save_path = save_dir / f"{safe}.jsonl"
 
@@ -106,17 +106,17 @@ def cmd_history_save(handler, filename: str) -> CommandResult:
 
 @registry.register("history.load", "Load chat history from a file", category=CommandCategory.HISTORY)
 def cmd_history_load(handler, filename: str) -> CommandResult:
-    """Load chat history from a .jsonl file in ~/hiollama/chat_history, overwriting current history."""
+    """Load chat history from a .jsonl file in ~/calous/chat_history, overwriting current history."""
     from pathlib import Path
     import re
-    from ...constants import HIOLLAMA_DIR
+    from ...constants import CALOUS_DIR
     from .services import HistoryService
     from .formatters import HistoryFormatter
 
     # Sanitize filename
     base = re.split(r"[.]", filename)[0]
     safe = re.sub(r"[^a-zA-Z0-9_-]", "_", base)
-    load_dir = Path.home() / "hiollama" / "chat_history"
+    load_dir = Path.home() / "calous" / "chat_history"
     load_path = load_dir / f"{safe}.jsonl"
 
     service = HistoryService(handler.app)
@@ -137,9 +137,9 @@ def cmd_history_load(handler, filename: str) -> CommandResult:
 
 @registry.register("history.list", "List saved chat history files", category=CommandCategory.HISTORY)
 def cmd_history_list(handler) -> CommandResult:
-    """List all .jsonl files in ~/hiollama/chat_history, showing base names only."""
+    """List all .jsonl files in ~/calous/chat_history, showing base names only."""
     from pathlib import Path
-    list_dir = Path.home() / "hiollama" / "chat_history"
+    list_dir = Path.home() / "calous" / "chat_history"
     if not list_dir.exists():
         print("\n[yellow]No saved chat history files found.[/yellow]")
         return CommandResult(ActionType.CONTINUE)
@@ -155,7 +155,7 @@ def cmd_history_list(handler) -> CommandResult:
 
 @registry.register("history.delete", "Delete a saved chat history file", category=CommandCategory.HISTORY)
 def cmd_history_delete(handler, filename: str) -> CommandResult:
-    """Delete a .jsonl file in ~/hiollama/chat_history after Y/N confirmation."""
+    """Delete a .jsonl file in ~/calous/chat_history after Y/N confirmation."""
     from pathlib import Path
     import re
     from rich.prompt import Confirm
@@ -163,7 +163,7 @@ def cmd_history_delete(handler, filename: str) -> CommandResult:
     # Sanitize filename
     base = re.split(r"[.]+", filename)[0]
     safe = re.sub(r"[^a-zA-Z0-9_-]", "_", base)
-    del_dir = Path.home() / "hiollama" / "chat_history"
+    del_dir = Path.home() / "calous" / "chat_history"
     del_path = del_dir / f"{safe}.jsonl"
 
     if not del_path.exists():

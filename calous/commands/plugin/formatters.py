@@ -20,7 +20,7 @@ class PluginFormatter(CommandFormatter):
     @staticmethod
     def create_plugin_table():
         """Create a table for plugin display."""
-        table = Table(title="HiOllama Plugins")
+        table = Table(title="CALOUS Plugins")
         table.add_column("Plugin", style="cyan", no_wrap=True)
         table.add_column("Version", style="dim")
         table.add_column("Status", style="green")

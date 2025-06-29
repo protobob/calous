@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class CalculatorPlugin(FunctionCallingPlugin):
     """
-    Calculator Plugin for HiOllama
+    Calculator Plugin for CALOUS
 
     Provides safe mathematical calculation functionality for LLM function calling.
     This plugin uses the asteval library for sandboxed evaluation of mathematical expressions.

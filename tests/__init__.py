@@ -1,1 +1,1 @@
-"""Test package for HiOllama application."""
+"""Test package for CALOUS application."""

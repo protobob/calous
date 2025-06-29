@@ -1,4 +1,4 @@
-"""Base classes for HiOllama plugin system."""
+"""Base classes for CALOUS plugin system."""
 
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional, Callable
@@ -14,7 +14,7 @@ class PluginCapability(Enum):
 
 
 class PluginBase(ABC):
-    """Base class for all HiOllama plugins."""
+    """Base class for all CALOUS plugins."""
     
     def __init__(self, name: str, version: str = "1.0.0", description: str = ""):
         self.name = name

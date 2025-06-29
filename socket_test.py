@@ -1,7 +1,7 @@
 import socket
 import json
 
-SOCKET_PATH = "/tmp/hiollama.sock"
+SOCKET_PATH = "/tmp/calous.sock"
 
 # Prepare the request as expected by your socket server
 request = {

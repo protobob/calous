@@ -300,7 +300,7 @@ class ModelInteraction:
             
             # Debug message showing what's being sent to the model
             # Only show when debug env var is explicitly set
-            show_debug = os.environ.get('HIOLLAMA_DEBUG', '').lower() in ['1', 'true', 'yes']
+            show_debug = os.environ.get('CALOUS_DEBUG', '').lower() in ['1', 'true', 'yes']
             
             if show_debug:
                 print(f"[DEBUG] Sending to model {self.app.selected_model}:", file=sys.stderr)

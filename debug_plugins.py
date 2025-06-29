@@ -3,9 +3,9 @@ import sys
 import os
 from pathlib import Path
 
-# Add the hiollama directory to the path
-hiollama_dir = Path(__file__).parent
-sys.path.insert(0, str(hiollama_dir))
+# Add the calous directory to the path
+calous_dir = Path(__file__).parent
+sys.path.insert(0, str(calous_dir))
 
 print("Python path:")
 for p in sys.path[:3]:
@@ -13,7 +13,7 @@ for p in sys.path[:3]:
 
 try:
     print("Importing PluginManager...")
-    from hiollama.plugins.manager import PluginManager
+    from calous.plugins.manager import PluginManager
     print("PluginManager imported successfully")
 except Exception as e:
     print(f"Error importing PluginManager: {e}")
@@ -22,7 +22,7 @@ except Exception as e:
     sys.exit(1)
 
 # Test plugin loading
-plugin_dir = hiollama_dir / 'hiollama' / 'plugins'
+plugin_dir = calous_dir / 'calous' / 'plugins'
 print(f"\nPlugin directory: {plugin_dir}")
 print(f"Plugin directory exists: {plugin_dir.exists()}")
 

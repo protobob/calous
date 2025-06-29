@@ -1,6 +1,6 @@
-# HiOllama Commands Reference
+# CALOUS Commands Reference
 
-Complete reference for all 38 available commands in HiOllama's hierarchical command system.
+Complete reference for all 38 available commands in CALOUS's hierarchical command system.
 
 ## 🎯 Chat Navigation Commands
 

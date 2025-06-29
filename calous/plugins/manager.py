@@ -1,4 +1,4 @@
-"""Plugin manager for HiOllama plugin system."""
+"""Plugin manager for CALOUS plugin system."""
 
 import importlib
 import importlib.util
@@ -34,7 +34,7 @@ class PluginManager:
               
         # Load enabled plugin configuration
         try:
-            from hiollama.plugins.plugin_config import ENABLED_PLUGINS
+            from calous.plugins.plugin_config import ENABLED_PLUGINS
             self.enabled_plugin_names = ENABLED_PLUGINS
             
             if self.enabled_plugin_names is None:
@@ -101,11 +101,11 @@ class PluginManager:
         
         # Determine appropriate module name based on plugin location
         if "builtin" in str(plugin_file):
-            module_name = f"hiollama.plugins.builtin.{plugin_file.stem}"
+            module_name = f"calous.plugins.builtin.{plugin_file.stem}"
         elif "user" in str(plugin_file):
-            module_name = f"hiollama.plugins.user.{plugin_file.stem}"
+            module_name = f"calous.plugins.user.{plugin_file.stem}"
         else:
-            module_name = f"hiollama.plugins.{plugin_file.stem}"
+            module_name = f"calous.plugins.{plugin_file.stem}"
         
         # Import the module
         spec = importlib.util.spec_from_file_location(module_name, plugin_file)

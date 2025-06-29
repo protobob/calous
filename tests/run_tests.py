@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test runner for the HiOllama application.
+Test runner for the CALOUS application.
 Provides convenient access to all test suites.
 
 Usage:
@@ -24,7 +24,7 @@ import test_integration
 
 def main():
     """Main test runner."""
-    parser = argparse.ArgumentParser(description="HiOllama Test Runner")
+    parser = argparse.ArgumentParser(description="CALOUS Test Runner")
     parser.add_argument('suite', nargs='?', default='all', 
                        choices=['all', 'cli', 'config', 'integration', 'quick'],
                        help='Test suite to run')
@@ -33,7 +33,7 @@ def main():
     
     args = parser.parse_args()
     
-    print("🚀 HiOllama Test Runner")
+    print("🚀 CALOUS Test Runner")
     print("=" * 50)
     
     total_passed = 0
@@ -64,7 +64,7 @@ def main():
     print(f"🏆 Overall Results: {total_passed}/{total_tests} test suites passed")
     
     if total_passed == total_tests:
-        print("🎉 All test suites passed! HiOllama is working correctly.")
+        print("🎉 All test suites passed! CALOUS is working correctly.")
         return 0
     else:
         print("⚠️  Some test suites failed. Check the output above.")

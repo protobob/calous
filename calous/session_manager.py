@@ -343,7 +343,7 @@ class ChatSessionManager:
         server.listen(1)
 
         def handle_exit(signum, frame):
-            print("[hiollama] Shutting down socket server...")
+            print("[calous] Shutting down socket server...")
             self.save_all_configs()
             server.close()
             exit(0)
@@ -351,7 +351,7 @@ class ChatSessionManager:
         signal.signal(signal.SIGINT, handle_exit)
 
         if interactive:
-            print(f"[hiollama] Listening on {SOCKET_PATH}")
+            print(f"[calous] Listening on {SOCKET_PATH}")
             
         while True:
             conn, addr = server.accept()
@@ -505,13 +505,13 @@ class ChatSessionManager:
                 conn.sendall(json.dumps(response).encode())
             except BrokenPipeError:
                 if interactive:
-                    print("[hiollama] Client closed connection before response was sent.")
+                    print("[calous] Client closed connection before response was sent.")
             conn.close()
             
             if interactive:
                 # Use sys.stderr to avoid Rich markup interpretation issues
                 try:
                     display_data = data.decode('utf-8', errors='replace')[:100]
-                    print(f"[hiollama] Received: {display_data}{'...' if len(data) > 100 else ''} -> Sent: {json.dumps(response)}", file=sys.stderr)
+                    print(f"[calous] Received: {display_data}{'...' if len(data) > 100 else ''} -> Sent: {json.dumps(response)}", file=sys.stderr)
                 except:
-                    print(f"[hiollama] Received: [binary data {len(data)} bytes] -> Sent: {json.dumps(response)}", file=sys.stderr)
+                    print(f"[calous] Received: [binary data {len(data)} bytes] -> Sent: {json.dumps(response)}", file=sys.stderr)

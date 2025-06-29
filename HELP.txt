@@ -583,7 +583,7 @@ Shows all saved persona files with:
 
 Persona Tips:
   • Use this to browse available personas before loading
-  • Files are stored in ~/.hiollama/personas/
+  • Files are stored in ~/.calous/personas/
   • Persona names are derived from filenames
   • Helpful for persona library management
 
@@ -782,7 +782,7 @@ Usage: /log.on
 
 Enables unified logging of all chat activities to daily log files.
 When enabled, all conversations from all chat sessions are logged to
-~/.hiollama/logs/ with filenames based on the date.
+~/.calous/logs/ with filenames based on the date.
 
 Logging Tips:
   • Creates new log file each day
@@ -939,7 +939,7 @@ Includes both built-in and user-defined plugins.
 
 Plugin Tips:
   • Built-in plugins provide core extended functionality
-  • User plugins can be added to ~/.hiollama/plugins/user/
+  • User plugins can be added to ~/.calous/plugins/user/
   • Plugin status indicates whether they're currently functional
   • Use /plugin.info for detailed information about specific plugins
 

@@ -1,5 +1,5 @@
 """
-Shell Command Plugin for HiOllama
+Shell Command Plugin for CALOUS
 
 Allows execution of shell commands prefixed with '!' in user input.
 This plugin is for private, trusted environments only.

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Comprehensive test script for HiOllama application.
+Comprehensive test script for CALOUS application.
 Tests command-line arguments, validation, and basic functionality.
 
 Usage:
-    python test_hiollama.py          # Run all tests
-    python test_hiollama.py --quick  # Run only fast tests
+    python test_calous.py          # Run all tests
+    python test_calous.py --quick  # Run only fast tests
 """
 
 import subprocess
@@ -14,7 +14,7 @@ import time
 import argparse
 from pathlib import Path
 
-# Add the parent directory to the path to import hiollama modules
+# Add the parent directory to the path to import calous modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from hiollama.constants import APP_VERSION
 

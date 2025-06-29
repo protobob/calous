@@ -1,4 +1,4 @@
-"""Utility functions for the hiollama package."""
+"""Utility functions for the calous package."""
 from rich import print
 from typing import Optional, Dict, Any
 from .constants import MAX_PREVIEW_LENGTH, RAINBOW_COLORS, EXTENDED_RAINBOW_COLORS, RAINBOW_TEXT, HEADER_SEPARATOR, APP_VERSION
@@ -21,7 +21,7 @@ def format_message_preview(content: Any, max_length: int = MAX_PREVIEW_LENGTH) -
     return first_line[:max_length] + ('...' if has_more else '')
 
 def print_rainbow_header() -> None:
-    """Print the HIOLLAMA! header in rainbow colors with the version below."""
+    """Print the CALOUS! header in rainbow colors with the version below."""
     rainbow_text = ""
     for i, char in enumerate(RAINBOW_TEXT):
         color = RAINBOW_COLORS[i % len(RAINBOW_COLORS)]

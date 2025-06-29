@@ -1,4 +1,4 @@
-"""Constants for the hiollama package."""
+"""Constants for the calous package."""
 from pathlib import Path
 
 # Rainbow text colors for logo
@@ -13,7 +13,7 @@ EXTENDED_RAINBOW_COLORS = [
 ]
 
 # Rainbow text constant for logo display
-RAINBOW_TEXT = "HIOLLAMA!"
+RAINBOW_TEXT = "CALOUS"
 
 # Default configuration
 DEFAULT_MODEL = ""
@@ -37,12 +37,12 @@ OLLAMA_API_URL = "http://localhost:11434/api/tags"
 API_TIMEOUT = 5
 
 # File paths
-HIOLLAMA_DIR = Path.home() / "hiollama"
-LOG_DIR = HIOLLAMA_DIR / "logs"
-HISTORY_DIR = HIOLLAMA_DIR / ".history"
-PERSONA_DIR = HIOLLAMA_DIR / "persona"
-CONFIG_PATH = HIOLLAMA_DIR / "config.json"  # Changed from Path.home() / ".hiollama_config_unified.json"
-CLI_HISTORY_PATH = HIOLLAMA_DIR / ".cli_history"
+CALOUS_DIR = Path.home() / "calous"
+LOG_DIR = CALOUS_DIR / "logs"
+HISTORY_DIR = CALOUS_DIR / ".history"
+PERSONA_DIR = CALOUS_DIR / "persona"
+CONFIG_PATH = CALOUS_DIR / "config.json"  # Changed from Path.home() / ".hiollama_config_unified.json"
+CLI_HISTORY_PATH = CALOUS_DIR / ".cli_history"
 
 # File size limits (in bytes)
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
@@ -75,7 +75,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "0.13.0.dev"
+APP_VERSION = "0.14.0.dev"
 
 # Multi-chat configuration
 DEFAULT_NUM_CHATS = 4  # default if no config
@@ -86,7 +86,7 @@ TWIST_PREVIEW_LENGTH = 100
 SWITCH_PREVIEW_LENGTH = 50
 
 # Added SOCKET_PATH for centralized configuration
-SOCKET_PATH = "/tmp/hiollama.sock"
+SOCKET_PATH = "/tmp/calous.sock"
 
 # UI Formatting Constants
 class Colors:

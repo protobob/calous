@@ -1,7 +1,7 @@
 """
-Plugin configuration for HiOllama.
+Plugin configuration for CALOUS.
 
-This module controls which plugins are enabled in the HiOllama application.
+This module controls which plugins are enabled in the CALOUS application.
 By default, all plugins are enabled. To restrict which plugins can be loaded,
 modify the ENABLED_PLUGINS set below.
 

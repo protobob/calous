@@ -1,18 +1,22 @@
-#!/usr/bin/env python3
-"""Script to list all registered commands in HiOllama."""
+#!/usr/binfrom calous.commands.registry import registry
+from calous.commands.types import CommandCategory
+
+# Import all command modules so they get registered
+import calous.commandspython3
+"""Script to list all registered commands in CALOUS."""
 
 import sys
 from pathlib import Path
 
-# Add the hiollama package to Python path
-hiollama_path = Path(__file__).parent / "hiollama"
-sys.path.insert(0, str(hiollama_path.parent))
+# Add the calous package to Python path
+calous_path = Path(__file__).parent / "calous"
+sys.path.insert(0, str(calous_path.parent))
 
-from hiollama.commands.registry import registry
-from hiollama.commands.types import CommandCategory
+from calous.commands.registry import registry
+from calous.commands.types import CommandCategory
 
 # Import all command modules to trigger registration
-import hiollama.commands
+import calous.commands
 
 def main():
     print("=== ALL REGISTERED COMMANDS ===\n")

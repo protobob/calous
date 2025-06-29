@@ -22,7 +22,7 @@ from typing import Dict, Any, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from .session_manager import ChatSessionManager
 
-SOCKET_PATH = "/tmp/hiollama.sock"
+SOCKET_PATH = "/tmp/calous.sock"
 
 class Chat:
 
@@ -126,7 +126,7 @@ class Chat:
         server.listen(1)
 
         def handle_exit(signum, frame):
-            print("[hiollama] Shutting down socket server...")
+            print("[calous] Shutting down socket server...")
             self.save_config()
             server.close()
             exit(0)
@@ -134,7 +134,7 @@ class Chat:
         signal.signal(signal.SIGINT, handle_exit)
 
         if interactive:
-            print(f"[hiollama] Listening on {SOCKET_PATH}")
+            print(f"[calous] Listening on {SOCKET_PATH}")
         while True:
             conn, addr = server.accept()
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -251,15 +251,15 @@ class Chat:
                 conn.sendall(json.dumps(response).encode())
             except BrokenPipeError:
                 if interactive:
-                    print("[hiollama] Client closed connection before response was sent.")
+                    print("[calous] Client closed connection before response was sent.")
             conn.close()
             if interactive:
                 # Use sys.stderr to avoid Rich markup interpretation issues
                 try:
                     display_data = data.decode('utf-8', errors='replace')[:100]
-                    print(f"[hiollama] Received: {display_data}{'...' if len(data) > 100 else ''} -> Sent: {json.dumps(response)}", file=sys.stderr)
+                    print(f"[calous] Received: {display_data}{'...' if len(data) > 100 else ''} -> Sent: {json.dumps(response)}", file=sys.stderr)
                 except:
-                    print(f"[hiollama] Received: [binary data {len(data)} bytes] -> Sent: {json.dumps(response)}", file=sys.stderr)
+                    print(f"[calous] Received: [binary data {len(data)} bytes] -> Sent: {json.dumps(response)}", file=sys.stderr)
 
     def confirm(self, question, default=True):
         """Auto-confirm if non_interactive, else prompt the user."""

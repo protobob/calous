@@ -51,11 +51,11 @@ class PluginService:
     @staticmethod
     def get_plugin_dir(app) -> Optional[Path]:
         """Get the plugin directory from the app."""
-        # Get the base hiollama package directory
-        hiollama_dir = Path(__file__).parent.parent.parent
+        # Get the base calous package directory
+        calous_dir = Path(__file__).parent.parent.parent
         
-        # The plugins directory is directly under the hiollama package
-        plugins_dir = hiollama_dir / 'plugins'
+        # The plugins directory is directly under the calous package
+        plugins_dir = calous_dir / 'plugins'
         
         if not plugins_dir.exists():
             return None

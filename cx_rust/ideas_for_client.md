@@ -2,14 +2,14 @@ Great! Now that the basic command functionality is working well, here are some i
 
 
 ## Useful Features
-5. **Output format control**: `hi -j` for JSON-only output (useful for scripts that parse responses)
-6. **Timeout option**: `hi -t 30` to set connection timeout
-7. **Socket path override**: `hi -s /custom/path.sock` for different socket locations
+5. **Output format control**: `cx -j` for JSON-only output (useful for scripts that parse responses)
+6. **Timeout option**: `cx -t 30` to set connection timeout
+7. **Socket path override**: `cx -s /custom/path.sock` for different socket locations
 
 ## Power User Features
-9. **Batch mode**: `hi -b commands.txt` to run multiple commands from a file
+9. **Batch mode**: `cx -b commands.txt` to run multiple commands from a file
 10. **Pipe-friendly**: Better handling when used in shell pipelines
-11. **Config file**: `~/.hirc` for default settings (socket path, timeout, etc.)
+11. **Config file**: `~/.cxrc` for default settings (socket path, timeout, etc.)
 
 ## Convenience
 12. **Command history**: Store recent commands for easy re-running

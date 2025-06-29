@@ -32,7 +32,7 @@ fn main() {
     while i < args.len() {
         match args[i].as_str() {
             "-h" | "--help" => {
-                println!("hi - HiOllama client");
+                println!("cx - CALOUS client");
                 println!();
                 println!("USAGE:");
                 println!("    hi [OPTIONS] [text]");
@@ -205,7 +205,7 @@ fn main() {
 }
 
 fn send_command(cmd: &HiCommand, debug: bool) -> Result<String, String> {
-    let socket_path = "/tmp/hiollama.sock";
+    let socket_path = "/tmp/calous.sock";
     let mut stream = UnixStream::connect(socket_path)
         .map_err(|e| format!("Failed to connect to socket: {}", e))?;
     
@@ -232,7 +232,7 @@ fn send_command(cmd: &HiCommand, debug: bool) -> Result<String, String> {
 }
 
 fn interactive_mode(debug: bool) {
-    println!("HiOllama Interactive Mode");
+    println!("CALOUS Interactive Mode");
     println!("Type 'quit' or 'exit' to leave, '/help' for commands");
     println!();
     

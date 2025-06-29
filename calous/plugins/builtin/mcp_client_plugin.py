@@ -8,7 +8,7 @@ class MCPClientPlugin(FunctionCallingPlugin):
         super().__init__(
             name="mcp_client",
             version="1.0.0",
-            description="Model Control Protocol (MCP) client plugin for HiOllama."
+            description="Model Control Protocol (MCP) client plugin for CALOUS."
         )
         self.server_host = "127.0.0.1"
         self.server_port = 8080
@@ -26,7 +26,7 @@ class MCPClientPlugin(FunctionCallingPlugin):
             result = self._call_mcp_method("initialize", {
                 "protocol_version": "2025-06-18",
                 "client_info": {
-                    "name": "hiollama",
+                    "name": "calous",
                     "version": "0.1"
                 },
                 "capabilities": {

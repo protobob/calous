@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Configuration management tests for HiOllama application.
+Configuration management tests for CALOUS application.
 Tests the unified configuration system, chat config generation, and settings validation.
 """
 
@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from unittest.mock import patch, mock_open
 
-# Add the parent directory to the path to import hiollama modules
+# Add the parent directory to the path to import calous modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from hiollama.config import ConfigManager

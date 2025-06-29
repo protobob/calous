@@ -404,8 +404,8 @@ class UIManager:
     
     def show_category_help(self, category: str):
         """Display help for a specific command category."""
-        from hiollama.commands.registry import registry
-        from hiollama.commands.types import CommandCategory        # Map user-friendly category names to internal categories
+        from calous.commands.registry import registry
+        from calous.commands.types import CommandCategory        # Map user-friendly category names to internal categories
         category_mapping = {
             'chat': CommandCategory.NAVIGATION,
             'model': CommandCategory.MODEL,
@@ -503,9 +503,9 @@ class UIManager:
     
     def show_command_help(self, command_name: str):
         """Display detailed help for a specific command."""
-        from hiollama.commands.registry import registry
-        from hiollama.commands.model.formatters import ModelFormatter
-        from hiollama.commands.alias.formatters import AliasFormatter
+        from calous.commands.registry import registry
+        from calous.commands.model.formatters import ModelFormatter
+        from calous.commands.alias.formatters import AliasFormatter
         
         # Remove leading slash if present
         if command_name.startswith('/'):
@@ -530,7 +530,7 @@ class UIManager:
         if command_name == "model.setctx":
             print(f"\n[bold grey70]| DETAILED HELP: /model.setctx[/bold grey70]\n")
             # Leverage existing comprehensive help
-            from hiollama.commands.model.services import ModelService
+            from calous.commands.model.services import ModelService
             service = ModelService(self.app)
             formatter = ModelFormatter()
             formatter.format_current_context(service.get_current_context(), self.app.selected_model, service)
@@ -771,7 +771,7 @@ class UIManager:
         
         print(f"\n[bold white]LOG COMMANDS HELP[/bold white]\n")
         
-        print(f"[white]The unified logging system provides centralized conversation tracking across all chat sessions. It maintains daily log files that capture conversations from every chat instance, creating a new log file each day. Logs are stored in the user's home directory under ~/.hiollama/logs/, allowing you to review your interaction history organized by date.[/white]\n")
+        print(f"[white]The unified logging system provides centralized conversation tracking across all chat sessions. It maintains daily log files that capture conversations from every chat instance, creating a new log file each day. Logs are stored in the user's home directory under ~/.calous/logs/, allowing you to review your interaction history organized by date.[/white]\n")
         
         print(f"[white]LOGGING CONTROL[/white]\n")
         

@@ -10,15 +10,15 @@ RUN pip install --no-cache-dir \
     asteval \
     prompt_toolkit
 
-# Create the hiollama directory for data persistence
-RUN mkdir -p /root/hiollama
+# Create the calous directory for data persistence
+RUN mkdir -p /root/calous
 
 # Set up volume mount point
-VOLUME ["/root/hiollama"]
+VOLUME ["/root/calous"]
 
 # Set PYTHONPATH so imports work
 ENV PYTHONPATH=/app
 
 # Don't copy code - we'll mount it instead
 # Run the application
-CMD ["python", "-m", "hiollama"]
+CMD ["python", "-m", "calous"]

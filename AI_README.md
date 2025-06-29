@@ -1,11 +1,12 @@
 
-# AI Agent Guidelines for HiOllama
+# AI Agent Guid### 1. Primary Objective
+Maintain and extend CALOUS's multi-channel, command-based environment. All features must work in both terminal and server modes.ines for CALOUS
 
 ## Purpose
-This document defines the strict rules for all AI agents working with the HiOllama codebase. These rules override any default AI behavior and must be followed exactly.
+This document defines the strict rules for all AI agents working with the CALOUS codebase. These rules override any default AI behavior and must be followed exactly.
 
-## About HiOllama
-HiOllama is a private, local-first system for interacting with locally hosted LLMs. It features:
+## About CALOUS
+CALOUS (Context Abstraction Layer Over Unix Sockets) is a private, local-first system for interacting with locally hosted LLMs. It features:
 - Multiple independent chat channels (each with its own persona)
 - Command-line and socket-based interfaces
 - Shared backend model execution

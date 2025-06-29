@@ -1,9 +1,9 @@
 import pytest
 import json
 from unittest.mock import Mock, MagicMock
-from hiollama.plugins.builtin.dice_roller import DiceRollerPlugin
-from hiollama.model_interaction import ModelInteraction
-from hiollama.unified_logger import unified_logger
+from calous.plugins.builtin.dice_roller import DiceRollerPlugin
+from calous.model_interaction import ModelInteraction
+from calous.unified_logger import unified_logger
 
 @pytest.fixture
 def dice_plugin():
@@ -31,7 +31,7 @@ def model_interaction(mock_app):
 @pytest.fixture
 def mock_logger(mocker):
     """Mock the unified logger's _write_log_entry method."""
-    return mocker.patch("hiollama.unified_logger.UnifiedLogger._write_log_entry")
+    return mocker.patch("calous.unified_logger.UnifiedLogger._write_log_entry")
 
 def test_centralized_function_call_logging(model_interaction, mock_logger):
     """Test that function calls are logged in the centralized location."""
