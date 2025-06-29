@@ -2,6 +2,8 @@
 # AI Agent Guid### 1. Primary Objective
 Maintain and extend CALOUS's multi-channel, command-based environment. All features must work in both terminal and server modes.ines for CALOUS
 
+CALOUS stands for Context Abstraction Layer Over Unix Sockets
+
 ## Purpose
 This document defines the strict rules for all AI agents working with the CALOUS codebase. These rules override any default AI behavior and must be followed exactly.
 

@@ -5,6 +5,30 @@ All notable changes to CALOUS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0.dev] - 2025-06-29
+
+### Added - Client (cx)
+- Config file support at `~/.calous/cx.json` with defaults for debug, chat targeting, and truncation
+- `--no-truncate` (`-t`) flag for one-time truncation override
+- Automatic version syncing with `Cargo.toml`
+
+### Added - Server Protocol  
+- `format` field in socket protocol for dual-format (rich/plain) output support
+- Enhanced session manager to handle client output format requests
+
+### Changed - Client (cx)
+- Truncation now applies only to stdin data, not prompt text
+- Help output cleaned up to show only client options, refers to `cx -c sys.help` for server commands
+
+### Changed - Both
+- **Version Synchronization**: Both client and server now use unified `1.0.0-dev` version for ecosystem consistency
+- Protocol enhancement enables clients to request specific output formats
+
+### Ecosystem Vision
+- **VS Code Extension**: GitHub Copilot modification for CALOUS integration
+- **Rich Python REPL**: Interactive Python environment with Rich formatting
+- **Ollama API Bridge**: Context management layer translating HTTP API calls to CALOUS socket protocol
+
 ## [0.14.0.dev] - 2025-06-29
 
 ### Changed

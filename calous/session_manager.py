@@ -394,9 +394,10 @@ class ChatSessionManager:
                 msg_type = req.get("type")
                 content = req.get("data", "")
                 target_chat = req.get("chat")  # Optional chat channel targeting
+                output_format = req.get("format", "plain")  # Default to plain for backward compatibility
                 
                 if interactive:
-                    print(f"[Debug] Parsed request: type={msg_type}, data length={len(content)} chars, target_chat={target_chat} at {timestamp}")
+                    print(f"[Debug] Parsed request: type={msg_type}, data length={len(content)} chars, target_chat={target_chat}, format={output_format} at {timestamp}")
                 
                 # Handle chat targeting
                 original_active_chat = self.active_chat_index
@@ -456,17 +457,24 @@ class ChatSessionManager:
                                 active_chat.non_interactive = False
                                 sys.stdout = original_stdout
                             
-                            # Get captured output and strip Rich tags
+                            # Get captured output and process based on format preference
                             captured_output = buffer.getvalue()
-                            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-                            clean_output = ansi_escape.sub('', captured_output)
                             
                             # Print Rich output to terminal (so user sees it)
                             if captured_output:
                                 print(captured_output, end='')
                             
-                            # Send clean output to client
-                            response = {"response": clean_output.strip() if clean_output.strip() else (cmd_result.message if hasattr(cmd_result, "message") else str(cmd_result))}
+                            # Process output based on client's format preference
+                            if output_format == "rich":
+                                # Send Rich markup directly to client
+                                final_output = captured_output.strip() if captured_output.strip() else (cmd_result.message if hasattr(cmd_result, "message") else str(cmd_result))
+                            else:
+                                # Default: strip ANSI codes for plain text output
+                                ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+                                clean_output = ansi_escape.sub('', captured_output)
+                                final_output = clean_output.strip() if clean_output.strip() else (cmd_result.message if hasattr(cmd_result, "message") else str(cmd_result))
+                            
+                            response = {"response": final_output}
                         else:
                             response = {"error": "Missing action in command."}
                     except json.JSONDecodeError:
