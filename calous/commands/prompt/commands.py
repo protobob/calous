@@ -91,7 +91,7 @@ def cmd_prompt_list(handler, slot: Optional[int] = None) -> CommandResult:
         for slot_num, content in all_prompts.items():
             formatter.show_prompt_list_item(chat_color, slot_num, content)
         
-        print()  # Add spacing after output
+        self._output()  # Add spacing after output
     
     return CommandResult(ActionType.CONTINUE)
 

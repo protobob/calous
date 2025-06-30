@@ -11,6 +11,16 @@ from typing import Dict, Any
 from ..base import HookPlugin
 
 class ShellCommandPlugin(HookPlugin):
+    def _output(self, message: str, message_type: str = "response"):
+        """Send output to client or print to console."""
+        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode:
+            self.session_manager.send_to_client(message, message_type)
+        elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
+            self.app.session_manager.send_to_client(message, message_type)
+        else:
+            from rich import print as rich_print
+            rich_print(message)
+    
     def __init__(self):
         super().__init__(
             name="shell_command",
@@ -44,11 +54,11 @@ class ShellCommandPlugin(HookPlugin):
                 # Explicitly append /usr/local/bin to PATH
                 env_dict["PATH"] = f"{env_dict.get('PATH', '')}:/usr/local/bin"
                 self.shell_env = env_dict
-                print("[DEBUG] Updated environment PATH:", self.shell_env["PATH"])
+                self._output("[DEBUG] Updated environment PATH:", self.shell_env["PATH"])
             else:
                 self.shell_env = dict(os.environ)
         except Exception as e:
-            print(f"Shell plugin initialization error: {e}")
+            self._output(f"Shell plugin initialization error: {e}")
             self.shell_env = dict(os.environ)
         return True
 

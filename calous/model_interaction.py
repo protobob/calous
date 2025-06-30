@@ -5,8 +5,33 @@ import json
 import sys
 import os
 from typing import Optional, NamedTuple, Dict, Any, List
-from rich import print
+from rich import print as rich_print
 from .utils import get_chat_color
+
+def _output_helper(message, message_type="response"):
+    """Helper to route output to client or console."""
+    try:
+        # Try to get session manager from various contexts
+        import inspect
+        frame = inspect.currentframe()
+        while frame:
+            local_vars = frame.f_locals
+            if 'self' in local_vars:
+                obj = local_vars['self']
+                if hasattr(obj, 'session_manager') and obj.session_manager and obj.session_manager.socket_mode:
+                    obj.session_manager.send_to_client(message, message_type)
+                    return
+                elif hasattr(obj, 'app') and hasattr(obj.app, 'session_manager') and obj.app.session_manager and obj.app.session_manager.socket_mode:
+                    obj.app.session_manager.send_to_client(message, message_type)
+                    return
+            frame = frame.f_back
+        # Fallback to rich print for now
+        from rich import print as rich_print
+        rich_print(message)
+    except:
+        from rich import print as rich_print
+        rich_print(message)
+
 
 class ContextWindowInfo(NamedTuple):
     """Information about a model's context window."""
@@ -19,6 +44,12 @@ class ContextWindowInfo(NamedTuple):
     quantization: Optional[str]    # Quantization level (e.g., "Q4_K_M")
 
 class ModelInteraction:
+    def _output(self, message: str, message_type: str = "response", **kwargs):
+        """Send output to client or discard if no client connected."""
+        # For now, just discard all model output to avoid double responses
+        # The JSON response will contain the model's text content
+        pass
+    
     def __init__(self, app):
         self.app = app    
         self._context_cache = {}  # Cache context window info to avoid repeated API calls
@@ -115,7 +146,7 @@ class ModelInteraction:
             return context_info
             
         except Exception as e:
-            print(f"[yellow]Warning: Could not get context window info for {model_name}: {e}[/yellow]")
+            self._output(f"[yellow]Warning: Could not get context window info for {model_name}: {e}[/yellow]")
             return None
     
     def _parse_num_ctx_parameter(self, parameters: str) -> Optional[int]:
@@ -245,8 +276,8 @@ class ModelInteraction:
         """Send a prompt to the selected model and return the model response (streaming or non-streaming)."""
         # Check if model is selected before making API call
         if not self.app.selected_model or self.app.selected_model.strip() == "":
-            print(f"\n[bold red]No Model Selected:[/bold red] Please select a model first.")
-            print(f"[grey50]Use /model to choose an available model[/grey50]")
+            self._output(f"\n[bold red]No Model Selected:[/bold red] Please select a model first.")
+            self._output(f"[grey50]Use /model to choose an available model[/grey50]")
             return {"message": {"content": "[Error: No model selected. Use /model to choose a model.]"}}
         
         messages = []
@@ -286,7 +317,7 @@ class ModelInteraction:
             # Print the header before response starts
             chat_index = getattr(self.app, 'active_chat_index', 0)
             chat_color = get_chat_color(chat_index)
-            print(f"\n[bold {chat_color}]|[/bold {chat_color}][bold {chat_color}]{chat_index + 1})[/bold {chat_color}][underline]{self.app.selected_model}[/underline]:\n")
+            self._output(f"\n[bold {chat_color}]|[/bold {chat_color}][bold {chat_color}]{chat_index + 1})[/bold {chat_color}][underline]{self.app.selected_model}[/underline]:\n")
             # Prepare chat options
             chat_options = {
                 'model': self.app.selected_model,
@@ -303,20 +334,20 @@ class ModelInteraction:
             show_debug = os.environ.get('CALOUS_DEBUG', '').lower() in ['1', 'true', 'yes']
             
             if show_debug:
-                print(f"[DEBUG] Sending to model {self.app.selected_model}:", file=sys.stderr)
-                print(f"[DEBUG] Messages: {len(messages)} messages", file=sys.stderr)
-                print(f"[DEBUG] Options: num_ctx={self.app.num_ctx}, temp={self.app.temperature}", file=sys.stderr)
+                self._output(f"[DEBUG] Sending to model {self.app.selected_model}:", file=sys.stderr)
+                self._output(f"[DEBUG] Messages: {len(messages)} messages", file=sys.stderr)
+                self._output(f"[DEBUG] Options: num_ctx={self.app.num_ctx}, temp={self.app.temperature}", file=sys.stderr)
                 if tools:
-                    print(f"[DEBUG] Tools: {len(tools)} available", file=sys.stderr)
+                    self._output(f"[DEBUG] Tools: {len(tools)} available", file=sys.stderr)
                 
                 # Show all messages being sent
-                print(f"[DEBUG] Full conversation:", file=sys.stderr)
+                self._output(f"[DEBUG] Full conversation:", file=sys.stderr)
                 for i, msg in enumerate(messages):
                     role = msg.get('role', 'unknown')
                     content = msg.get('content', '')
                     if len(content) > 300:
                         content = content[:300] + "..."
-                    print(f"[DEBUG]   {i+1}. {role}: {content}", file=sys.stderr)
+                    self._output(f"[DEBUG]   {i+1}. {role}: {content}", file=sys.stderr)
             
             # Try to use native thinking API, fall back to without think parameter
             try:
@@ -325,9 +356,9 @@ class ModelInteraction:
             except (TypeError, ollama.ResponseError) as e:
                 if isinstance(e, ollama.ResponseError) and "thinking" in str(e).lower():
                     if self.app.thinking_enabled:
-                        print(f"\n[yellow]⚠️  Model '{self.app.selected_model}' doesn't support thinking mode.[/yellow]")
-                        print(f"[grey50]Try updating the model with: ollama pull {self.app.selected_model}[/grey50]")
-                        print(f"[grey50]Continuing without thinking mode...[/grey50]\n")
+                        self._output(f"\n[yellow]⚠️  Model '{self.app.selected_model}' doesn't support thinking mode.[/yellow]")
+                        self._output(f"[grey50]Try updating the model with: ollama pull {self.app.selected_model}[/grey50]")
+                        self._output(f"[grey50]Continuing without thinking mode...[/grey50]\n")
                     chat_options.pop('think', None)
                     response = ollama.chat(**chat_options)
                 else:
@@ -341,41 +372,41 @@ class ModelInteraction:
                         content = getattr(chunk.message, 'content', '')
                         if content:
                             full_response += content
-                            print(content, end='', flush=True)
+                            self._output(content, end='', flush=True)
                         if hasattr(chunk.message, 'tool_calls') and chunk.message.tool_calls:
                             tool_calls.extend(chunk.message.tool_calls)
                         if self.app.thinking_enabled and hasattr(chunk.message, 'thinking'):
                             thinking = getattr(chunk.message, 'thinking', '')
                             if thinking:
                                 thinking_content += thinking
-                                print(f"[dim cyan]{thinking}[/dim cyan]", end='', flush=True)
+                                self._output(f"[dim cyan]{thinking}[/dim cyan]", end='', flush=True)
                     response_dict = chunk
-                print()  # newline after stream
+                self._output("")  # newline after stream
             else:
                 # Non-streaming path
                 if show_debug:
-                    print(f"[DEBUG] Non-streaming raw response: {response}")  # <--- Debug print
+                    self._output(f"[DEBUG] Non-streaming raw response: {response}")  # <--- Debug print
                 if hasattr(response, 'message'):
                     content = getattr(response.message, 'content', '')
                     if content:
                         full_response += content
-                        print(content, end='', flush=True)
+                        self._output(content, end='', flush=True)
                     if hasattr(response.message, 'tool_calls') and response.message.tool_calls:
                         tool_calls.extend(response.message.tool_calls)
                     if self.app.thinking_enabled and hasattr(response.message, 'thinking'):
                         thinking = getattr(response.message, 'thinking', '')
                         if thinking:
                             thinking_content += thinking
-                            print(f"[dim cyan]{thinking}[/dim cyan]", end='', flush=True)
+                            self._output(f"[dim cyan]{thinking}[/dim cyan]", end='', flush=True)
                     response_dict = response
-                print()  # newline after response
+                self._output("")  # newline after response
             # Handle function calls if present
             if tool_calls:
                 tool_results = self._handle_function_calls(tool_calls)
                 if tool_results:
                     messages.append({"role": "assistant", "content": full_response, "tool_calls": tool_calls})
                     messages.extend(tool_results)
-                    print(f"[dim green]🔄 Processing function results...[/dim green]")
+                    self._output(f"[dim green]🔄 Processing function results...[/dim green]")
                     # Make follow-up call without tools to get final response
                     return self._handle_model_response(messages, user_prompt, tools=None, stream=stream)
             clean_response = full_response
@@ -429,7 +460,7 @@ class ModelInteraction:
                 except json.JSONDecodeError:
                     function_args = {}
             
-            print(f"[dim yellow]🔧 Using LLM tool: {function_name}[/dim yellow]")
+            self._output(f"[dim yellow]🔧 Using LLM tool: {function_name}[/dim yellow]")
             
             # Log function call attempt
             unified_logger._write_log_entry(
@@ -499,7 +530,7 @@ class ModelInteraction:
             # Print the header before streaming starts
             chat_index = getattr(self.app, 'active_chat_index', 0)
             chat_color = get_chat_color(chat_index)
-            print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]{chat_index + 1})[/bold {chat_color}][underline]{self.app.selected_model}[/underline]:\n")
+            self._output(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]{chat_index + 1})[/bold {chat_color}][underline]{self.app.selected_model}[/underline]:\n")
             
             # Prepare chat options
             chat_options = {
@@ -521,9 +552,9 @@ class ModelInteraction:
                 # Handle both unsupported client versions and unsupported models
                 if isinstance(e, ollama.ResponseError) and "thinking" in str(e).lower():
                     if self.app.thinking_enabled:
-                        print(f"\n[yellow]⚠️  Model '{self.app.selected_model}' doesn't support thinking mode.[/yellow]")
-                        print(f"[grey50]Try updating the model with: ollama pull {self.app.selected_model}[/grey50]")
-                        print(f"[grey50]Continuing without thinking mode...[/grey50]\n")
+                        self._output(f"\n[yellow]⚠️  Model '{self.app.selected_model}' doesn't support thinking mode.[/yellow]")
+                        self._output(f"[grey50]Try updating the model with: ollama pull {self.app.selected_model}[/grey50]")
+                        self._output(f"[grey50]Continuing without thinking mode...[/grey50]\n")
                     # Disable thinking for this request and continue
                     chat_options.pop('think', None)
                     chunks = ollama.chat(**chat_options)
@@ -539,7 +570,7 @@ class ModelInteraction:
                     content = getattr(chunk.message, 'content', '')
                     if content:
                         full_response += content
-                        print(content, end='', flush=True)
+                        self._output(content, end='', flush=True)
                     
                     # Handle tool calls
                     if hasattr(chunk.message, 'tool_calls') and chunk.message.tool_calls:
@@ -551,12 +582,12 @@ class ModelInteraction:
                         if thinking:
                             thinking_content += thinking
                             # Display thinking in a different style (dim cyan for reasoning)
-                            print(f"[dim cyan]{thinking}[/dim cyan]", end='', flush=True)
+                            self._output(f"[dim cyan]{thinking}[/dim cyan]", end='', flush=True)
                 
                 # Store the last chunk to get eval data if available
                 response_dict = chunk
             
-            print()  # newline after stream
+            self._output("")  # newline after stream
             
             # Handle function calls if present
             if tool_calls:
@@ -565,7 +596,7 @@ class ModelInteraction:
                     # Add tool calls to messages and call model again
                     messages.append({"role": "assistant", "content": full_response, "tool_calls": tool_calls})
                     messages.extend(tool_results)
-                    print(f"[dim green]🔄 Processing function results...[/dim green]")
+                    self._output(f"[dim green]🔄 Processing function results...[/dim green]")
                     # Make follow-up call without tools to get final response
                     return self._handle_streaming(messages, user_prompt, tools=None)
             
@@ -600,31 +631,31 @@ class ModelInteraction:
     def _handle_response_error(self, e):
         """Handle ResponseError with detailed messaging."""
         if "model not found" in str(e).lower() or "model" in str(e).lower() and "not found" in str(e).lower():
-            print(f"\n[bold red]Model Error:[/bold red] Model '{self.app.selected_model}' not found.")
-            print(f"[grey50]Try: /model to select an available model[/grey50]")
+            self._output(f"\n[bold red]Model Error:[/bold red] Model '{self.app.selected_model}' not found.")
+            self._output(f"[grey50]Try: /model to select an available model[/grey50]")
             available_models = self.list_ollama_models()
             if available_models:
-                print(f"[grey50]Available models: {', '.join(available_models[:3])}{'...' if len(available_models) > 3 else ''}[/grey50]")
+                self._output(f"[grey50]Available models: {', '.join(available_models[:3])}{'...' if len(available_models) > 3 else ''}[/grey50]")
         else:
-            print(f"\n[bold red]Ollama API Error:[/bold red] {e}")
+            self._output(f"\n[bold red]Ollama API Error:[/bold red] {e}")
         return {"message": {"content": "[Error: Model response failed.]"}}
 
     def _handle_connection_error(self, e):
         """Handle ConnectionError with helpful messaging."""
-        print(f"\n[bold red]Connection Error:[/bold red] Cannot connect to Ollama server.")
-        print(f"[grey50]Try: 'ollama serve' in another terminal or check if port 11434 is accessible[/grey50]")
+        self._output(f"\n[bold red]Connection Error:[/bold red] Cannot connect to Ollama server.")
+        self._output(f"[grey50]Try: 'ollama serve' in another terminal or check if port 11434 is accessible[/grey50]")
         return {"message": {"content": "[Error: Cannot connect to Ollama server.]"}}
 
     def _handle_timeout_error(self, e):
         """Handle TimeoutError with helpful messaging."""
-        print(f"\n[bold red]Timeout Error:[/bold red] Request timed out.")
-        print(f"[grey50]The model may be processing a complex request. Try again or use a smaller model.[/grey50]")
+        self._output(f"\n[bold red]Timeout Error:[/bold red] Request timed out.")
+        self._output(f"[grey50]The model may be processing a complex request. Try again or use a smaller model.[/grey50]")
         return {"message": {"content": "[Error: Request timed out.]"}}    
     
     def _handle_unexpected_error(self, e):
         """Handle unexpected errors with helpful messaging."""
-        print(f"\n[bold red]Unexpected Error:[/bold red] {e}")
-        print(f"[grey50]If this persists, try restarting Ollama with 'ollama serve'[/grey50]")
+        self._output(f"\n[bold red]Unexpected Error:[/bold red] {e}")
+        self._output(f"[grey50]If this persists, try restarting Ollama with 'ollama serve'[/grey50]")
         return {"message": {"content": "[Error: An unexpected error occurred.]"}}
 
     def _process_response(self, user_input, response, full_response_for_logging=None):
@@ -643,9 +674,9 @@ class ModelInteraction:
         # Show eval data if verbosity is enabled
         if self.app.verbosity:
             if 'eval_count' in response and 'eval_duration' in response:
-                print(self.pull_eval_data(response))
+                self._output(self.pull_eval_data(response))
             else:
-                print("[italic][grey50]Evaluation data missing in response.[/grey50][/italic]")
+                self._output("[italic][grey50]Evaluation data missing in response.[/grey50][/italic]")
 
         # Add to chat history (clean response without thoughts)
         self.app.chat_history.add_message("assistant", clean_response)
@@ -655,39 +686,39 @@ class ModelInteraction:
         try:
             response = ollama.list()
             if not response or not hasattr(response, 'models'):
-                print(f"\n[yellow]Warning:[/yellow] Unexpected response format from Ollama")
+                self._output(f"\n[yellow]Warning:[/yellow] Unexpected response format from Ollama")
                 return []
             return [model.model for model in response.models]
         except ollama.ResponseError as e:
-            print(f"\n[bold red]Ollama API Error:[/bold red] {e}")
-            print(f"[grey50]Check if Ollama is running properly[/grey50]")
+            self._output(f"\n[bold red]Ollama API Error:[/bold red] {e}")
+            self._output(f"[grey50]Check if Ollama is running properly[/grey50]")
             return []
         except ConnectionError:
-            print(f"\n[bold red]Connection Error:[/bold red] Cannot connect to Ollama server.")
-            print(f"[grey50]Make sure Ollama is running: 'ollama serve'[/grey50]")
+            self._output(f"\n[bold red]Connection Error:[/bold red] Cannot connect to Ollama server.")
+            self._output(f"[grey50]Make sure Ollama is running: 'ollama serve'[/grey50]")
             return []        
         except Exception as e:
-            print(f"\n[bold red]Error fetching models:[/bold red] {e}")
-            print(f"[grey50]Check if Ollama is installed and running properly[/grey50]")
+            self._output(f"\n[bold red]Error fetching models:[/bold red] {e}")
+            self._output(f"[grey50]Check if Ollama is installed and running properly[/grey50]")
             return []
     
     def select_model(self):
         """Display available models and let the user select one."""
         models = self.list_ollama_models()
         if not models:
-            print("\n[bold red]No models installed.[/bold red]")
-            print("[grey50]Install a model with: 'ollama pull model-name'[/grey50]")
+            self._output("\n[bold red]No models installed.[/bold red]")
+            self._output("[grey50]Install a model with: 'ollama pull model-name'[/grey50]")
             return None
         
-        print("\nAvailable Ollama models:")
+        self._output("\nAvailable Ollama models:")
         for i, model in enumerate(models, 1):
             # Get context window info for display
             context_info = self.get_context_window_info(model)
             if context_info:
                 context_display = f"[cyan]{context_info.actual_context//1000}k[/cyan] ctx"
-                print(f"{i}. {model} [{context_display}]")
+                self._output(f"{i}. {model} [{context_display}]")
             else:
-                print(f"{i}. {model}")
+                self._output(f"{i}. {model}")
 
         while True:
             try:
@@ -699,11 +730,11 @@ class ModelInteraction:
                     if 0 <= index < len(models):
                         return models[index]
                     else:
-                        print(f"\n[bold red]Invalid selection.[/bold red] Please choose 1-{len(models)}")
+                        self._output(f"\n[bold red]Invalid selection.[/bold red] Please choose 1-{len(models)}")
                 else:
-                    print("\n[bold red]Invalid input.[/bold red] Please enter a number or 'q' to cancel")
+                    self._output("\n[bold red]Invalid input.[/bold red] Please enter a number or 'q' to cancel")
             except KeyboardInterrupt:
-                print("\n[grey50]Model selection cancelled.[/grey50]")
+                self._output("\n[grey50]Model selection cancelled.[/grey50]")
                 return None
 
     def pull_eval_data(self, response):

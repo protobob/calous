@@ -6,6 +6,16 @@ from ..registry import registry
 class SysService:
     """Service class for system operations."""
     
+    def _output(self, message: str, message_type: str = "response"):
+        """Send output to client or print to console."""
+        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode:
+            self.session_manager.send_to_client(message, message_type)
+        elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
+            self.app.session_manager.send_to_client(message, message_type)
+        else:
+            from rich import print as rich_print
+            rich_print(message)
+    
     @staticmethod
     def show_help(handler, category: str = None, command: str = None) -> CommandResult:
         """Display the help menu with optional category or command filtering.
@@ -34,8 +44,8 @@ class SysService:
         """Save configuration and exit."""
         # Prevent quit command in socket/non-interactive mode
         if getattr(handler.app, 'non_interactive', False):
-            from rich import print
-            print(f"\n[bold red]Error:[/bold red] Quit command not available in socket mode")
+            from rich import print as rich_print
+            CommandFormatter._output(f"\n[bold red]Error:[/bold red] Quit command not available in socket mode")
             return CommandResult(ActionType.CONTINUE)
         
         return CommandResult(ActionType.QUIT)

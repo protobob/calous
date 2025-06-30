@@ -2,6 +2,7 @@
 from ..types import CommandResult, ActionType
 from .registry import registry
 from .command_service import CommandParsingService, CommandExecutionService
+from .formatters import CommandFormatter
 
 
 class AdvancedCommandHandler:
@@ -10,6 +11,12 @@ class AdvancedCommandHandler:
     def __init__(self, app):
         self.app = app
         self.registry = registry
+        
+        # Inject session manager into formatter for output routing
+        if hasattr(app, 'session_manager') and app.session_manager:
+            CommandFormatter._session_manager = app.session_manager
+        else:
+            CommandFormatter._session_manager = None
     
     def parse_and_execute(self, user_input: str) -> CommandResult:
         """Parse and execute commands with full argparse support."""

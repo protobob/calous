@@ -4,6 +4,16 @@ from typing import Dict, Any, List, Optional
 from ..base import FunctionCallingPlugin, PluginCapability
 
 class MCPClientPlugin(FunctionCallingPlugin):
+    def _output(self, message: str, message_type: str = "response"):
+        """Send output to client or print to console."""
+        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode:
+            self.session_manager.send_to_client(message, message_type)
+        elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
+            self.app.session_manager.send_to_client(message, message_type)
+        else:
+            from rich import print as rich_print
+            rich_print(message)
+    
     def __init__(self):
         super().__init__(
             name="mcp_client",
@@ -41,7 +51,7 @@ class MCPClientPlugin(FunctionCallingPlugin):
             self.initialized = True
             return True
         except Exception as e:
-            print(f"Failed to initialize MCP session: {e}")
+            self._output(f"Failed to initialize MCP session: {e}")
             return False
 
     def get_function_schemas(self) -> List[Dict[str, Any]]:

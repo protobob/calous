@@ -4,12 +4,22 @@ import os
 import re
 from pathlib import Path
 from typing import Dict, List, Optional
-from rich import print
+from rich import print as rich_print
 from .constants import PERSONA_DIR
 
 
 class PersonaManager:
     """Manages persona storage and operations."""
+    
+    def _output(self, message: str, message_type: str = "response"):
+        """Send output to client or print to console."""
+        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode:
+            self.session_manager.send_to_client(message, message_type)
+        elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
+            self.app.session_manager.send_to_client(message, message_type)
+        else:
+            from rich import print as rich_print
+            rich_print(message)
     
     def __init__(self):
         self.persona_dir = PERSONA_DIR
@@ -28,7 +38,7 @@ class PersonaManager:
     def save_persona(self, name: str, slots: Dict[int, str]) -> bool:
         """Save persona to file."""
         if not name.strip():
-            print("[bold red]Error:[/bold red] Persona name cannot be empty.")
+            CommandFormatter._output("[bold red]Error:[/bold red] Persona name cannot be empty.")
             return False
         
         sanitized_name = self.sanitize_filename(name)
@@ -43,7 +53,7 @@ class PersonaManager:
                 default="n"
             )
             if confirm != 'y':
-                print("Save operation cancelled.")
+                CommandFormatter._output("Save operation cancelled.")
                 return False
         
         persona_data = {
@@ -54,10 +64,10 @@ class PersonaManager:
         try:
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(persona_data, f, indent=2, ensure_ascii=False)
-            print(f"[bold green]Success:[/bold green] Persona '{name}' saved!")
+            CommandFormatter._output(f"[bold green]Success:[/bold green] Persona '{name}' saved!")
             return True
         except Exception as e:
-            print(f"[bold red]Error:[/bold red] Failed to save persona: {e}")
+            CommandFormatter._output(f"[bold red]Error:[/bold red] Failed to save persona: {e}")
             return False
     
     def load_persona(self, name: str) -> Optional[Dict]:
@@ -66,14 +76,14 @@ class PersonaManager:
         filepath = self.persona_dir / f"{sanitized_name}.json"
         
         if not filepath.exists():
-            print(f"[bold red]Error:[/bold red] Persona '{name}' not found.")
+            CommandFormatter._output(f"[bold red]Error:[/bold red] Persona '{name}' not found.")
             return None
         
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
-            print(f"[bold red]Error:[/bold red] Failed to load persona: {e}")
+            CommandFormatter._output(f"[bold red]Error:[/bold red] Failed to load persona: {e}")
             return None
     
     def list_personas(self) -> List[str]:
@@ -99,20 +109,30 @@ class PersonaManager:
         filepath = self.persona_dir / f"{sanitized_name}.json"
         
         if not filepath.exists():
-            print(f"[bold red]Error:[/bold red] Persona '{name}' not found.")
+            CommandFormatter._output(f"[bold red]Error:[/bold red] Persona '{name}' not found.")
             return False
         
         try:
             filepath.unlink()
-            print(f"[bold green]Success:[/bold green] Persona '{name}' deleted!")
+            CommandFormatter._output(f"[bold green]Success:[/bold green] Persona '{name}' deleted!")
             return True
         except Exception as e:
-            print(f"[bold red]Error:[/bold red] Failed to delete persona: {e}")
+            CommandFormatter._output(f"[bold red]Error:[/bold red] Failed to delete persona: {e}")
             return False
 
 
 class Persona:
     """Represents a chat persona with named slots."""
+    
+    def _output(self, message: str, message_type: str = "response"):
+        """Send output to client or print to console."""
+        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode:
+            self.session_manager.send_to_client(message, message_type)
+        elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
+            self.app.session_manager.send_to_client(message, message_type)
+        else:
+            from rich import print as rich_print
+            rich_print(message)
     
     def __init__(self):
         self.name: str = ""

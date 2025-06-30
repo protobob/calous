@@ -1,5 +1,5 @@
 """Utility functions for the calous package."""
-from rich import print
+from rich import print as rich_print
 from typing import Optional, Dict, Any
 from .constants import MAX_PREVIEW_LENGTH, RAINBOW_COLORS, EXTENDED_RAINBOW_COLORS, RAINBOW_TEXT, HEADER_SEPARATOR, APP_VERSION
 from pathlib import Path
@@ -28,17 +28,17 @@ def print_rainbow_header() -> None:
         rainbow_text += f"[{color}]{char}[/{color}]"
     
     # Print the rainbow header
-    print(f"\n[bold]{rainbow_text}[/bold]")
+    self._output(f"\n[bold]{rainbow_text}[/bold]")
     
     # Print the version below the header in darker grey
-    print(f"[grey30]v.{APP_VERSION}[/grey30]\n")
+    self._output(f"[grey30]v.{APP_VERSION}[/grey30]\n")
 
 def print_chat_header(chat_index: int) -> str:
     """Print the chat header and return the chat color."""
     chat_color = get_chat_color(chat_index)
     
     # Print chat header with color
-    print(f"[bold {chat_color}]CHAT {chat_index + 1}{HEADER_SEPARATOR}[/bold {chat_color}]")
+    self._output(f"[bold {chat_color}]CHAT {chat_index + 1}{HEADER_SEPARATOR}[/bold {chat_color}]")
     
     return chat_color
 
@@ -46,7 +46,7 @@ def print_message_with_bar(chat_color: str, role: str, content: Any) -> None:
     """Print a message with a colored vertical bar and role prefix."""
     preview = format_message_preview(content)
     prefix = f"{role}: " if role else ""
-    print(f"[bold {chat_color}]|[/bold {chat_color}] [grey42]{prefix}{preview}[/grey42]")
+    self._output(f"[bold {chat_color}]|[/bold {chat_color}] [grey42]{prefix}{preview}[/grey42]")
 
 def find_last_messages(chat_history) -> Dict[str, Any]:
     """Find the last user and assistant messages in chat history."""
@@ -67,6 +67,16 @@ def find_last_messages(chat_history) -> Dict[str, Any]:
 
 # Keeping existing class for file loading
 class Utils:
+    def _output(self, message: str, message_type: str = "response"):
+        """Send output to client or print to console."""
+        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode:
+            self.session_manager.send_to_client(message, message_type)
+        elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
+            self.app.session_manager.send_to_client(message, message_type)
+        else:
+            from rich import print as rich_print
+            rich_print(message)
+    
     @staticmethod
     def load_file_as_prompt(filepath, instructions=""):
         """Load a file and format it as a prompt with instructions."""

@@ -1,6 +1,6 @@
 """Main application class for Hi, Ollama!"""
 from rich.prompt import Prompt
-from rich import print
+from rich import print as rich_print
 
 import socket
 import sys
@@ -26,6 +26,12 @@ SOCKET_PATH = "/tmp/calous.sock"
 
 class Chat:
 
+    def _output(self, message: str, message_type: str = "response"):
+        """Send output to client or discard if no client connected."""
+        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode and self.session_manager.current_connection:
+            self.session_manager.send_to_client(message, message_type)
+        # In daemon mode with no client: discard output silently
+    
     def __init__(self, instance_index):
         self.instance_index = instance_index
         # Load configs from unified system
@@ -114,7 +120,7 @@ class Chat:
         try:
             response = self.model.talk_to_model(user_input, images=images)
         except Exception as e:
-            print(f"[bold red]Error processing input:[/bold red] {e}")
+            self._output(f"[bold red]Error processing input:[/bold red] {e}")
 
     # DEPRECATED: Socket listener moved to ChatSessionManager
     # This method is kept for reference but should not be used
@@ -126,7 +132,7 @@ class Chat:
         server.listen(1)
 
         def handle_exit(signum, frame):
-            print("[calous] Shutting down socket server...")
+            self._output("[calous] Shutting down socket server...")
             self.save_config()
             server.close()
             exit(0)
@@ -134,12 +140,12 @@ class Chat:
         signal.signal(signal.SIGINT, handle_exit)
 
         if interactive:
-            print(f"[calous] Listening on {SOCKET_PATH}")
+            self._output(f"[calous] Listening on {SOCKET_PATH}")
         while True:
             conn, addr = server.accept()
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             if interactive:
-                print(f"[Debug] Connection accepted from {addr} at {timestamp}")
+                self._output(f"[Debug] Connection accepted from {addr} at {timestamp}")
             
             # Read all data from the connection
             data = b""
@@ -169,14 +175,14 @@ class Chat:
             try:
                 decoded_data = data.decode('utf-8')
                 if interactive:
-                    print(f"[Debug] Raw data received: {decoded_data[:200]}{'...' if len(decoded_data) > 200 else ''} at {timestamp}")
-                    print(f"[Debug] Total data size: {len(data)} bytes")
+                    self._output(f"[Debug] Raw data received: {decoded_data[:200]}{'...' if len(decoded_data) > 200 else ''} at {timestamp}")
+                    self._output(f"[Debug] Total data size: {len(data)} bytes")
                 
                 req = json.loads(decoded_data)
                 msg_type = req.get("type")
                 content = req.get("data", "")
                 if interactive:
-                    print(f"[Debug] Parsed request: type={msg_type}, data length={len(content)} chars at {timestamp}")
+                    self._output(f"[Debug] Parsed request: type={msg_type}, data length={len(content)} chars at {timestamp}")
                 if msg_type == "prompt":
                     self.chat_history.add_message("user", content)
                     model_response = self.model.talk_to_model(content, stream=False)
@@ -186,7 +192,7 @@ class Chat:
                     try:
                         action = json.loads(content).get("action")
                         if interactive:
-                            print(f"[Debug] Extracted action: {action} at {timestamp}")
+                            self._output(f"[Debug] Extracted action: {action} at {timestamp}")
                         if action:
                             # Capture ALL output from command processing
                             import io
@@ -218,7 +224,7 @@ class Chat:
                             
                             # Print Rich output to terminal (so user sees it)
                             if captured_output:
-                                print(captured_output, end='')
+                                self._output(captured_output, end='')
                             
                             # Send clean output to client
                             response = {"response": clean_output.strip() if clean_output.strip() else (cmd_result.message if hasattr(cmd_result, "message") else str(cmd_result))}
@@ -232,34 +238,34 @@ class Chat:
                 if interactive:
                     try:
                         decoded_data = data.decode('utf-8', errors='replace')
-                        print(f"[Debug] JSON decode error: {e}")
-                        print(f"[Debug] Problematic data: {decoded_data[:500]}...")
+                        self._output(f"[Debug] JSON decode error: {e}")
+                        self._output(f"[Debug] Problematic data: {decoded_data[:500]}...")
                     except:
-                        print(f"[Debug] JSON decode error: {e}")
-                        print(f"[Debug] Raw bytes: {data[:100]}...")
+                        self._output(f"[Debug] JSON decode error: {e}")
+                        self._output(f"[Debug] Raw bytes: {data[:100]}...")
                 response = {"error": f"Invalid JSON in request: {str(e)}"}
             except UnicodeDecodeError as e:
                 if interactive:
-                    print(f"[Debug] Unicode decode error: {e}")
-                    print(f"[Debug] Raw bytes: {data[:100]}...")
+                    self._output(f"[Debug] Unicode decode error: {e}")
+                    self._output(f"[Debug] Raw bytes: {data[:100]}...")
                 response = {"error": f"Invalid UTF-8 in request: {str(e)}"}
             except Exception as e:
                 if interactive:
-                    print(f"[Debug] Unexpected error: {e}")
+                    self._output(f"[Debug] Unexpected error: {e}")
                 response = {"error": f"Server error: {str(e)}"}
             try:
                 conn.sendall(json.dumps(response).encode())
             except BrokenPipeError:
                 if interactive:
-                    print("[calous] Client closed connection before response was sent.")
+                    self._output("[calous] Client closed connection before response was sent.")
             conn.close()
             if interactive:
                 # Use sys.stderr to avoid Rich markup interpretation issues
                 try:
                     display_data = data.decode('utf-8', errors='replace')[:100]
-                    print(f"[calous] Received: {display_data}{'...' if len(data) > 100 else ''} -> Sent: {json.dumps(response)}", file=sys.stderr)
+                    self._output(f"[calous] Received: {display_data}{'...' if len(data) > 100 else ''} -> Sent: {json.dumps(response)}", file=sys.stderr)
                 except:
-                    print(f"[calous] Received: [binary data {len(data)} bytes] -> Sent: {json.dumps(response)}", file=sys.stderr)
+                    self._output(f"[calous] Received: [binary data {len(data)} bytes] -> Sent: {json.dumps(response)}", file=sys.stderr)
 
     def confirm(self, question, default=True):
         """Auto-confirm if non_interactive, else prompt the user."""

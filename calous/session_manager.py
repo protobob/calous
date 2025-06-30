@@ -1,6 +1,6 @@
 """Chat session management for Hi, Ollama!"""
 from typing import List, Optional, Dict, Any, TYPE_CHECKING
-from rich import print
+from rich import print as rich_print
 import os
 from .types import ActionType, CommandResult  # Import from types instead
 from .utils import get_chat_color, print_rainbow_header, format_message_preview
@@ -13,11 +13,26 @@ if TYPE_CHECKING:
     from .app import Chat
 
 class ChatSessionManager:    
-    def __init__(self, num_chats: Optional[int] = None):  # Remove hardcoded default
+    def _output(self, message: str, message_type: str = "response"):
+        """Send output to client or print to console."""
+        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode:
+            self.session_manager.send_to_client(message, message_type)
+        elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
+            self.app.session_manager.send_to_client(message, message_type)
+        else:
+            from rich import print as rich_print
+            rich_print(message)
+    
+    def __init__(self, num_chats: Optional[int] = None, debug: bool = False):  # Remove hardcoded default
         self.chats: List['Chat'] = []
         self.active_chat_index: int = 0
         # Use constant for default
         self.num_chats = num_chats if num_chats is not None else DEFAULT_NUM_CHATS
+        
+        # Connection tracking for daemon mode
+        self.current_connection = None
+        self.socket_mode = False
+        self.debug = debug
         
         # Initialize plugin manager at session level
         self._initialize_plugin_manager()
@@ -37,7 +52,7 @@ class ChatSessionManager:
         
         # Get the plugin directory path
         plugin_dir = Path(os.path.dirname(__file__)) / 'plugins'
-        self.plugin_manager = PluginManager()
+        self.plugin_manager = PluginManager(debug=self.debug)
         self.plugin_manager.discover_and_load_plugins(plugin_dir)
     
     def _initialize_chats(self):
@@ -73,7 +88,7 @@ class ChatSessionManager:
             self.active_chat_index = target_index
             return True
         
-        print(f"\n[bold red]Error:[/bold red] Invalid chat number. Available chats: 1-{self.num_chats}")
+        self.send_to_client(f"\n[bold red]Error:[/bold red] Invalid chat number. Available chats: 1-{self.num_chats}", "error")
         return False
     def twist_to_chat(self, content: str, target_index: Optional[int] = None) -> bool:
         """Twist content to specified chat or next chat if no index provided."""
@@ -84,7 +99,7 @@ class ChatSessionManager:
             target_index = (self.active_chat_index + 1) % self.num_chats
 
         if not (0 <= target_index < self.num_chats):
-            print(f"\n[bold red]Error:[/bold red] Invalid chat number. Available chats: 1-{self.num_chats}")
+            self.send_to_client(f"\n[bold red]Error:[/bold red] Invalid chat number. Available chats: 1-{self.num_chats}", "error")
             return False
 
         # Log the twist action
@@ -95,7 +110,7 @@ class ChatSessionManager:
         target_color = get_chat_color(target_index)
 
         preview = format_message_preview(content, 50)
-        print(f"[bold {source_color}]↪ Twisting to Chat {target_index + 1}: "
+        self.send_to_client(f"[bold {source_color}]↪ Twisting to Chat {target_index + 1}: "
               f"[/bold {source_color}][italic {target_color}]\"{preview}\"[/italic {target_color}]")
 
         # Switch to target chat FIRST
@@ -116,8 +131,8 @@ class ChatSessionManager:
             twist_preview = twist_preview[:TWIST_PREVIEW_LENGTH] + "..."
 
         # Use SOURCE_COLOR instead of target_color for the TWIST CONTENT display
-        print(f"\n[bold {source_color}]|[/bold {source_color}] [bold {source_color}]TWIST CONTENT:[/bold {source_color}]")
-        print(f"[bold {source_color}]|[/bold {source_color}] [grey70]{twist_preview}[/grey70]\n")
+        self.send_to_client(f"\n[bold {source_color}]|[/bold {source_color}] [bold {source_color}]TWIST CONTENT:[/bold {source_color}]")
+        self.send_to_client(f"[bold {source_color}]|[/bold {source_color}] [grey70]{twist_preview}[/grey70]\n")
 
         # Send the content as a prompt (which will trigger AI response)
         target_chat.handle_regular_input(content)
@@ -181,7 +196,7 @@ class ChatSessionManager:
         # Log the addition
         unified_logger.log_channel_switch(-1, new_chat_index, "addchat")
         
-        print(f"[bold green]✓[/bold green] Chat {new_chat_index + 1} added successfully!")
+        self.send_to_client(f"[bold green]✓[/bold green] Chat {new_chat_index + 1} added successfully!")
         return True
         
     def remove_chat(self, target_index: int) -> bool:
@@ -193,9 +208,9 @@ class ChatSessionManager:
         chat_to_remove = self.chats[target_index]
         try:
             chat_to_remove.save_config()
-            print(f"[grey70]Saved configuration for Chat {target_index + 1}[/grey70]")
+            self._output(f"[grey70]Saved configuration for Chat {target_index + 1}[/grey70]")
         except Exception as e:
-            print(f"[bold yellow]Warning:[/bold yellow] Could not save config for Chat {target_index + 1}: {e}")
+            self._output(f"[bold yellow]Warning:[/bold yellow] Could not save config for Chat {target_index + 1}: {e}")
         
         # Remove the chat from the list
         removed_chat = self.chats.pop(target_index)
@@ -222,8 +237,8 @@ class ChatSessionManager:
         # Log the removal
         unified_logger.log_channel_switch(target_index, -1, "removechat")
         
-        print(f"[bold green]✓[/bold green] Chat {target_index + 1} removed successfully!")
-        print(f"[grey70]Configuration preserved in unified config file.[/grey70]")
+        self.send_to_client(f"[bold green]✓[/bold green] Chat {target_index + 1} removed successfully!")
+        self.send_to_client(f"[grey70]Configuration preserved in unified config file.[/grey70]")
         return True
 
     def process_command_result(self, result: CommandResult) -> bool:
@@ -280,7 +295,7 @@ class ChatSessionManager:
     
     def save_all_configs(self):
         """Save configurations for all chat instances."""
-        print("\n[bold]Exiting and saving configurations.[/bold]")
+        self._output("\n[bold]Exiting and saving configurations.[/bold]")
         
         # Log session end
         unified_logger.log_session_end()
@@ -289,7 +304,7 @@ class ChatSessionManager:
             try:
                 chat.save_config()
             except Exception as e:
-                print(f"\nError saving config: {e}")
+                self._output(f"\nError saving config: {e}")
     
     def run(self):
         """Run the main application loop."""
@@ -324,23 +339,49 @@ class ChatSessionManager:
         from .utils import print_rainbow_header
         print_rainbow_header()
 
-    def send_to_client(self, response: dict, conn):
+    def send_to_client(self, message: str, message_type: str = "response", conn=None):
         """
-        Safely send a JSON response to the connected client.
-        Handles encoding and connection errors gracefully.
+        Send a message directly to the connected client.
+        For command mode, buffer the output instead of sending immediately.
         """
         import json
+        import re
+        
+        # Use provided connection or current connection
+        target_conn = conn or self.current_connection
+        if not target_conn:
+            return  # No client connected
+            
+        # Strip Rich markup for plain text output
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        rich_markup = re.compile(r'\[/?[^\]]*\]')
+        
+        # Remove ANSI codes and Rich markup
+        clean_message = ansi_escape.sub('', message)
+        clean_message = rich_markup.sub('', clean_message)
+        
+        # If we're in command processing mode, buffer the output
+        if hasattr(self, '_command_output_buffer'):
+            self._command_output_buffer.append(clean_message)
+            return
+        
+        # Otherwise send immediately (for prompts)
+        # Create response structure
+        if message_type == "error":
+            response = {"error": clean_message.strip()}
+        else:
+            response = {"response": clean_message.strip()}
+        
         try:
-            conn.sendall(json.dumps(response).encode())
+            target_conn.sendall(json.dumps(response).encode())
         except BrokenPipeError:
-            # Client closed connection before response was sent
-            if hasattr(self, 'interactive') and self.interactive:
-                print("[calous] Client closed connection before response was sent.")
+            # Client disconnected
+            self.current_connection = None
         except Exception as e:
-            if hasattr(self, 'interactive') and self.interactive:
-                print(f"[calous] Error sending response to client: {e}")
+            # Log error but don't crash
+            pass
                 
-    def listen_for_socket(self, interactive=False):
+    def listen_for_socket(self, debug=False):
         """Listen for socket connections and handle multi-chat commands."""
         import socket
         import json
@@ -348,6 +389,9 @@ class ChatSessionManager:
         import sys
         import os
         from datetime import datetime
+        
+        # Set daemon mode
+        self.socket_mode = True
         
         # Remove existing socket file if it exists
         if os.path.exists(SOCKET_PATH):
@@ -359,21 +403,17 @@ class ChatSessionManager:
         server.listen(1)
 
         def handle_exit(signum, frame):
-            print("[calous] Shutting down socket server...")
             self.save_all_configs()
             server.close()
             exit(0)
 
         signal.signal(signal.SIGINT, handle_exit)
-
-        if interactive:
-            print(f"[calous] Listening on {SOCKET_PATH}")
             
         while True:
             conn, addr = server.accept()
+            # Track current connection
+            self.current_connection = conn
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            if interactive:
-                print(f"[Debug] Connection accepted from {addr} at {timestamp}")
             
             # Read all data from the connection
             data = b""
@@ -398,13 +438,14 @@ class ChatSessionManager:
             
             if not data:
                 conn.close()
+                self.current_connection = None
                 continue
                 
             try:
                 decoded_data = data.decode('utf-8')
-                if interactive:
-                    print(f"[Debug] Raw data received: {decoded_data[:200]}{'...' if len(decoded_data) > 200 else ''} at {timestamp}")
-                    print(f"[Debug] Total data size: {len(data)} bytes")
+                if debug:
+                    self._output(f"[Debug] Raw data received: {decoded_data[:200]}{'...' if len(decoded_data) > 200 else ''} at {timestamp}")
+                    self._output(f"[Debug] Total data size: {len(data)} bytes")
                 
                 req = json.loads(decoded_data)
                 msg_type = req.get("type")
@@ -412,8 +453,8 @@ class ChatSessionManager:
                 target_chat = req.get("chat")  # Optional chat channel targeting
                 output_format = req.get("format", "plain")  # Default to plain for backward compatibility
                 
-                if interactive:
-                    print(f"[Debug] Parsed request: type={msg_type}, data length={len(content)} chars, target_chat={target_chat}, format={output_format} at {timestamp}")
+                if debug:
+                    self._output(f"[Debug] Parsed request: type={msg_type}, data length={len(content)} chars, target_chat={target_chat}, format={output_format} at {timestamp}")
                 
                 # Handle chat targeting
                 original_active_chat = self.active_chat_index
@@ -422,8 +463,8 @@ class ChatSessionManager:
                     target_index = target_chat - 1
                     if 0 <= target_index < self.num_chats:
                         self.active_chat_index = target_index
-                        if interactive:
-                            print(f"[Debug] Switched to chat {target_chat} for this command")
+                        if debug:
+                            self._output(f"[Debug] Switched to chat {target_chat} for this command")
                     else:
                         response = {"error": f"Invalid chat number: {target_chat}. Available chats: 1-{self.num_chats}"}
                         conn.sendall(json.dumps(response).encode())
@@ -437,60 +478,63 @@ class ChatSessionManager:
                 response: Dict[str, Any] = {"error": "Unknown error"}
                 
                 if msg_type == "prompt":
-                    # Handle prompt message
+                    # Handle prompt message - model will send output via send_to_client
                     active_chat.chat_history.add_message("user", content)
+                    if debug:
+                        self._output(f"[Debug] About to call talk_to_model")
                     model_response = active_chat.model.talk_to_model(content, stream=False)
-                    response_text = model_response.get("message", {}).get("content", "")
+                    if debug:
+                        self._output(f"[Debug] Model response received: {model_response}")
+                    # Send JSON response with the content for compatibility
+                    response_text = model_response.get("message", {}).get("content", "") if model_response else ""
                     response = {"response": response_text}
+                    if debug:
+                        self._output(f"[Debug] Sending JSON response: {response}")
                     
                 elif msg_type == "cmd":
                     try:
                         action = json.loads(content).get("action")
-                        if interactive:
-                            print(f"[Debug] Extracted action: {action} at {timestamp}")
                         if action:
-                            # Capture ALL output from command processing
-                            import io
-                            import re
-                            
-                            original_stdout = sys.stdout
-                            buffer = io.StringIO()
+                            # Set non-interactive mode for socket commands
+                            active_chat.non_interactive = True
                             
                             try:
-                                # Set non-interactive mode for socket commands
-                                active_chat.non_interactive = True
-                                sys.stdout = buffer
+                                # Set up output buffering for command
+                                self._command_output_buffer = []
+                                
+                                # Inject session manager into formatter before command execution
+                                from .commands.formatters import CommandFormatter
+                                CommandFormatter._session_manager = self
                                 
                                 # Process command using active chat
+                                if debug:
+                                    self._output(f"[Debug] Processing command: {action}")
                                 cmd_result = active_chat.process_input(f"{action}")
+                                if debug:
+                                    self._output(f"[Debug] Command result: {cmd_result}")
                                 
                                 # Process the command result through session manager
                                 # This enables chat switching and other session-level operations
                                 self.process_command_result(cmd_result)
+                                
+                                # Send buffered output as single JSON response
+                                if self._command_output_buffer:
+                                    combined_output = "\n".join(self._command_output_buffer)
+                                    response = {"response": combined_output}
+                                else:
+                                    response = {"response": "Command completed"}
+                                    
+                                # Send the buffered response immediately instead of letting the main handler do it
+                                import json
+                                conn.sendall(json.dumps(response).encode())
+                                response = None  # Prevent the main handler from sending another response
+                                
+                                # Clean up buffer
+                                delattr(self, '_command_output_buffer')
                                     
                             finally:
                                 # Reset non-interactive mode
                                 active_chat.non_interactive = False
-                                sys.stdout = original_stdout
-                            
-                            # Get captured output and process based on format preference
-                            captured_output = buffer.getvalue()
-                            
-                            # Print Rich output to terminal (so user sees it)
-                            if captured_output:
-                                print(captured_output, end='')
-                            
-                            # Process output based on client's format preference
-                            if output_format == "rich":
-                                # Send Rich markup directly to client
-                                final_output = captured_output.strip() if captured_output.strip() else (cmd_result.message if hasattr(cmd_result, "message") else str(cmd_result))
-                            else:
-                                # Default: strip ANSI codes for plain text output
-                                ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-                                clean_output = ansi_escape.sub('', captured_output)
-                                final_output = clean_output.strip() if clean_output.strip() else (cmd_result.message if hasattr(cmd_result, "message") else str(cmd_result))
-                            
-                            response = {"response": final_output}
                         else:
                             response = {"error": "Missing action in command."}
                     except json.JSONDecodeError:
@@ -501,41 +545,40 @@ class ChatSessionManager:
                 # Restore original active chat if we switched for targeting
                 if target_chat is not None and original_active_chat != self.active_chat_index:
                     self.active_chat_index = original_active_chat
-                    if interactive:
-                        print(f"[Debug] Restored active chat to {original_active_chat + 1}")
+                    if debug:
+                        self._output(f"[Debug] Restored active chat to {original_active_chat + 1}")
                     
             except json.JSONDecodeError as e:
-                if interactive:
+                if debug:
                     try:
                         decoded_data = data.decode('utf-8', errors='replace')
-                        print(f"[Debug] JSON decode error: {e}")
-                        print(f"[Debug] Problematic data: {decoded_data[:500]}...")
+                        self._output(f"[Debug] JSON decode error: {e}")
+                        self._output(f"[Debug] Problematic data: {decoded_data[:500]}...")
                     except:
-                        print(f"[Debug] JSON decode error: {e}")
-                        print(f"[Debug] Raw bytes: {data[:100]}...")
+                        self._output(f"[Debug] JSON decode error: {e}")
+                        self._output(f"[Debug] Raw bytes: {data[:100]}...")
                 response = {"error": f"Invalid JSON in request: {str(e)}"}
             except UnicodeDecodeError as e:
-                if interactive:
-                    print(f"[Debug] Unicode decode error: {e}")
-                    print(f"[Debug] Raw bytes: {data[:100]}...")
+                if debug:
+                    self._output(f"[Debug] Unicode decode error: {e}")
+                    self._output(f"[Debug] Raw bytes: {data[:100]}...")
                 response = {"error": f"Invalid UTF-8 in request: {str(e)}"}
             except Exception as e:
-                if interactive:
-                    print(f"[Debug] Unexpected error: {e}")
+                if debug:
+                    self._output(f"[Debug] Unexpected error: {e}")
                 response = {"error": f"Server error: {str(e)}"}
                 
-            # Send response back to client
-            try:
-                conn.sendall(json.dumps(response).encode())
-            except BrokenPipeError:
-                if interactive:
-                    print("[calous] Client closed connection before response was sent.")
-            conn.close()
-            
-            if interactive:
-                # Use sys.stderr to avoid Rich markup interpretation issues
+            # Send response back to client (for errors and acknowledgments)
+            if response is not None:
                 try:
-                    display_data = data.decode('utf-8', errors='replace')[:100]
-                    print(f"[calous] Received: {display_data}{'...' if len(data) > 100 else ''} -> Sent: {json.dumps(response)}", file=sys.stderr)
-                except:
-                    print(f"[calous] Received: [binary data {len(data)} bytes] -> Sent: {json.dumps(response)}", file=sys.stderr)
+                    conn.sendall(json.dumps(response).encode())
+                except BrokenPipeError:
+                    # Client closed connection before response was sent
+                    pass
+                except Exception:
+                    # Log error but don't crash
+                    pass
+            
+            # Clean up connection
+            conn.close()
+            self.current_connection = None

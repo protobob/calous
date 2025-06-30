@@ -5,7 +5,7 @@ import importlib.util
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Callable
-from rich import print
+from rich import print as rich_print
 
 from ..unified_logger import unified_logger
 from .base import PluginBase, PluginCapability, FunctionCallingPlugin, CommandPlugin, HookPlugin
@@ -14,21 +14,34 @@ from .base import PluginBase, PluginCapability, FunctionCallingPlugin, CommandPl
 class PluginManager:
     """Manages plugin discovery, loading, and lifecycle."""
     
-    def __init__(self):
+    def _output(self, message: str, message_type: str = "response"):
+        """Send output to client or print to console."""
+        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode:
+            self.session_manager.send_to_client(message, message_type)
+        elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
+            self.app.session_manager.send_to_client(message, message_type)
+        else:
+            from rich import print as rich_print
+            rich_print(message)
+    
+    def __init__(self, debug: bool = False):
         self.plugins: Dict[str, PluginBase] = {}
         self.function_plugins: Dict[str, FunctionCallingPlugin] = {}
         self.command_plugins: Dict[str, CommandPlugin] = {}
         self.hook_plugins: List[HookPlugin] = []
         self.plugin_commands: Dict[str, Callable] = {}
         self.plugin_functions: Dict[str, Callable] = {}
+        self.debug = debug
         
     def discover_and_load_plugins(self, plugin_dir: Path) -> None:
         """Discover and load all plugins from the plugin directory."""
-        print(f"[DEBUG] Discovering plugins in directory: {plugin_dir}")
+        if self.debug:
+            self._output(f"[DEBUG] Discovering plugins in directory: {plugin_dir}")
         unified_logger.log_plugin_event("DISCOVERY", f"Scanning for plugins in {plugin_dir}")
         
         if not plugin_dir.exists():
-            print(f"[DEBUG] Plugin directory does not exist: {plugin_dir}")
+            if self.debug:
+                self._output(f"[DEBUG] Plugin directory does not exist: {plugin_dir}")
             unified_logger.log_plugin_event("ERROR", f"Plugin directory does not exist: {plugin_dir}")
             return
               
@@ -38,38 +51,47 @@ class PluginManager:
             self.enabled_plugin_names = ENABLED_PLUGINS
             
             if self.enabled_plugin_names is None:
-                print(f"[blue]Plugin config:[/blue] Loading all available plugins (no filtering)")
+                if self.debug:
+                    self._output(f"[blue]Plugin config:[/blue] Loading all available plugins (no filtering)")
                 unified_logger.log_plugin_event("CONFIG", "Loading all available plugins (no filtering)")
             elif len(self.enabled_plugin_names) == 0:
-                print(f"[blue]Plugin config:[/blue] All plugins disabled (empty set in config)")
+                if self.debug:
+                    self._output(f"[blue]Plugin config:[/blue] All plugins disabled (empty set in config)")
                 unified_logger.log_plugin_event("CONFIG", "All plugins disabled (empty set in config)")
             else:
                 plugins_list = ', '.join(self.enabled_plugin_names)
-                print(f"[blue]Plugin filtering active:[/blue] Only loading: {plugins_list}")
+                if self.debug:
+                    self._output(f"[blue]Plugin filtering active:[/blue] Only loading: {plugins_list}")
                 unified_logger.log_plugin_event("CONFIG", f"Only loading these plugins: {plugins_list}")
         except Exception as e:
-            print(f"[yellow]Warning:[/yellow] Could not load plugin configuration: {e}")
+            self._output(f"[yellow]Warning:[/yellow] Could not load plugin configuration: {e}")
             unified_logger.log_plugin_event("ERROR", f"Could not load plugin configuration: {e}")
             self.enabled_plugin_names = None  # Load all plugins if config not present
 
         # Load built-in plugins
         builtin_dir = plugin_dir / "builtin"
-        print(f"[DEBUG] Checking built-in plugins directory: {builtin_dir}")
+        if self.debug:
+            self._output(f"[DEBUG] Checking built-in plugins directory: {builtin_dir}")
         unified_logger.log_plugin_event("SCAN", f"Checking built-in plugins directory: {builtin_dir}")
         if builtin_dir.exists():
-            print(f"[DEBUG] Built-in plugins directory exists: {builtin_dir}")
+            if self.debug:
+                self._output(f"[DEBUG] Built-in plugins directory exists: {builtin_dir}")
             self._load_plugins_from_directory(builtin_dir)
         else:
-            print(f"[DEBUG] Built-in plugins directory does not exist: {builtin_dir}")
+            if self.debug:
+                self._output(f"[DEBUG] Built-in plugins directory does not exist: {builtin_dir}")
             unified_logger.log_plugin_event("ERROR", f"Built-in plugins directory does not exist: {builtin_dir}")        # Load user plugins (future expansion)
         user_dir = plugin_dir / "user"
-        print(f"[DEBUG] Checking user plugins directory: {user_dir}")
+        if self.debug:
+            self._output(f"[DEBUG] Checking user plugins directory: {user_dir}")
         unified_logger.log_plugin_event("SCAN", f"Checking user plugins directory: {user_dir}")
         if user_dir.exists():
-            print(f"[DEBUG] User plugins directory exists: {user_dir}")
+            if self.debug:
+                self._output(f"[DEBUG] User plugins directory exists: {user_dir}")
             self._load_plugins_from_directory(user_dir)
         else:
-            print(f"[DEBUG] User plugins directory does not exist: {user_dir}")
+            if self.debug:
+                self._output(f"[DEBUG] User plugins directory does not exist: {user_dir}")
             unified_logger.log_plugin_event("INFO", f"User plugins directory does not exist (this is normal): {user_dir}")
             
         # Log a summary of loaded plugins
@@ -85,7 +107,7 @@ class PluginManager:
             try:
                 self._load_plugin_file(plugin_file)
             except Exception as e:
-                print(f"[yellow]Warning:[/yellow] Failed to load plugin {plugin_file.name}: {e}")
+                self._output(f"[yellow]Warning:[/yellow] Failed to load plugin {plugin_file.name}: {e}")
                 unified_logger.log_plugin_event("ERROR", f"Failed to load plugin {plugin_file.name}: {e}")
     
     def _load_plugin_file(self, plugin_file: Path) -> None:
@@ -93,7 +115,8 @@ class PluginManager:
         # Skip loading if not in enabled list
         if hasattr(self, "enabled_plugin_names") and self.enabled_plugin_names is not None:
             if plugin_file.stem not in self.enabled_plugin_names:
-                print(f"[blue]Skipping disabled plugin:[/blue] {plugin_file.stem}")
+                if self.debug:
+                    self._output(f"[blue]Skipping disabled plugin:[/blue] {plugin_file.stem}")
                 unified_logger.log_plugin_event("SKIP", f"Skipping disabled plugin: {plugin_file.stem}")
                 return
                 
@@ -128,7 +151,7 @@ class PluginManager:
                     plugin_instance = attr()
                     self.register_plugin(plugin_instance)
                 except Exception as e:
-                    print(f"[yellow]Warning:[/yellow] Failed to instantiate plugin {attr_name}: {e}")
+                    self._output(f"[yellow]Warning:[/yellow] Failed to instantiate plugin {attr_name}: {e}")
     
     def register_plugin(self, plugin: PluginBase) -> bool:
         """Register a plugin instance."""        
@@ -163,7 +186,7 @@ class PluginManager:
                 self.hook_plugins.append(plugin)
             
             # Print success message for all loaded plugins
-            print(f"[green]✓[/green] Loaded plugin: {plugin.name} v{plugin.version}")
+            self._output(f"[green]✓[/green] Loaded plugin: {plugin.name} v{plugin.version}")
             unified_logger.log_plugin_event("SUCCESS", f"Loaded plugin: {plugin.name} v{plugin.version}")
             return True
             
@@ -171,7 +194,7 @@ class PluginManager:
             plugin.error = str(e)
             plugin.loaded = False
             self.plugins[plugin.name] = plugin
-            print(f"[red]✗[/red] Failed to register plugin {plugin.name}: {e}")
+            self._output(f"[red]✗[/red] Failed to register plugin {plugin.name}: {e}")
             unified_logger.log_plugin_event("ERROR", f"Failed to register plugin {plugin.name}: {e}")
             return False
     
@@ -204,7 +227,7 @@ class PluginManager:
                 try:
                     schemas.extend(plugin.get_function_schemas())
                 except Exception as e:
-                    print(f"[yellow]Warning:[/yellow] Error getting schemas from {plugin.name}: {e}")
+                    self._output(f"[yellow]Warning:[/yellow] Error getting schemas from {plugin.name}: {e}")
         return schemas
     
     def execute_function(self, function_name: str, **kwargs) -> str:
@@ -225,7 +248,7 @@ class PluginManager:
         try:
             return self.plugin_commands[command_name](*args, **kwargs)
         except Exception as e:
-            print(f"[red]Error executing plugin command {command_name}:[/red] {e}")
+            self._output(f"[red]Error executing plugin command {command_name}:[/red] {e}")
             return None
     
     def apply_pre_message_hooks(self, user_input: str, context: Dict[str, Any]) -> str:
@@ -236,7 +259,7 @@ class PluginManager:
                 try:
                     processed_input = hook_plugin.pre_message_hook(processed_input, context)
                 except Exception as e:
-                    print(f"[yellow]Warning:[/yellow] Error in pre-message hook from {hook_plugin.name}: {e}")
+                    self._output(f"[yellow]Warning:[/yellow] Error in pre-message hook from {hook_plugin.name}: {e}")
         return processed_input
     
     def apply_post_message_hooks(self, response: str, context: Dict[str, Any]) -> str:
@@ -247,7 +270,7 @@ class PluginManager:
                 try:
                     processed_response = hook_plugin.post_message_hook(processed_response, context)
                 except Exception as e:
-                    print(f"[yellow]Warning:[/yellow] Error in post-message hook from {hook_plugin.name}: {e}")
+                    self._output(f"[yellow]Warning:[/yellow] Error in post-message hook from {hook_plugin.name}: {e}")
         return processed_response
     
     def get_plugin_info(self, plugin_name: str) -> Optional[Dict[str, Any]]:
@@ -297,7 +320,7 @@ class PluginManager:
             try:
                 plugin.cleanup()
             except Exception as e:
-                print(f"[yellow]Warning:[/yellow] Error cleaning up {plugin.name}: {e}")
+                self._output(f"[yellow]Warning:[/yellow] Error cleaning up {plugin.name}: {e}")
         
         # Clear all registries
         self.plugins.clear()

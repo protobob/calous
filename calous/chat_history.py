@@ -2,12 +2,22 @@
 import json
 from datetime import datetime
 from pathlib import Path
-from rich import print
+from rich import print as rich_print
 from .utils import get_chat_color
 from .unified_logger import unified_logger
 from .constants import HISTORY_DIR
 
 class ChatHistory:    
+    def _output(self, message: str, message_type: str = "response"):
+        """Send output to client or print to console."""
+        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode:
+            self.session_manager.send_to_client(message, message_type)
+        elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
+            self.app.session_manager.send_to_client(message, message_type)
+        else:
+            from rich import print as rich_print
+            rich_print(message)
+    
     def __init__(self, app, instance_index):
         self.app = app
         self.instance_index = instance_index
@@ -40,11 +50,13 @@ class ChatHistory:
                             # Skip malformed lines
                             continue
                 if messages_loaded > 0:
-                    print(f"[dim green]Loaded {messages_loaded} messages from chat history[/dim green]")
+                    # Only show loading message in debug mode
+                    if hasattr(self.app, 'session_manager') and hasattr(self.app.session_manager, 'debug') and self.app.session_manager.debug:
+                        self._output(f"[dim green]Loaded {messages_loaded} messages from chat history[/dim green]")
                     
         except Exception as e:
             # Don't crash if loading fails, just start with empty history
-            print(f"[dim red]Warning: Failed to load chat history: {e}[/dim red]")
+            self._output(f"[dim red]Warning: Failed to load chat history: {e}[/dim red]")
             self.history = []
     
     def _get_history_filename(self):
@@ -71,7 +83,7 @@ class ChatHistory:
                 
         except Exception as e:
             # Don't crash the app if history saving fails, just log it
-            print(f"[dim red]Warning: Failed to save message to history file: {e}[/dim red]")
+            self._output(f"[dim red]Warning: Failed to save message to history file: {e}[/dim red]")
     
     def _delete_history_file(self):
         """Delete the current chat's history file."""
@@ -79,9 +91,9 @@ class ChatHistory:
         if history_file.exists():
             try:
                 history_file.unlink()
-                print(f"[dim green]History file deleted: {history_file.name}[/dim green]")
+                self._output(f"[dim green]History file deleted: {history_file.name}[/dim green]")
             except Exception as e:
-                print(f"[dim red]Warning: Failed to delete history file: {e}[/dim red]")
+                self._output(f"[dim red]Warning: Failed to delete history file: {e}[/dim red]")
     
     def add_message(self, role, content):
         """Add a message to the chat history."""
@@ -107,10 +119,10 @@ class ChatHistory:
         chat_color = get_chat_color(self.app.active_chat_index)
         
         # Start header with CHAT # in the chat color
-        print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]START CHAT {self.app.active_chat_index + 1} HISTORY[/bold {chat_color}]\n")
+        self._output(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]START CHAT {self.app.active_chat_index + 1} HISTORY[/bold {chat_color}]\n")
         
         if not self.history:
-            print(f"[bold {chat_color}]|[/bold {chat_color}] [grey70]No messages in history.[/grey70]")
+            self._output(f"[bold {chat_color}]|[/bold {chat_color}] [grey70]No messages in history.[/grey70]")
         else:
             for i, msg in enumerate(self.history, 1):
                 role = msg.get("role", "unknown").upper()
@@ -125,9 +137,9 @@ class ChatHistory:
                     role_color = "grey70"
                 
                 # Display message with consistent formatting
-                print(f"[bold {chat_color}]|[/bold {chat_color}] [{role_color}]{role}[/{role_color}]: [grey70]{content}[/grey70]")
+                self._output(f"[bold {chat_color}]|[/bold {chat_color}] [{role_color}]{role}[/{role_color}]: [grey70]{content}[/grey70]")
           # End header with CHAT # in the chat color
-        print(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]END CHAT {self.app.active_chat_index + 1} HISTORY[/bold {chat_color}]\n")
+        self._output(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]END CHAT {self.app.active_chat_index + 1} HISTORY[/bold {chat_color}]\n")
 
     def clear(self):
         """Clear the chat history."""

@@ -1,5 +1,5 @@
 """Persona commands module."""
-from rich import print
+from rich import print as rich_print
 
 from ...types import CommandResult, ActionType
 from ..registry import registry

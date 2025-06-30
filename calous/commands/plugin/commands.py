@@ -1,5 +1,5 @@
 """Plugin commands module."""
-from rich import print
+from rich import print as rich_print
 from rich.prompt import Prompt
 
 from ...types import CommandResult, ActionType
@@ -104,7 +104,7 @@ def cmd_plugin_reload(handler) -> CommandResult:
     # Show plugin directory for debugging
     plugin_dir = PluginService.get_plugin_dir(handler.app)
     if plugin_dir:
-        print(f"[grey50]Plugin directory: {plugin_dir}[/grey50]")
+        self._output(f"[grey50]Plugin directory: {plugin_dir}[/grey50]")
     
     # Ask for confirmation
     formatter.reload_warning()

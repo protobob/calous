@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.2.0-dev] - 2025-06-30
+
+### Changed
+- **Debug Flag Rename**: Changed `-i`/`--interactive` flag to `--debug` for clearer intent
+- **Debug Output Control**: All debug messages now properly respect the `--debug` flag
+  - Plugin loading debug messages (directory scanning, plugin discovery, configuration)
+  - Chat history loading messages
+  - Socket communication debug output
+- **Complete Daemon Mode**: Eliminated all CLI/terminal mode remnants, application runs purely in daemon mode
+- **Enhanced Output Buffering**: Fixed "invalid response" errors by implementing proper command output buffering
+  - Commands now send consolidated JSON responses instead of multiple separate responses
+  - Improved socket client compatibility and user experience
+
+### Fixed
+- **Debug Message Consistency**: Debug messages no longer appear without the `--debug` flag
+- **Socket Response Consolidation**: Commands now properly buffer output and send single JSON responses
+- **Plugin Manager Integration**: Plugin manager now properly inherits debug flag setting
+- **Chat History Verbosity**: History loading messages only appear in debug mode
+
+### Technical
+- Updated argument parsing to use `--debug` instead of `-i`/`--interactive`
+- Enhanced session manager to pass debug flag throughout the system
+- Improved plugin manager with debug-controlled output
+- Fixed output buffering implementation in socket command processing
+- Centralized debug flag propagation from main entry point through all subsystems
+
 ## [1.1.0.dev] - 2025-06-30
 
 ### Changed

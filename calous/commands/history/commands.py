@@ -1,6 +1,6 @@
 """History management commands."""
 from typing import Optional
-from rich import print
+from rich import print as rich_print
 from ...types import CommandResult, ActionType
 from ..registry import registry
 from ..types import CommandCategory
@@ -91,17 +91,17 @@ def cmd_history_save(handler, filename: str) -> CommandResult:
 
     # Check for overwrite
     if save_path.exists():
-        print(f"\n[yellow]File {save_path.name} already exists.[/yellow]")
+        self._output(f"\n[yellow]File {save_path.name} already exists.[/yellow]")
         if not Confirm.ask("Overwrite?", default=False):
-            print("\n[cyan]Operation cancelled.[/cyan]")
+            self._output("\n[cyan]Operation cancelled.[/cyan]")
             return CommandResult(ActionType.CONTINUE)
 
     service = HistoryService(handler.app)
     count = service.save_history_to_file(save_path)
     if count > 0:
-        print(f"\n[green]Chat history saved to {save_path} ({count} messages).[/green]")
+        self._output(f"\n[green]Chat history saved to {save_path} ({count} messages).[/green]")
     else:
-        print(f"\n[yellow]No messages to save. File not created.[/yellow]")
+        self._output(f"\n[yellow]No messages to save. File not created.[/yellow]")
     return CommandResult(ActionType.CONTINUE)
 
 @registry.register("history.load", "Load chat history from a file", category=CommandCategory.HISTORY)
@@ -121,18 +121,18 @@ def cmd_history_load(handler, filename: str) -> CommandResult:
 
     service = HistoryService(handler.app)
     if not load_path.exists():
-        print(f"\n[red]File not found: {load_path}[/red]")
+        self._output(f"\n[red]File not found: {load_path}[/red]")
         return CommandResult(ActionType.CONTINUE)
 
     # Warn user about overwrite
-    print("\n[yellow]Warning: Loading will overwrite current chat history in memory.[/yellow]")
+    self._output("\n[yellow]Warning: Loading will overwrite current chat history in memory.[/yellow]")
     from rich.prompt import Confirm
     if not Confirm.ask("Continue?", default=False):
-        print("\n[cyan]Operation cancelled.[/cyan]")
+        self._output("\n[cyan]Operation cancelled.[/cyan]")
         return CommandResult(ActionType.CONTINUE)
 
     count = service.load_history_from_file(load_path)
-    print(f"\n[green]Loaded {count} messages from {load_path} into current chat history.[/green]")
+    self._output(f"\n[green]Loaded {count} messages from {load_path} into current chat history.[/green]")
     return CommandResult(ActionType.CONTINUE)
 
 @registry.register("history.list", "List saved chat history files", category=CommandCategory.HISTORY)
@@ -141,16 +141,16 @@ def cmd_history_list(handler) -> CommandResult:
     from pathlib import Path
     list_dir = Path.home() / "calous" / "chat_history"
     if not list_dir.exists():
-        print("\n[yellow]No saved chat history files found.[/yellow]")
+        self._output("\n[yellow]No saved chat history files found.[/yellow]")
         return CommandResult(ActionType.CONTINUE)
     files = sorted(list_dir.glob("*.jsonl"))
     if not files:
-        print("\n[yellow]No saved chat history files found.[/yellow]")
+        self._output("\n[yellow]No saved chat history files found.[/yellow]")
     else:
-        print("\n[bold]Saved chat history files:[/bold]")
+        self._output("\n[bold]Saved chat history files:[/bold]")
         for f in files:
             base = f.stem  # filename without extension
-            print(f"  [cyan]{base}[/cyan]  ({f.stat().st_size} bytes)")
+            self._output(f"  [cyan]{base}[/cyan]  ({f.stat().st_size} bytes)")
     return CommandResult(ActionType.CONTINUE)
 
 @registry.register("history.delete", "Delete a saved chat history file", category=CommandCategory.HISTORY)
@@ -167,19 +167,19 @@ def cmd_history_delete(handler, filename: str) -> CommandResult:
     del_path = del_dir / f"{safe}.jsonl"
 
     if not del_path.exists():
-        print(f"\n[red]File not found: {del_path}[/red]")
+        self._output(f"\n[red]File not found: {del_path}[/red]")
         return CommandResult(ActionType.CONTINUE)
 
-    print(f"\n[yellow]Are you sure you want to delete {del_path.name}? This cannot be undone.[/yellow]")
+    self._output(f"\n[yellow]Are you sure you want to delete {del_path.name}? This cannot be undone.[/yellow]")
     if not Confirm.ask("Delete?", default=False):
-        print("\n[cyan]Operation cancelled.[/cyan]")
+        self._output("\n[cyan]Operation cancelled.[/cyan]")
         return CommandResult(ActionType.CONTINUE)
 
     try:
         del_path.unlink()
-        print(f"\n[green]Deleted {del_path.name}.[/green]")
+        self._output(f"\n[green]Deleted {del_path.name}.[/green]")
     except Exception as e:
-        print(f"\n[red]Error deleting file: {e}[/red]")
+        self._output(f"\n[red]Error deleting file: {e}[/red]")
     return CommandResult(ActionType.CONTINUE)
 
 @registry.register("history.purge", "Purge the most recent N entries from current chat history", category=CommandCategory.HISTORY)
@@ -192,11 +192,11 @@ def cmd_history_purge(handler, num_entries: int) -> CommandResult:
     n = max(0, min(num_entries, total))
 
     if n == 0:
-        print(f"[yellow]No messages to purge.[/yellow]")
+        self._output(f"[yellow]No messages to purge.[/yellow]")
         return CommandResult(ActionType.CONTINUE)
 
-    print(f"\n[bold yellow]Warning:[/bold yellow] This will [bold red]DELETE[/bold red] the [bold]{n}[/bold] most recent message(s) from [bold {chat_info.color}]CHAT {chat_info.number}[/bold {chat_info.color}] history.")
-    print("This cannot be undone.")
+    self._output(f"\n[bold yellow]Warning:[/bold yellow] This will [bold red]DELETE[/bold red] the [bold]{n}[/bold] most recent message(s) from [bold {chat_info.color}]CHAT {chat_info.number}[/bold {chat_info.color}] history.")
+    self._output("This cannot be undone.")
     
     # Use app.confirm() which handles socket mode properly
     # In socket mode, auto-confirm destructive operations since they're intentional
@@ -215,7 +215,7 @@ def cmd_history_purge(handler, num_entries: int) -> CommandResult:
         with open(history_file, 'w', encoding='utf-8') as f:
             for msg in history:
                 f.write(json.dumps(msg, ensure_ascii=False) + '\n')
-        print(f"[green]Purged {n} message(s) from chat history.[/green]")
+        self._output(f"[green]Purged {n} message(s) from chat history.[/green]")
     except Exception as e:
-        print(f"[red]Error updating history file: {e}[/red]")
+        self._output(f"[red]Error updating history file: {e}[/red]")
     return CommandResult(ActionType.CONTINUE)

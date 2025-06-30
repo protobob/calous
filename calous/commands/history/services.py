@@ -4,6 +4,16 @@ import json
 
 
 class ChatInfo(NamedTuple):
+    def _output(self, message: str, message_type: str = "response"):
+        """Send output to client or print to console."""
+        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode:
+            self.session_manager.send_to_client(message, message_type)
+        elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
+            self.app.session_manager.send_to_client(message, message_type)
+        else:
+            from rich import print as rich_print
+            rich_print(message)
+    
     number: int
     color: str
     chat_index: int
@@ -11,6 +21,16 @@ class ChatInfo(NamedTuple):
 
 class HistoryService:
     """Service for managing history operations."""
+    
+    def _output(self, message: str, message_type: str = "response"):
+        """Send output to client or print to console."""
+        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode:
+            self.session_manager.send_to_client(message, message_type)
+        elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
+            self.app.session_manager.send_to_client(message, message_type)
+        else:
+            from rich import print as rich_print
+            rich_print(message)
     
     def __init__(self, app):
         self.app = app
@@ -59,7 +79,7 @@ class HistoryService:
                     f.write(json.dumps(msg, ensure_ascii=False) + '\n')
             return len(history)
         except Exception as e:
-            print(f"\n[red]Error saving history: {e}[/red]")
+            self._output(f"\n[red]Error saving history: {e}[/red]")
             return 0
 
     def load_history_from_file(self, load_path):
@@ -77,7 +97,7 @@ class HistoryService:
             self.app.chat_history.history = messages
             return len(messages)
         except Exception as e:
-            print(f"\n[red]Error loading history: {e}[/red]")
+            self._output(f"\n[red]Error loading history: {e}[/red]")
             return 0
     
     def purge_history(self, num_entries: int) -> int:
@@ -96,5 +116,5 @@ class HistoryService:
                 for msg in history:
                     f.write(json.dumps(msg, ensure_ascii=False) + '\n')
         except Exception as e:
-            print(f"[red]Error updating history file: {e}[/red]")
+            self._output(f"[red]Error updating history file: {e}[/red]")
         return n

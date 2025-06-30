@@ -8,6 +8,16 @@ from .constants import LOG_DIR
 class UnifiedLogger:
     """Handles unified logging across all chat channels and system events."""
     
+    def _output(self, message: str, message_type: str = "response"):
+        """Send output to client or print to console."""
+        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode:
+            self.session_manager.send_to_client(message, message_type)
+        elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
+            self.app.session_manager.send_to_client(message, message_type)
+        else:
+            from rich import print as rich_print
+            rich_print(message)
+    
     def __init__(self):
         self.enabled = True
     
@@ -34,7 +44,7 @@ class UnifiedLogger:
                 f.write(log_entry)
                 
         except Exception as e:
-            print(f"Failed to write unified log: {e}")
+            self._output(f"Failed to write unified log: {e}")
     
     def log_conversation(self, chat_index: int, role: str, content: str, model: Optional[str] = None):
         """Log a conversation message."""
@@ -111,7 +121,7 @@ class UnifiedLogger:
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(f"\n{separator}\n\n")
         except Exception as e:
-            print(f"Failed to write log separator: {e}")
+            self._output(f"Failed to write log separator: {e}")
             
     def log_plugin_event(self, event_type: str, message: str):
         """Log plugin-related events."""

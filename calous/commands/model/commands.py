@@ -1,6 +1,6 @@
 """Model management commands."""
 from typing import Optional
-from rich import print
+from rich import print as rich_print
 from ...types import CommandResult, ActionType
 from ..registry import registry
 from ..types import CommandCategory
@@ -26,8 +26,8 @@ def cmd_model_switch(handler, model_selection: Optional[str] = None) -> CommandR
         plain_text = f"Model changed to: {selected}"
         return CommandResult(ActionType.CONTINUE, message=plain_text)
     else:
-        print(f"\n[bold red]Invalid model selection:[/bold red] {model_selection}")
-        print("[grey50]Use /model.switch to see available models[/grey50]")
+        self._output(f"\n[bold red]Invalid model selection:[/bold red] {model_selection}")
+        self._output("[grey50]Use /model.switch to see available models[/grey50]")
         return CommandResult(ActionType.CONTINUE, message="Error: Invalid model selection")
 
 

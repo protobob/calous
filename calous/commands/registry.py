@@ -14,6 +14,16 @@ from .types import CommandDefinition, CommandCategory
 class CommandRegistry:
     """Registry for all available commands with decorator-based registration."""
     
+    def _output(self, message: str, message_type: str = "response"):
+        """Send output to client or print to console."""
+        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode:
+            self.session_manager.send_to_client(message, message_type)
+        elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
+            self.app.session_manager.send_to_client(message, message_type)
+        else:
+            from rich import print as rich_print
+            rich_print(message)
+    
     def __init__(self):
         self.commands: Dict[str, CommandDefinition] = {}
         self.aliases: Dict[str, str] = {}
@@ -133,7 +143,7 @@ class CommandRegistry:
                 
                 # Print the Rich output to terminal (so user sees it)
                 if rich_output:
-                    print(rich_output, end='')
+                    self._output(rich_output, end='')
                 
                 # If the command returned a CommandResult, update its message with plain text
                 if hasattr(result, 'message') and hasattr(result, 'action'):
