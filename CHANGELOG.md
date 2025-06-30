@@ -5,6 +5,15 @@ All notable changes to CALOUS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [1.1.0.dev] - 2025-06-30
+
+### Changed
+- **Socket Mode Default**: The application now starts in socket (daemon) mode by default. CLI/terminal mode has been removed.
+- **Channel Count Configurable**: The number of chat channels is now configurable via a constant in `constants.py` and can still be set via command-line argument.
+- **Output Method Refactor**: Introduced a new method to handle output in place of direct `print` statements, but existing `print` calls have not yet been replaced.
+
+
 ## [1.0.0.dev] - 2025-06-29
 
 ### Added - Client (cx)

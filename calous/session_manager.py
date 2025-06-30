@@ -323,7 +323,23 @@ class ChatSessionManager:
         os.system('cls' if os.name == 'nt' else 'clear')
         from .utils import print_rainbow_header
         print_rainbow_header()
-    
+
+    def send_to_client(self, response: dict, conn):
+        """
+        Safely send a JSON response to the connected client.
+        Handles encoding and connection errors gracefully.
+        """
+        import json
+        try:
+            conn.sendall(json.dumps(response).encode())
+        except BrokenPipeError:
+            # Client closed connection before response was sent
+            if hasattr(self, 'interactive') and self.interactive:
+                print("[calous] Client closed connection before response was sent.")
+        except Exception as e:
+            if hasattr(self, 'interactive') and self.interactive:
+                print(f"[calous] Error sending response to client: {e}")
+                
     def listen_for_socket(self, interactive=False):
         """Listen for socket connections and handle multi-chat commands."""
         import socket

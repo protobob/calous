@@ -6,10 +6,6 @@ WORKDIR /app
 RUN pip install --no-cache-dir \
     ollama>=0.5.2 \
     rich \
-    pydantic \
-    asteval \
-    prompt_toolkit
-
 # Create the calous directory for data persistence
 RUN mkdir -p /root/calous
 
