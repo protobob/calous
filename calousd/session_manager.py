@@ -14,10 +14,8 @@ if TYPE_CHECKING:
 class ChatSessionManager:    
     def _output(self, message: str, message_type: str = "response"):
         """Send output to client or print to console."""
-        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode:
-            self.session_manager.send_to_client(message, message_type)
-        elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
-            self.app.session_manager.send_to_client(message, message_type)
+        if self.socket_mode and self.current_connection:
+            self.send_to_client(message, message_type)
         else:
             print(message)
     
@@ -55,6 +53,10 @@ class ChatSessionManager:
         # Get the plugin directory path
         plugin_dir = Path(os.path.dirname(__file__)) / 'plugins'
         self.plugin_manager = PluginManager(debug=self.debug)
+        
+        # Set output callback so plugin manager can send messages to socket clients
+        self.plugin_manager.set_output_callback(self.send_to_client)
+        
         self.plugin_manager.discover_and_load_plugins(plugin_dir)
     
     def _initialize_chats(self):
@@ -66,7 +68,7 @@ class ChatSessionManager:
         for i, chat in enumerate(self.chats):
             chat.active_chat_index = i
             chat.session_manager = self  # Give chats reference to session manager only
-            chat.plugin_manager = self.plugin_manager  # Inject shared plugin manager
+            chat.plugin_manager = self.plugin_manager  # type: ignore # Inject shared plugin manager
     
     def get_active_chat(self) -> 'Chat':
         """Get the currently active chat instance."""
@@ -181,7 +183,7 @@ class ChatSessionManager:
         new_chat.session_manager = self
         
         # Inject shared plugin manager
-        new_chat.plugin_manager = self.plugin_manager
+        new_chat.plugin_manager = self.plugin_manager  # type: ignore
         
         # Ensure new chat has global context window setting
         new_chat.num_ctx = ConfigManager.get_global_num_ctx()
@@ -432,13 +434,19 @@ class ChatSessionManager:
         while time.time() - start_time < timeout:
             try:
                 # Set socket to non-blocking for timeout support
-                self.current_connection.settimeout(1.0)
+                if self.current_connection:
+                    self.current_connection.settimeout(1.0)
+                else:
+                    break
                 
                 # Read response data
                 data = b""
                 while True:
                     try:
-                        chunk = self.current_connection.recv(1024)
+                        if self.current_connection:
+                            chunk = self.current_connection.recv(1024)
+                        else:
+                            break
                         if not chunk:
                             break
                         data += chunk
@@ -578,7 +586,7 @@ class ChatSessionManager:
                 active_chat = self.get_active_chat()
                 
                 # Initialize response
-                response: Dict[str, Any] = {"error": "Unknown error"}
+                response: Optional[Dict[str, Any]] = {"error": "Unknown error"}
                 
                 if msg_type == "confirmation_response":
                     # Handle confirmation response - this will be processed by _wait_for_confirmation_response

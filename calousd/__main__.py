@@ -3,6 +3,7 @@ import sys
 from .session_manager import ChatSessionManager
 from .constants import DEFAULT_NUM_CHATS, MAX_CHATS, SERVER_DEFAULT_NUM_CHATS
 from .config import ConfigManager
+from .unified_logger import unified_logger
 
 def main():
     parser = argparse.ArgumentParser(description="Hi, Ollama! - Multi-chat AI interface")
@@ -19,7 +20,7 @@ def main():
     num_chats = SERVER_DEFAULT_NUM_CHATS
     # Warn user if they specified a chat count that will be ignored
     if args.num_chats is not None:
-        self._output(f"[Warning] Chat channel argument '{args.num_chats}' ignored in socket mode. Using {SERVER_DEFAULT_NUM_CHATS} chat channels.")
+        unified_logger._write_log_entry("WARNING", f"Chat channel argument '{args.num_chats}' ignored in socket mode. Using {SERVER_DEFAULT_NUM_CHATS} chat channels.")
 
     session_manager = ChatSessionManager(num_chats=num_chats, debug=args.debug)
     # Set all chats to non-interactive mode for socket/server

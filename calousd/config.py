@@ -1,17 +1,9 @@
 """Configuration management for Hi, Ollama!"""
 import json
 from .constants import CONFIG_PATH, DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS, DEFAULT_NUM_CHATS, DEFAULT_NUM_CTX, DEFAULT_KEEP_ALIVE
+from .unified_logger import unified_logger
 
 class ConfigManager:
-    
-    def _output(self, message: str, message_type: str = "response"):
-        """Send output to client or print to console."""
-        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode:
-            self.session_manager.send_to_client(message, message_type)
-        elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
-            self.app.session_manager.send_to_client(message, message_type)
-        else:
-            print(message)
     
     @staticmethod    
     def _generate_default_chat_config():
@@ -54,8 +46,8 @@ class ConfigManager:
             with open(CONFIG_PATH, 'r') as f:
                 return json.load(f)
         except (json.JSONDecodeError, FileNotFoundError) as e:
-            CommandFormatter._output(f"\nError loading config: {e}")
-            CommandFormatter._output("Creating new default configuration...")
+            unified_logger._write_log_entry("ERROR", f"Error loading config: {e}")
+            unified_logger._write_log_entry("INFO", "Creating new default configuration...")
             return ConfigManager._generate_default_unified_config()
     
     @staticmethod
@@ -66,7 +58,7 @@ class ConfigManager:
             with open(CONFIG_PATH, 'w') as f:
                 json.dump(config, f, indent=2)
         except Exception as e:
-            CommandFormatter._output(f"\nError saving config: {e}")
+            unified_logger._write_log_entry("ERROR", f"Error saving config: {e}")
     @staticmethod
     def get_chat_config(instance_index):
         """Get configuration for a specific chat instance."""

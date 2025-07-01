@@ -19,6 +19,7 @@ from typing import Dict, Any, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .session_manager import ChatSessionManager
+    from .plugins.manager import PluginManager
 
 SOCKET_PATH = "/tmp/calous.sock"
 
@@ -60,8 +61,8 @@ class Chat:
         self.keep_alive = ConfigManager.get_keep_alive()  # Load global keep_alive setting
         self.prompts = self.config.get("prompts", {f"prompt{i}": "" for i in range(1, MAX_PROMPTS + 1)})
         self.active_chat_index = instance_index
-        self.session_manager = None
-        self.plugin_manager = None
+        self.session_manager: Optional['ChatSessionManager'] = None
+        self.plugin_manager: Optional['PluginManager'] = None  # Will be set by session manager
         self.non_interactive = False  # Add this line for auto-confirm mode
 
         self.ui = UIManager(self)
@@ -225,7 +226,7 @@ class Chat:
                             
                             # Print Rich output to terminal (so user sees it)
                             if captured_output:
-                                self._output(captured_output, end='')
+                                self._output(captured_output)
                             
                             # Send clean output to client
                             response = {"response": clean_output.strip() if clean_output.strip() else (cmd_result.message if hasattr(cmd_result, "message") else str(cmd_result))}
@@ -264,9 +265,9 @@ class Chat:
                 # Use sys.stderr to avoid Rich markup interpretation issues
                 try:
                     display_data = data.decode('utf-8', errors='replace')[:100]
-                    self._output(f"[calous] Received: {display_data}{'...' if len(data) > 100 else ''} -> Sent: {json.dumps(response)}", file=sys.stderr)
+                    self._output(f"[calous] Received: {display_data}{'...' if len(data) > 100 else ''} -> Sent: {json.dumps(response)}")
                 except:
-                    self._output(f"[calous] Received: [binary data {len(data)} bytes] -> Sent: {json.dumps(response)}", file=sys.stderr)
+                    self._output(f"[calous] Received: [binary data {len(data)} bytes] -> Sent: {json.dumps(response)}")
 
     def confirm(self, question, default=True):
         """Auto-confirm if non_interactive, else prompt the user."""

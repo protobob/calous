@@ -14,13 +14,23 @@ class PluginManager:
     """Manages plugin discovery, loading, and lifecycle."""
     
     def _output(self, message: str, message_type: str = "response"):
-        """Send output to client or print to console."""
-        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode:
-            self.session_manager.send_to_client(message, message_type)
-        elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
-            self.app.session_manager.send_to_client(message, message_type)
+        """Send output to client via callback or log it."""
+        # Try to use callback if available (set by session manager)
+        if hasattr(self, '_output_callback') and self._output_callback:
+            self._output_callback(message, message_type)
         else:
-            print(message)
+            # Fall back to logging for daemon mode
+            # Strip Rich markup for clean logs
+            import re
+            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+            rich_markup = re.compile(r'\[/?[^\]]*\]')
+            clean_message = ansi_escape.sub('', message)
+            clean_message = rich_markup.sub('', clean_message)
+            unified_logger._write_log_entry("PLUGIN_OUTPUT", clean_message)
+    
+    def set_output_callback(self, callback):
+        """Set a callback function for output (called by session manager)."""
+        self._output_callback = callback
     
     def __init__(self, debug: bool = False):
         self.plugins: Dict[str, PluginBase] = {}
@@ -30,6 +40,7 @@ class PluginManager:
         self.plugin_commands: Dict[str, Callable] = {}
         self.plugin_functions: Dict[str, Callable] = {}
         self.debug = debug
+        self._output_callback = None  # Will be set by session manager
         
     def discover_and_load_plugins(self, plugin_dir: Path) -> None:
         """Discover and load all plugins from the plugin directory."""
@@ -146,7 +157,7 @@ class PluginManager:
                 
                 # Instantiate and register the plugin
                 try:
-                    plugin_instance = attr()
+                    plugin_instance = attr()  # type: ignore # Plugin classes define their own constructors
                     self.register_plugin(plugin_instance)
                 except Exception as e:
                     self._output(f"[yellow]Warning:[/yellow] Failed to instantiate plugin {attr_name}: {e}")
@@ -167,21 +178,24 @@ class PluginManager:
             capabilities = plugin.get_capabilities()
             
             if PluginCapability.FUNCTION_CALLING in capabilities:
-                func_plugin = plugin
-                self.function_plugins[plugin.name] = func_plugin
-                # Register function mappings
-                for func_name in func_plugin.get_function_names():
-                    self.plugin_functions[func_name] = func_plugin.execute_function
+                if isinstance(plugin, FunctionCallingPlugin):
+                    func_plugin = plugin
+                    self.function_plugins[plugin.name] = func_plugin
+                    # Register function mappings
+                    for func_name in func_plugin.get_function_names():
+                        self.plugin_functions[func_name] = func_plugin.execute_function
             
             if PluginCapability.COMMANDS in capabilities:
-                cmd_plugin = plugin
-                self.command_plugins[plugin.name] = cmd_plugin
-                # Register command mappings
-                commands = cmd_plugin.get_commands()
-                self.plugin_commands.update(commands)
+                if isinstance(plugin, CommandPlugin):
+                    cmd_plugin = plugin
+                    self.command_plugins[plugin.name] = cmd_plugin
+                    # Register command mappings
+                    commands = cmd_plugin.get_commands()
+                    self.plugin_commands.update(commands)
             
             if PluginCapability.HOOKS in capabilities:
-                self.hook_plugins.append(plugin)
+                if isinstance(plugin, HookPlugin):
+                    self.hook_plugins.append(plugin)
             
             # Print success message for all loaded plugins
             self._output(f"[green]✓[/green] Loaded plugin: {plugin.name} v{plugin.version}")
@@ -288,12 +302,14 @@ class PluginManager:
         
         # Add capability-specific info
         if PluginCapability.FUNCTION_CALLING in plugin.get_capabilities() and plugin.loaded:
-            func_plugin = plugin
-            info["functions"] = func_plugin.get_function_names()
+            if isinstance(plugin, FunctionCallingPlugin):
+                func_plugin = plugin
+                info["functions"] = func_plugin.get_function_names()
         
         if PluginCapability.COMMANDS in plugin.get_capabilities() and plugin.loaded:
-            cmd_plugin = plugin
-            info["commands"] = list(cmd_plugin.get_commands().keys())
+            if isinstance(plugin, CommandPlugin):
+                cmd_plugin = plugin
+                info["commands"] = list(cmd_plugin.get_commands().keys())
         
         return info
     

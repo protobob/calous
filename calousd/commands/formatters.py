@@ -1,11 +1,15 @@
 """UI formatting utilities for command output."""
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, TYPE_CHECKING
 from ..constants import Colors, Messages, Confirmations
 from ..utils import get_chat_color
+
+if TYPE_CHECKING:
+    from ..session_manager import ChatSessionManager
 
 
 class CommandFormatter:
     """Utility class for consistent command output formatting."""   
+    _session_manager: Optional['ChatSessionManager'] = None  # Will be set by session manager during command execution
     
     @staticmethod
     def _get_session_manager():

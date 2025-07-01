@@ -5,23 +5,29 @@ import re
 from pathlib import Path
 from typing import Dict, List, Optional
 from .constants import PERSONA_DIR
+from .unified_logger import unified_logger
 
 
 class PersonaManager:
     """Manages persona storage and operations."""
     
-    def _output(self, message: str, message_type: str = "response"):
-        """Send output to client or print to console."""
-        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode:
-            self.session_manager.send_to_client(message, message_type)
-        elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
-            self.app.session_manager.send_to_client(message, message_type)
-        else:
-            print(message)
-    
-    def __init__(self):
+    def __init__(self, output_callback=None):
         self.persona_dir = PERSONA_DIR
         self.persona_dir.mkdir(parents=True, exist_ok=True)
+        self._output_callback = output_callback
+    
+    def _output(self, message: str, message_type: str = "response"):
+        """Send output via callback or log it."""
+        if self._output_callback:
+            self._output_callback(message, message_type)
+        else:
+            # Fall back to logging for daemon mode
+            import re
+            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+            rich_markup = re.compile(r'\[/?[^\]]*\]')
+            clean_message = ansi_escape.sub('', message)
+            clean_message = rich_markup.sub('', clean_message)
+            unified_logger._write_log_entry("PERSONA", clean_message)
     
     @staticmethod
     def sanitize_filename(name: str) -> str:
@@ -36,18 +42,15 @@ class PersonaManager:
     def save_persona(self, name: str, slots: Dict[int, str]) -> bool:
         """Save persona to file."""
         if not name.strip():
-            CommandFormatter._output("[bold red]Error:[/bold red] Persona name cannot be empty.")
+            self._output("[bold red]Error:[/bold red] Persona name cannot be empty.")
             return False
         
         sanitized_name = self.sanitize_filename(name)
         filepath = self.persona_dir / f"{sanitized_name}.json"
         
-        # Check for overwrite protection
+        # Check for overwrite protection - skip confirmation in daemon mode
         if filepath.exists():
-            confirm = input(f"\nWarning: Persona '{name}' already exists. Overwrite? (y/n) [n]: ")
-            if confirm.lower() != 'y':
-                CommandFormatter._output("Save operation cancelled.")
-                return False
+            self._output(f"[bold yellow]Warning:[/bold yellow] Persona '{name}' already exists. Overwriting...")
         
         persona_data = {
             "name": name,
@@ -57,10 +60,10 @@ class PersonaManager:
         try:
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(persona_data, f, indent=2, ensure_ascii=False)
-            CommandFormatter._output(f"[bold green]Success:[/bold green] Persona '{name}' saved!")
+            self._output(f"[bold green]Success:[/bold green] Persona '{name}' saved!")
             return True
         except Exception as e:
-            CommandFormatter._output(f"[bold red]Error:[/bold red] Failed to save persona: {e}")
+            self._output(f"[bold red]Error:[/bold red] Failed to save persona: {e}")
             return False
     
     def load_persona(self, name: str) -> Optional[Dict]:
@@ -69,14 +72,14 @@ class PersonaManager:
         filepath = self.persona_dir / f"{sanitized_name}.json"
         
         if not filepath.exists():
-            CommandFormatter._output(f"[bold red]Error:[/bold red] Persona '{name}' not found.")
+            self._output(f"[bold red]Error:[/bold red] Persona '{name}' not found.")
             return None
         
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
-            CommandFormatter._output(f"[bold red]Error:[/bold red] Failed to load persona: {e}")
+            self._output(f"[bold red]Error:[/bold red] Failed to load persona: {e}")
             return None
     
     def list_personas(self) -> List[str]:
@@ -102,33 +105,42 @@ class PersonaManager:
         filepath = self.persona_dir / f"{sanitized_name}.json"
         
         if not filepath.exists():
-            CommandFormatter._output(f"[bold red]Error:[/bold red] Persona '{name}' not found.")
+            self._output(f"[bold red]Error:[/bold red] Persona '{name}' not found.")
             return False
         
         try:
             filepath.unlink()
-            CommandFormatter._output(f"[bold green]Success:[/bold green] Persona '{name}' deleted!")
+            self._output(f"[bold green]Success:[/bold green] Persona '{name}' deleted!")
             return True
         except Exception as e:
-            CommandFormatter._output(f"[bold red]Error:[/bold red] Failed to delete persona: {e}")
+            self._output(f"[bold red]Error:[/bold red] Failed to delete persona: {e}")
             return False
 
 
 class Persona:
     """Represents a chat persona with named slots."""
     
-    def _output(self, message: str, message_type: str = "response"):
-        """Send output to client or print to console."""
-        if hasattr(self, 'session_manager') and self.session_manager and self.session_manager.socket_mode:
-            self.session_manager.send_to_client(message, message_type)
-        elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
-            self.app.session_manager.send_to_client(message, message_type)
-        else:
-            print(message)
-    
-    def __init__(self):
+    def __init__(self, output_callback=None):
         self.name: str = ""
         self.slots: Dict[int, str] = {}
+        self._output_callback = output_callback
+    
+    def _output(self, message: str, message_type: str = "response"):
+        """Send output via callback or log it."""
+        if self._output_callback:
+            self._output_callback(message, message_type)
+        else:
+            # Fall back to logging for daemon mode
+            import re
+            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+            rich_markup = re.compile(r'\[/?[^\]]*\]')
+            clean_message = ansi_escape.sub('', message)
+            clean_message = rich_markup.sub('', clean_message)
+            unified_logger._write_log_entry("PERSONA", clean_message)
+    
+    def set_output_callback(self, callback):
+        """Set the output callback for this persona."""
+        self._output_callback = callback
     
     def set_name(self, name: str):
         """Set the persona name."""

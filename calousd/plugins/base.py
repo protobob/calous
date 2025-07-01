@@ -22,7 +22,7 @@ class PluginBase(ABC):
         self.description = description
         self.capabilities: List[PluginCapability] = []
         self.loaded = False
-        self.error = None
+        self.error: Optional[str] = None
     
     @abstractmethod
     def initialize(self) -> bool:

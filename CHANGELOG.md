@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.1.dev] - 2025-07-01
+
+### Fixed
+- **Daemon Output System**: Comprehensive refactoring of output handling for socket/daemon safety
+  - Fixed broken `_output()` methods across multiple core modules that were causing type and runtime errors
+  - Replaced direct print statements with socket-aware output routing via callback system
+  - Implemented unified logging fallback for daemon mode when no client is connected
+  - Removed all interactive input dependencies for full daemon compatibility
+  - Fixed `CommandFormatter._output()` calls throughout the codebase
+  - Updated PersonaManager and PluginManager to use callback-based output systems
+- **Type Safety**: Resolved numerous type annotation and attribute access errors
+  - Fixed missing class attributes and method signatures in core modules
+  - Added proper type ignore comments where necessary for plugin instantiation
+  - Corrected session manager and plugin manager attribute typing
+
+### Changed
+- **Output Architecture**: Replaced stdout-dependent output with daemon-safe alternatives
+  - All user-facing output now routes through session manager or unified logger
+  - Interactive confirmations removed from daemon code paths for safety
+  - Plugin and persona managers now use callback-based output with logging fallback
+
 ## [1.4.0.dev] - 2025-07-01
 
 ### Added
@@ -316,6 +337,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Universal Compatibility**: All existing commands now work flawlessly with external clients like the Rust `hi` tool without any Rich formatting interference.
 - **Streamlined Integration**: External tools can reliably parse and process command outputs, enabling better automation and scripting capabilities.
 - **Maintainability**: The global output capture system eliminates the need for manual Rich tag handling in individual commands, reducing maintenance overhead.
+
 
 ## [0.12.19.dev] - 2025-06-27
 
@@ -1056,7 +1078,7 @@ This represents a foundational architectural improvement that enhances code main
 - Persistent thinking mode configuration across sessions
 
 ### Changed
-- Upgraded to ollama library 0.5.2.dev2 for native thinking support
+- Upgraded to olloma library 0.5.2.dev2 for native thinking support
 - Model responses now use Ollama's native thinking separation instead of regex
 - Thinking content displays in dim cyan during streaming when enabled
 - Default thinking mode is disabled for clean output
