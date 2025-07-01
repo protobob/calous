@@ -1,8 +1,8 @@
 #!/usr/binfrom calous.commands.registry import registry
-from calous.commands.types import CommandCategory
+from calousd.commands.types import CommandCategory
 
 # Import all command modules so they get registered
-import calous.commandspython3
+import calousd.commandspython3
 """Script to list all registered commands in CALOUS."""
 
 import sys
@@ -12,11 +12,11 @@ from pathlib import Path
 calous_path = Path(__file__).parent / "calous"
 sys.path.insert(0, str(calous_path.parent))
 
-from calous.commands.registry import registry
-from calous.commands.types import CommandCategory
+from calousd.commands.registry import registry
+from calousd.commands.types import CommandCategory
 
 # Import all command modules to trigger registration
-import calous.commands
+import calousd.commands
 
 def main():
     print("=== ALL REGISTERED COMMANDS ===\n")

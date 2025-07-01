@@ -1,9 +1,9 @@
 import pytest
 import json
 from unittest.mock import Mock, MagicMock
-from calous.plugins.builtin.dice_roller import DiceRollerPlugin
-from calous.model_interaction import ModelInteraction
-from calous.unified_logger import unified_logger
+from calousd.plugins.builtin.dice_roller import DiceRollerPlugin
+from calousd.model_interaction import ModelInteraction
+from calousd.unified_logger import unified_logger
 
 @pytest.fixture
 def dice_plugin():

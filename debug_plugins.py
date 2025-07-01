@@ -13,7 +13,7 @@ for p in sys.path[:3]:
 
 try:
     print("Importing PluginManager...")
-    from calous.plugins.manager import PluginManager
+    from calousd.plugins.manager import PluginManager
     print("PluginManager imported successfully")
 except Exception as e:
     print(f"Error importing PluginManager: {e}")

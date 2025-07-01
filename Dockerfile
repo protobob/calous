@@ -5,16 +5,15 @@ WORKDIR /app
 # Install only the non-standard dependencies
 RUN pip install --no-cache-dir \
     ollama>=0.5.2 \
-    rich \
 # Create the calous directory for data persistence
-RUN mkdir -p /root/calous
+RUN mkdir -p /root/calousd
 
 # Set up volume mount point
-VOLUME ["/root/calous"]
+VOLUME ["/root/calousd"]
 
 # Set PYTHONPATH so imports work
 ENV PYTHONPATH=/app
 
 # Don't copy code - we'll mount it instead
 # Run the application
-CMD ["python", "-m", "calous"]
+CMD ["python", "-m", "calousd"]

@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-from calous.constants import APP_VERSION
+from calousd.constants import APP_VERSION
 
 setup(
     name="calous",

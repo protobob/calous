@@ -1,21 +1,45 @@
-CALOUS: Context Abstraction Layer Over Unix Sockets
+What is CALOUS?
 
-CALOUS is a CLI context management layer that sits between you and your local llm's run by ollama. It's not a model, an ai or a replacement for ollama. Instead it handles system prompts, chat history, prompt library and model settings. It fetures over 55+ commands divided into categories.
+What if you could have a multi-persona context manager for your ollama and your local LLM's that sits right on top of your operating system and lives in your terminal?
 
-It includes three(four) main software applications:
+That's what CALOUS does. It consists of:
 
-calousd: minimal python daemon that listens over unix sockets for CALOUS clients and manages context and sends prompts to ollama
+calousd: a mutli-chat context manager service that's written in python and takes very few resources to run. It defaults to starting with fourteen channels, each with it's own context (name, modular system prompt, chat-history, prompt library, model settings) which you can switch between any time. And you can save all of these settings to disk and reload them later.
 
-cx: a minimal rust unix tool that lets you send prompts, calous commands and data through unix pipes, it also includes a basic REPL mode.
+cx: a unix tool written in rust that you use in your terminal. It lets you send prompts, send commands to calous AND you can use it with unix pipes to send data to your model or save prompts to disk.
 
-cxi: a minmal python repl for CALOUS that features rich text, tab completion and command history (not made yet)
+    examples:
 
-cxgui: a gui app that lets you talk to your local models using CALOUS context management. (not made yet)
+        # Send a prompt to your model:
+        cx "What is the flag for ls that shows file details?"
 
-CX is the star of the show, it lets your bring you models down into any terminal.
+        # Send commands to calous:
+        cx -c "/sys.help"
 
-Examples:
+        # specify channel:
+        cx -n 2 "Hello Astraea! WRite me a poem about mars!"
+        
+        # use unix pipes to create complex commands:
+        ls -l | cx "What is the largest file in this directory?"
+        textfile > cx "Summarize this file for me" > summaryfile
 
-ps aux | head -n 10 | cx "what is the top process?"
-textfile > cx "summarize this text file" > newtextfile
-cx -c "/sys.help"
+        # start the CALOUS REPL:
+        cx -i
+
+CALOUS has over 55+ commands, and while that sounds confusing they are broken up into categories with comphrensive online help.
+
+        # change your ollama mode:
+        /sys.model 7
+
+        # see help for chat commands:
+        /sys.help chat
+        
+        # show your chat history:
+        /history.chat
+
+        # create a command alias
+        /alias.add s chat.switch
+
+        # set a system prompt (0-9):
+        /persona.set 0 You are a helpful assistant
+

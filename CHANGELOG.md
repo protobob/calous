@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.3.0.dev] - 2025-07-01
+
+### Fixed
+- **Rich Dependency Removal**: Complete removal of Rich library from codebase for container compatibility
+  - Removed all Rich imports from 17+ files including core modules (app.py, session_manager.py, model_interaction.py)
+  - Fixed `/sys.help.all` error by replacing Rich Table with simple text formatting
+  - Updated all command formatters to use standard Python I/O instead of Rich markup
+- **Chat.twist Command**: Fixed incomplete implementation that wasn't sending twisted content to models
+  - Fixed `handle_regular_input()` method to store response in `self.last_response`
+  - Fixed `process_input()` to call `handle_regular_input()` for non-command input
+- **Directory Path Consistency**: Updated commands to use proper directory constants
+  - Added `CHAT_HISTORY_DIR` constant pointing to `~/calousd/chat_history`
+  - Fixed history commands to use centralized constants instead of hardcoded paths
+
+### Added
+- **History Status Command**: New `/history.vars` command showing history recording status and message count
+- **Context Management System**: Complete new command category for saving/loading persona, prompts, and chat history
+  - `/context.save <name>` - Save current context to JSON file
+  - `/context.load <name>` - Load context from file (overwrites current data)
+  - `/context.list` - List all saved contexts
+  - `/context.delete <name>` - Delete saved context file
+  - Added `CONTEXT_DIR` constant for consistent file storage
+
+### Enhanced
+- **Multi-word Argument Support**: Fixed argument parsing for commands with multi-word filenames
+  - Updated registry to handle context and history commands with `nargs='+'`
+  - Commands now properly join multi-word arguments (e.g., `/context.save admin panel`)
+- **Directory Structure**: Updated constants to use `~/calousd/` instead of `~/calous/`
+  - All file operations now use centralized directory constants
+  - Consistent path handling across context, history, and persona commands
+
+### Technical
+- **Command Architecture**: Enhanced command registry with special argument handling
+- **Service Layer**: Added `ContextService` for context operations with proper error handling
+- **Formatter System**: Context commands follow established formatter patterns for consistent output
+- **Path Management**: Centralized all directory paths in `constants.py` for maintainability
+
 ## [1.2.0-dev] - 2025-06-30
 
 ### Changed
