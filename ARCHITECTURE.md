@@ -47,20 +47,27 @@
 
 ### Socket Interface Architecture
 - **Unix Socket**: `/tmp/calous.sock` enables external client communication
-- **Output Capture**: Global system captures all Rich console output
-- **Format Stripping**: ANSI/Rich tags automatically removed for socket responses
-- **Dual Format Support**: Same commands work in both CLI and socket modes
+- **Format Handling**: Clients specify `"format": "plain"` or `"format": "rich"` in JSON requests
+- **Automatic ANSI Stripping**: Rich markup and ANSI codes automatically removed in `session_manager.send_to_client()` for plain clients
+- **Single Output Path**: Commands always generate Rich formatting; socket interface handles conversion
 - **Protocol**: JSON-based message protocol for universal client compatibility
 - **External Integration**: Any application can connect and interact with CALOUS
+
+### Output Formatting System
+- **Rich by Default**: All commands and formatters generate Rich-formatted output with colors and styling
+- **Client-Controlled Conversion**: Socket clients specify `format: "plain"` or `format: "rich"` in JSON requests
+- **Automatic Stripping**: `session_manager.send_to_client()` uses regex to remove ANSI codes and Rich markup for plain clients
+- **Single Codebase**: No dual formatter patterns needed - conversion happens at the socket boundary
+- **Backward Compatible**: Existing CLI behavior unchanged; socket clients get clean text automatically
 
 
 ### UI Management (`ui.py`)
 - **UIManager Class**: Centralized display logic and Rich console management
-- **Dual-Format Methods**: Methods like `show_available_models()` return both Rich and plain text
+- **Rich Output Focus**: Methods like `show_available_models()` generate Rich-formatted content
 - **Responsibilities**: User prompts, help menus, variable displays, context views
 - **Size**: ~950+ lines - comprehensive UI management
 - **Status**: ✅ Well-organized, represents good centralization
-- **Rule**: All new display logic should be added here, with dual-format support
+- **Rule**: All new display logic should be added here, with Rich formatting as primary output
 
 ### Model Interaction (`model_interaction.py`)
 - **ModelInteraction Class**: All Ollama model communication
@@ -83,7 +90,7 @@
 - **Formatter Distribution**: 
   - Central base formatter (`commands/formatters.py`) with CommandFormatter base class
   - Specialized formatters in each category directory (`chat/formatters.py`, `file/formatters.py`, etc.)
-- **Output Responsibility**: Formatters handle Rich formatting, UIManager handles dual-format output
+- **Output Responsibility**: Formatters handle Rich formatting, session_manager handles ANSI stripping for socket clients
 - **Rule**: Focus on bug fixes and minor enhancements only
 - **NO MAJOR RESTRUCTURING**: The current system works and is familiar to users
 
@@ -106,6 +113,15 @@
 ### Socket API for External Integration
 - **Universal Interface**: Any application can connect to `/tmp/calous.sock`
 - **JSON Protocol**: Standardized message format for interoperability
+- **Format Control**: Clients specify output format in requests:
+  ```json
+  {
+    "type": "cmd",
+    "data": "{\"action\": \"/help\"}",
+    "format": "plain"  // or "rich" for ANSI codes
+  }
+  ```
+- **Automatic Conversion**: `session_manager.send_to_client()` strips ANSI/Rich markup for plain clients
 - **Potential Clients**: 
   - IDE extensions (VS Code, Neovim, Emacs)
   - Browser extensions for web development
@@ -211,7 +227,7 @@ Ask these questions:
 
 ## Command Implementation Pattern
 
-**IMPORTANT NOTE**: The pattern described below conflicts with the AI_README.md guidelines. According to AI_README.md, "Formatting logic lives ONLY in UIManager" and output should be routed through UIManager only. However, the current implementation uses specialized formatters within command modules.
+**IMPORTANT NOTE**: The AI_README.md guidelines state "Formatting logic lives ONLY in UIManager" and output should be routed through UIManager only. However, the current implementation uses specialized formatters within command modules, with socket compatibility achieved through ANSI stripping in `session_manager.send_to_client()`.
 
 To keep the codebase maintainable and consistent, commands are structured using three main components:
 
@@ -220,9 +236,9 @@ To keep the codebase maintainable and consistent, commands are structured using 
 - **Formatter Classes** (`commands/*/formatters.py`): Handle all user-facing output, prompts, and confirmation dialogs. This keeps UI logic separate from business logic.
 
 **Current Reality vs. AI Guidelines**:
-- **Current Pattern**: Commands → Formatters (Rich output) → Socket output capture (ANSI stripping)
-- **AI_README Rule**: Commands → UIManager (dual-format output)
-- **Socket Compatibility**: Achieved through global output capture and ANSI stripping in `app.py`
+- **Current Pattern**: Commands → Formatters (Rich output) → Socket ANSI stripping (via session_manager.send_to_client())
+- **AI_README Rule**: Commands → UIManager (dual-format output) - This conflicts with actual implementation
+- **Socket Compatibility**: Achieved through automatic ANSI/Rich stripping in `session_manager.send_to_client()` method
 
 **Example Pattern:**
 
@@ -262,9 +278,9 @@ The CALOUS daemon runs as a background service, accepting commands and input exc
 ```
 External Client → Unix Socket → JSON Parser → CommandHandler.process()
     ↓
-Service.execute() → Formatter.format() → Output Capture Buffer
+Service.execute() → Formatter.format() (Rich Output) → session_manager.send_to_client()
     ↓
-ANSI Strip → JSON Response → Socket → External Client
+ANSI Strip (if format="plain") → JSON Response → Socket → External Client
     ↓
 UnifiedLogger.log() → Daily Log File
 ```
@@ -341,11 +357,12 @@ Both channels maintain separate histories
 - **Simplicity**: No need for authentication, CORS, or web server complexity
 - **Local-First**: Designed for same-machine integration, not web services
 
-### Why Output Capture vs Dual Formatters?
+### Why Single Rich Output with Socket Stripping?
 - **Backward Compatibility**: Existing Rich formatters work unchanged
 - **Maintainability**: Single formatter codebase, automatic socket compatibility
-- **Consistency**: Same visual output in CLI translates to clean text in socket mode
+- **Consistency**: Same visual output in CLI translates to clean text in socket mode via ANSI stripping
 - **Development Speed**: No need to maintain separate output paths
+- **Client Control**: Socket clients specify their preferred format (`"plain"` or `"rich"`) in JSON requests
 
 ### Why Multi-Chat Support in Socket Mode?
 - **Feature Parity**: Socket mode provides the same multi-chat capabilities as CLI mode

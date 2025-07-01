@@ -63,7 +63,7 @@ class HistoryService:
             return 0
 
     def load_history_from_file(self, load_path):
-        """Load chat history from a .jsonl file, overwriting current in-memory history. Returns number of messages loaded."""
+        """Load chat history from a .jsonl file, overwriting current in-memory history and .history file. Returns number of messages loaded."""
         try:
             messages = []
             with open(load_path, 'r', encoding='utf-8') as f:
@@ -74,7 +74,29 @@ class HistoryService:
                             messages.append({"role": msg["role"], "content": msg["content"]})
                     except Exception:
                         continue
+            
+            # Update in-memory history
             self.app.chat_history.history = messages
+            
+            # Overwrite the .history file with loaded messages
+            history_file = self.app.chat_history._get_history_filename()
+            try:
+                with open(history_file, 'w', encoding='utf-8') as f:
+                    for msg in messages:
+                        # Create full message data for file storage
+                        from datetime import datetime
+                        message_data = {
+                            "timestamp": datetime.now().isoformat(),
+                            "role": msg["role"],
+                            "content": msg["content"],
+                            "model": getattr(self.app, 'selected_model', None),
+                            "chat_index": self.app.instance_index
+                        }
+                        f.write(json.dumps(message_data, ensure_ascii=False) + '\n')
+            except Exception:
+                # If file write fails, still return success for in-memory load
+                pass
+                
             return len(messages)
         except Exception as e:
             # Error will be handled by caller

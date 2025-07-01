@@ -56,9 +56,19 @@ class CommandFormatter:
     def confirm_action(message: str, default: str = Confirmations.DEFAULT_NO, app=None) -> bool:
         """Ask for user confirmation."""
         if app and hasattr(app, 'confirm'):
-            # In socket mode, default to True (yes) unless explicitly specified
-            default_bool = default == "y" if default != Confirmations.DEFAULT_NO else True
-            return app.confirm(message, default=default_bool)
+            # Check if we should use interactive confirmations in socket mode
+            if hasattr(app, 'session_manager') and app.session_manager and app.session_manager.socket_mode:
+                # Check if client supports interactive confirmations
+                if hasattr(app.session_manager, 'supports_confirmations') and app.session_manager.supports_confirmations:
+                    return app.session_manager.request_confirmation(message, default)
+                else:
+                    # Fall back to auto-confirm for non-interactive clients
+                    default_bool = default == "y"
+                    return app.confirm(message, default=default_bool)
+            else:
+                # Regular confirmation for non-socket mode
+                default_bool = default == "y" 
+                return app.confirm(message, default=default_bool)
         else:
             # Simple input-based confirmation without rich
             choices_str = "/".join(Confirmations.YES_NO)

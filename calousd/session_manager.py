@@ -32,6 +32,10 @@ class ChatSessionManager:
         self.socket_mode = False
         self.debug = debug
         
+        # Confirmation support for socket mode
+        self.supports_confirmations = False
+        self.pending_confirmation = None
+        
         # Initialize plugin manager at session level
         self._initialize_plugin_manager()
         
@@ -358,12 +362,12 @@ class ChatSessionManager:
         clean_message = ansi_escape.sub('', message)
         clean_message = rich_markup.sub('', clean_message)
         
-        # If we're in command processing mode, buffer the output
-        if hasattr(self, '_command_output_buffer'):
+        # If we're in command processing mode, buffer the output UNLESS it's a confirmation request
+        if hasattr(self, '_command_output_buffer') and message_type != "confirmation_request":
             self._command_output_buffer.append(clean_message)
             return
         
-        # Otherwise send immediately (for prompts)
+        # Otherwise send immediately (for prompts and confirmation requests)
         # Create response structure
         if message_type == "error":
             response = {"error": clean_message.strip()}
@@ -378,6 +382,103 @@ class ChatSessionManager:
         except Exception as e:
             # Log error but don't crash
             pass
+    
+    def request_confirmation(self, message: str, default: str = "n") -> bool:
+        """Request confirmation from socket client."""
+        import json
+        import uuid
+        import time
+        
+        if not self.current_connection or not self.supports_confirmations:
+            # Fall back to auto-confirm with default
+            return default == "y"
+        
+        # Generate unique ID for this confirmation
+        confirmation_id = str(uuid.uuid4())
+        self.pending_confirmation = {
+            "id": confirmation_id,
+            "timestamp": time.time()
+        }
+        
+        # Send confirmation request DIRECTLY to client (bypass output buffering)
+        from .constants import MessageTypes
+        confirmation_request = {
+            "type": MessageTypes.CONFIRMATION_REQUEST,
+            "message": message,
+            "default": default,
+            "confirmation_id": confirmation_id
+        }
+        
+        try:
+            # Send directly to socket, bypassing send_to_client buffering
+            self.current_connection.sendall(json.dumps(confirmation_request).encode())
+            
+            # Wait for response (with timeout)
+            return self._wait_for_confirmation_response(confirmation_id, timeout=30.0)
+            
+        except Exception:
+            # If anything goes wrong, fall back to default
+            self.pending_confirmation = None
+            return default == "y"
+    
+    def _wait_for_confirmation_response(self, confirmation_id: str, timeout: float = 30.0) -> bool:
+        """Wait for confirmation response from client."""
+        import socket
+        import json
+        import time
+        
+        start_time = time.time()
+        
+        while time.time() - start_time < timeout:
+            try:
+                # Set socket to non-blocking for timeout support
+                self.current_connection.settimeout(1.0)
+                
+                # Read response data
+                data = b""
+                while True:
+                    try:
+                        chunk = self.current_connection.recv(1024)
+                        if not chunk:
+                            break
+                        data += chunk
+                        
+                        # Try to parse complete JSON message
+                        try:
+                            decoded_data = data.decode('utf-8')
+                            response = json.loads(decoded_data)
+                            break
+                        except (json.JSONDecodeError, UnicodeDecodeError):
+                            continue
+                            
+                    except socket.timeout:
+                        continue
+                    except Exception:
+                        break
+                
+                if data:
+                    try:
+                        decoded_data = data.decode('utf-8')
+                        response = json.loads(decoded_data)
+                        
+                        # Check if this is our confirmation response
+                        if (response.get("type") == "confirmation_response" and 
+                            response.get("confirmation_id") == confirmation_id):
+                            
+                            self.pending_confirmation = None
+                            return response.get("response", "n").lower() == "y"
+                            
+                    except Exception:
+                        continue
+                        
+            except socket.timeout:
+                continue
+            except Exception:
+                break
+        
+        # Timeout or error - fall back to default
+        self.pending_confirmation = None
+        return False  # Default to "no" on timeout
                 
     def listen_for_socket(self, debug=False):
         """Listen for socket connections and handle multi-chat commands."""
@@ -451,6 +552,10 @@ class ChatSessionManager:
                 target_chat = req.get("chat")  # Optional chat channel targeting
                 output_format = req.get("format", "plain")  # Default to plain for backward compatibility
                 
+                # Check if client supports confirmations
+                if req.get("supports_confirmations", False):
+                    self.supports_confirmations = True
+                
                 if debug:
                     self._output(f"[Debug] Parsed request: type={msg_type}, data length={len(content)} chars, target_chat={target_chat}, format={output_format} at {timestamp}")
                 
@@ -475,7 +580,12 @@ class ChatSessionManager:
                 # Initialize response
                 response: Dict[str, Any] = {"error": "Unknown error"}
                 
-                if msg_type == "prompt":
+                if msg_type == "confirmation_response":
+                    # Handle confirmation response - this will be processed by _wait_for_confirmation_response
+                    # Just acknowledge receipt and let the waiting method handle it
+                    response = {"response": "confirmation received"}
+                    
+                elif msg_type == "prompt":
                     # Handle prompt message - model will send output via send_to_client
                     active_chat.chat_history.add_message("user", content)
                     if debug:

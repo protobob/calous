@@ -42,6 +42,12 @@ struct HiCommand {
     chat: Option<u8>,
     #[serde(skip_serializing_if = "Option::is_none")]
     format: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    supports_confirmations: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    confirmation_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    response: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -49,6 +55,10 @@ struct HiResponse {
     response: Option<String>,
     result: Option<String>,
     error: Option<String>,
+    r#type: Option<String>,
+    message: Option<String>,
+    default: Option<String>,
+    confirmation_id: Option<String>,
 }
 
 fn get_config_path() -> PathBuf {
@@ -304,6 +314,9 @@ fn main() {
         data,
         chat: chat_channel,
         format: Some("plain".to_string()),
+        supports_confirmations: Some(true),  // Enable confirmations
+        confirmation_id: None,
+        response: None,
     };
 
     match send_command(&cmd, debug) {
@@ -312,6 +325,10 @@ fn main() {
                 response: None,
                 result: None,
                 error: Some("Invalid response".to_string()),
+                r#type: None,
+                message: None,
+                default: None,
+                confirmation_id: None,
             });
 
             if let Some(err) = result.error {
@@ -347,12 +364,86 @@ fn send_command(cmd: &HiCommand, debug: bool) -> Result<String, String> {
     stream.write_all(request.as_bytes())
         .map_err(|e| format!("Failed to write to socket: {}", e))?;
 
+    // Read response in chunks to handle potential confirmation flow
     let mut response = String::new();
-    stream.read_to_string(&mut response)
-        .map_err(|e| format!("Failed to read from socket: {}", e))?;
+    let mut buffer = [0; 4096];
+    
+    loop {
+        match stream.read(&mut buffer) {
+            Ok(0) => break, // EOF
+            Ok(n) => {
+                let chunk = String::from_utf8_lossy(&buffer[..n]);
+                response.push_str(&chunk);
+                
+                // Try to parse what we have so far
+                if let Ok(parsed) = serde_json::from_str::<HiResponse>(&response) {
+                    if let Some(msg_type) = &parsed.r#type {
+                        if msg_type == "confirmation_request" {
+                            if let (Some(message), Some(confirmation_id), Some(default)) = 
+                                (&parsed.message, &parsed.confirmation_id, &parsed.default) {
+                                
+                                if debug {
+                                    eprintln!("[Debug] Received confirmation request: {}", response);
+                                }
+                                
+                                // Prompt user for confirmation
+                                print!("{} [{}]: ", message, default);
+                                io::stdout().flush().unwrap();
+                                
+                                let mut user_input = String::new();
+                                io::stdin().read_line(&mut user_input).unwrap();
+                                let user_input = user_input.trim();
+                                
+                                // Use default if empty, otherwise use user input
+                                let response_value = if user_input.is_empty() {
+                                    default.clone()
+                                } else {
+                                    user_input.to_string()
+                                };
+                                
+                                // Send confirmation response back on the SAME socket connection
+                                let confirmation_cmd = HiCommand {
+                                    r#type: "confirmation_response".to_string(),
+                                    data: "".to_string(),
+                                    chat: None,
+                                    format: None,
+                                    supports_confirmations: None,
+                                    confirmation_id: Some(confirmation_id.clone()),
+                                    response: Some(response_value),
+                                };
+                                
+                                let confirmation_request = serde_json::to_string(&confirmation_cmd)
+                                    .map_err(|e| format!("Failed to serialize confirmation: {}", e))?;
+                                
+                                if debug {
+                                    eprintln!("[Debug] Sending confirmation: {}", confirmation_request);
+                                }
+                                
+                                // Write confirmation response to the same stream
+                                stream.write_all(confirmation_request.as_bytes())
+                                    .map_err(|e| format!("Failed to write confirmation: {}", e))?;
+                                
+                                // Clear response buffer and continue reading final response
+                                response.clear();
+                                continue;
+                            }
+                        } else {
+                            // Got a complete non-confirmation response
+                            break;
+                        }
+                    } else {
+                        // Got a complete response without type
+                        break;
+                    }
+                }
+                // Continue reading if we don't have a complete JSON yet
+            }
+            Err(e) => return Err(format!("Failed to read from socket: {}", e)),
+        }
+    }
     
     if debug {
-        eprintln!("[Debug] Received response: {}", response);
+        eprintln!("[Debug] Final response: {}", response);
     }
 
     Ok(response)
@@ -393,7 +484,7 @@ fn interactive_mode(debug: bool, config: &CxConfig) {
     }
 }
 
-fn send_to_server(input: &str, debug: bool, config: &CxConfig) {
+fn send_to_server(input: &str, debug: bool, _config: &CxConfig) {
     let message_type = if input.starts_with("/") { "cmd" } else { "prompt" };
 
     let data = if message_type == "cmd" {
@@ -407,6 +498,9 @@ fn send_to_server(input: &str, debug: bool, config: &CxConfig) {
         data,
         chat: None,  // Interactive mode doesn't support chat targeting
         format: Some("plain".to_string()),
+        supports_confirmations: Some(true),
+        confirmation_id: None,
+        response: None,
     };
 
     match send_command(&cmd, debug) {
@@ -415,6 +509,10 @@ fn send_to_server(input: &str, debug: bool, config: &CxConfig) {
                 response: None,
                 result: None,
                 error: Some("Invalid response".to_string()),
+                r#type: None,
+                message: None,
+                default: None,
+                confirmation_id: None,
             });
 
             if let Some(err) = result.error {

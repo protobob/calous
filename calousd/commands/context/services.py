@@ -76,6 +76,26 @@ class ContextService:
             history_data = context_data.get("chat_history", [])
             self.app.chat_history.history = history_data
             
+            # Update the .history file with loaded chat history
+            if history_data:
+                history_file = self.app.chat_history._get_history_filename()
+                try:
+                    with open(history_file, 'w', encoding='utf-8') as f:
+                        for msg in history_data:
+                            # Create full message data for file storage
+                            from datetime import datetime
+                            message_data = {
+                                "timestamp": datetime.now().isoformat(),
+                                "role": msg.get("role", ""),
+                                "content": msg.get("content", ""),
+                                "model": getattr(self.app, 'selected_model', None),
+                                "chat_index": self.app.instance_index
+                            }
+                            f.write(json.dumps(message_data, ensure_ascii=False) + '\n')
+                except Exception:
+                    # If file write fails, still continue with context load
+                    pass
+            
             # Save the updated configuration
             self.app.save_config()
             

@@ -6,6 +6,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.0.dev] - 2025-07-01
+
+### Added
+- **Interactive Confirmation System**: Implemented y/n confirmation support for destructive commands over socket connections
+  - Added `supports_confirmations` field to client requests for enabling interactive prompts
+  - Confirmation requests bypass output buffering for immediate user interaction
+  - Default behavior is safe (usually "n" for cancel) when confirmations fail or are unavailable
+  - Works seamlessly in both command-line and interactive modes of the `cx` Rust client
+- **Enhanced Socket Protocol**: Extended the socket communication protocol to support confirmation round-trips
+  - Added `confirmation_request` and `confirmation_response` message types
+  - Confirmation requests include unique IDs for proper request/response matching
+  - Socket connections remain open throughout the confirmation flow
+
+### Enhanced
+- **Rust Client (`cx`)**: Major improvements to socket handling and user interaction
+  - Implemented chunked socket reading to handle confirmation requests properly
+  - Added interactive y/n prompts with default value support
+  - Enhanced error handling and debug output for socket communication
+  - Fixed socket connection lifecycle to support confirmation round-trips
+- **Python Daemon**: Improved session management and output handling
+  - Modified output buffering system to send confirmation requests immediately
+  - Enhanced `request_confirmation()` method with proper timeout and fallback handling
+  - Added confirmation ID generation and response tracking
+
+### Fixed
+- **History Commands**: Fixed file handling and message count tracking
+  - Fixed `/history.load` to properly overwrite history file in .history folder and update message count
+  - Fixed `/context.load` to properly handle chat_history loading
+- **Socket Communication**: Resolved hanging issues with destructive commands
+  - Fixed output buffering preventing confirmation requests from being sent
+  - Improved socket read/write cycle for interactive operations
+
+### Technical
+- **Confirmation Protocol**: Established robust confirmation system architecture
+  - Unique confirmation IDs prevent request/response mix-ups
+  - Timeout handling ensures commands don't hang indefinitely
+  - Fallback to safe defaults when confirmations are not supported
+- **Socket Handling**: Enhanced both client and server socket implementations
+  - Improved partial message handling in Rust client
+  - Better connection lifecycle management
+  - Enhanced debug output for troubleshooting socket communication
+
 ## [1.3.0.dev] - 2025-07-01
 
 ### Fixed

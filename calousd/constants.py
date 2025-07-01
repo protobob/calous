@@ -79,7 +79,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "1.3.0-dev"
+APP_VERSION = "1.4.0-dev"
 
 # Multi-chat configuration
 DEFAULT_NUM_CHATS = 4  # default if no config
@@ -91,6 +91,14 @@ SWITCH_PREVIEW_LENGTH = 50
 
 # Added SOCKET_PATH for centralized configuration
 SOCKET_PATH = "/tmp/calous.sock"
+
+# Socket message types
+class MessageTypes:
+    """Socket message type constants."""
+    PROMPT = "prompt"
+    CMD = "cmd"
+    CONFIRMATION_REQUEST = "confirmation_request"
+    CONFIRMATION_RESPONSE = "confirmation_response"
 
 # UI Formatting Constants
 class Colors:
