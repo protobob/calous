@@ -140,19 +140,18 @@ class CommandRegistry:
                     # Restore original stdout
                     sys.stdout = original_stdout
                 
-                # Get the captured output and strip Rich tags
+                # Get the captured output (keep Rich markup)
                 rich_output = buffer.getvalue()
-                plain_output = self._strip_rich_tags(rich_output)
                 
-                # Print the Rich output to terminal (so user sees it)
+                # Send the Rich output to client (let send_to_client handle format conversion)
                 if rich_output:
-                    self._output(rich_output, end='')
+                    self._output(rich_output)
                 
-                # If the command returned a CommandResult, update its message with plain text
+                # If the command returned a CommandResult, update its message with Rich markup
                 if hasattr(result, 'message') and hasattr(result, 'action'):
-                    # It's a CommandResult - update the message with plain output for client
-                    if plain_output.strip():
-                        result.message = plain_output.strip()
+                    # Always use Rich output - let send_to_client convert format if needed
+                    if rich_output.strip():
+                        result.message = rich_output.strip()
                     return result
                 else:
                     # Return original result if it's not a CommandResult
@@ -212,6 +211,8 @@ class CommandRegistry:
             from ..config import ConfigManager
             ConfigManager.add_alias(alias, command)
             self.user_aliases[alias] = command
+            # Update commands file for tab completion
+            self.write_commands_file()
             return True
         except Exception:
             return False
@@ -226,6 +227,8 @@ class CommandRegistry:
             success = ConfigManager.remove_alias(alias)
             if success:
                 del self.user_aliases[alias]
+                # Update commands file for tab completion
+                self.write_commands_file()
             return success
         except Exception:
             return False
@@ -237,6 +240,38 @@ class CommandRegistry:
     def refresh_user_aliases(self):
         """Reload user aliases from config."""
         self._load_user_aliases()
+    
+    def write_commands_file(self):
+        """Write all commands to a file for cx_rust tab completion."""
+        try:
+            from ..constants import COMMANDS_FILE, CALOUS_DIR
+            import os
+            
+            # Ensure directory exists
+            os.makedirs(CALOUS_DIR, exist_ok=True)
+            
+            # Get all commands and sort them
+            commands = []
+            for name in sorted(self.commands.keys()):
+                commands.append(f"/{name}")
+            
+            # Add aliases
+            for alias in sorted(self.aliases.keys()):
+                if alias not in [name[1:] for name in commands]:  # Don't duplicate
+                    commands.append(f"/{alias}")
+            
+            # Add user aliases
+            for alias in sorted(self.user_aliases.keys()):
+                if alias not in [name[1:] for name in commands]:  # Don't duplicate
+                    commands.append(f"/{alias}")
+            
+            # Write to file
+            with open(COMMANDS_FILE, 'w') as f:
+                f.write('\n'.join(sorted(commands)) + '\n')
+                
+        except Exception as e:
+            # Silently fail - this is not critical functionality
+            pass
 
 
 # Global registry instance

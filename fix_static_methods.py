@@ -40,7 +40,7 @@ def fix_static_methods(file_path):
 
 def main():
     """Fix all Python files in the calous directory."""
-    calous_dir = Path('/home/aswin/python/calous/calous')
+    calous_dir = Path('/home/aswin/python/calous/calousd')
     
     fixed_files = []
     

@@ -33,6 +33,9 @@ class ChatSessionManager:
         self.supports_confirmations = False
         self.pending_confirmation = None
         
+        # Client format preference for socket mode
+        self.client_format = "plain"  # Default to plain for backward compatibility
+        
         # Initialize plugin manager at session level
         self._initialize_plugin_manager()
         
@@ -272,13 +275,19 @@ class ChatSessionManager:
         if not target_conn:
             return  # No client connected
             
-        # Strip Rich markup for plain text output
-        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-        rich_markup = re.compile(r'\[/?[^\]]*\]')
+        # Handle message formatting based on client preference
+        if hasattr(self, 'client_format') and self.client_format == "rich":
+            # Client wants rich formatting - keep Rich markup but strip ANSI codes
+            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+            processed_message = ansi_escape.sub('', message)
+        else:
+            # Client wants plain text - strip both ANSI codes and Rich markup
+            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+            rich_markup = re.compile(r'\[/?[^\]]*\]')
+            processed_message = ansi_escape.sub('', message)
+            processed_message = rich_markup.sub('', processed_message)
         
-        # Remove ANSI codes and Rich markup
-        clean_message = ansi_escape.sub('', message)
-        clean_message = rich_markup.sub('', clean_message)
+        clean_message = processed_message
         
         # If we're in command processing mode, buffer the output UNLESS it's a confirmation request
         if hasattr(self, '_command_output_buffer') and message_type != "confirmation_request":
@@ -475,6 +484,9 @@ class ChatSessionManager:
                 content = req.get("data", "")
                 target_chat = req.get("chat")  # Optional chat channel targeting
                 output_format = req.get("format", "plain")  # Default to plain for backward compatibility
+                
+                # Store client's format preference
+                self.client_format = output_format
                 
                 # Check if client supports confirmations
                 if req.get("supports_confirmations", False):

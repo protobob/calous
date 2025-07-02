@@ -15,4 +15,7 @@ from .plugin import commands as plugin_commands
 from .persona import commands as persona_commands
 from .context import commands as context_commands
 
+# Write commands file for cx_rust tab completion
+registry.write_commands_file()
+
 __all__ = ['AdvancedCommandHandler']

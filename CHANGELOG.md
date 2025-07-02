@@ -5,8 +5,38 @@ All notable changes to CALOUS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+# Changelog
 
-## [1.4.2.dev] - 2025-07-02
+  ## [1.4.3-dev] - 2025-01-02
+
+  ### Added
+  - **Rich text support in cx_rust client** - Added ANSI color parsing with crossterm for enhanced terminal output
+  - **Command history in interactive mode** - Added persistent command history using rustyline with ~/.calous/cx_history.txt
+  - **Tab completion for commands** - Comprehensive auto-completion for all 56+ commands and aliases in interactive mode
+  - **Command hints while typing** - Real-time command suggestions as you type
+  - **Rich/plain output control** - Added -r/--rich and -p/--plain flags to control output formatting
+  - **File-based command completion** - calousd automatically writes available commands to ~/.calous/commands.txt for client tab 
+  completion
+
+  ### Changed
+  - **Unified directory structure** - All components now use ~/.calous instead of mixed ~/calousd/~/hiollama paths
+  - **Renamed legacy references** - Updated HiCommand/HiResponse to CxCommand/CxResponse, removed old "hi" naming
+  - **Cleaner Rich text architecture** - Single point of format conversion in send_to_client, removed duplicate markup stripping
+  - **Updated Rust toolchain** - Fixed compatibility issues by upgrading from package manager Rust 1.63 to rustup-managed latest 
+  version
+
+  ### Fixed
+  - **Hardcoded path references** - Removed hardcoded paths from utility scripts and docstrings
+  - **Rich markup preservation** - Fixed Rich formatting being stripped multiple times in the processing pipeline
+  - **Client format preference** - Socket clients can now properly request and receive rich or plain text formatting
+  - **Command completion accuracy** - Tab completion now includes user aliases and stays in sync with available commands
+
+  ### Technical Improvements
+  - **Code deduplication** - Extracted helper functions for command creation and response handling
+  - **Removed unused imports** - Cleaned up cx_rust dependencies and eliminated compiler warnings
+  - **Better error handling** - Improved fallback behavior for readline initialization and command processing
+
+## [1.4.2.dev] - 2025-07-01
 
 ### Removed
 - **Deprecated Chat Management Commands**: Eliminated `/chat.add` and `/chat.remove` commands

@@ -127,7 +127,7 @@ def _output_helper(message, message_type="response"):
 
 def main():
     """Convert all Python files in the calous directory."""
-    calous_dir = Path('/home/aswin/python/calous/calous')
+    calous_dir = Path('/home/aswin/python/calous/calousd')
     
     if not calous_dir.exists():
         print(f"Directory {calous_dir} not found!")

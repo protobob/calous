@@ -39,13 +39,14 @@ OLLAMA_API_URL = "http://localhost:11434/api/tags"
 API_TIMEOUT = 5
 
 # File paths
-CALOUS_DIR = Path.home() / "calousd"
+CALOUS_DIR = Path.home() / ".calous"
 LOG_DIR = CALOUS_DIR / "logs"
 HISTORY_DIR = CALOUS_DIR / ".history"
 PERSONA_DIR = CALOUS_DIR / "persona"
 CONTEXT_DIR = CALOUS_DIR / "contexts"
 CHAT_HISTORY_DIR = CALOUS_DIR / "chat_history"
 CONFIG_PATH = CALOUS_DIR / "config.json"  # Changed from Path.home() / ".hiollama_config_unified.json"
+COMMANDS_FILE = CALOUS_DIR / "commands.txt"  # For cx_rust tab completion
 
 # File size limits (in bytes)
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
@@ -78,7 +79,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "1.4.2.dev"
+APP_VERSION = "1.4.3.dev"
 
 # Chat session defaults
 TWIST_PREVIEW_LENGTH = 100

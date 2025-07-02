@@ -86,7 +86,7 @@ def cmd_history_off(handler) -> CommandResult:
 
 @registry.register("history.save", "Save current chat history to a file", category=CommandCategory.HISTORY)
 def cmd_history_save(handler, filename) -> CommandResult:
-    """Save the current chat's history to a .jsonl file in ~/calousd/chat_history."""
+    """Save the current chat's history to a .jsonl file in the chat history directory."""
     from pathlib import Path
     import re
     from ...constants import CHAT_HISTORY_DIR
@@ -120,7 +120,7 @@ def cmd_history_save(handler, filename) -> CommandResult:
 
 @registry.register("history.load", "Load chat history from a file", category=CommandCategory.HISTORY)
 def cmd_history_load(handler, filename) -> CommandResult:
-    """Load chat history from a .jsonl file in ~/calousd/chat_history, overwriting current history."""
+    """Load chat history from a .jsonl file in the chat history directory, overwriting current history."""
     from pathlib import Path
     import re
     from ...constants import CHAT_HISTORY_DIR
@@ -153,7 +153,7 @@ def cmd_history_load(handler, filename) -> CommandResult:
 
 @registry.register("history.list", "List saved chat history files", category=CommandCategory.HISTORY)
 def cmd_history_list(handler) -> CommandResult:
-    """List all .jsonl files in ~/calousd/chat_history, showing base names only."""
+    """List all .jsonl files in the chat history directory, showing base names only."""
     from ...constants import CHAT_HISTORY_DIR
     if not CHAT_HISTORY_DIR.exists():
         HistoryFormatter.format_no_saved_files()
@@ -170,7 +170,7 @@ def cmd_history_list(handler) -> CommandResult:
 
 @registry.register("history.delete", "Delete a saved chat history file", category=CommandCategory.HISTORY)
 def cmd_history_delete(handler, filename) -> CommandResult:
-    """Delete a .jsonl file in ~/calousd/chat_history after Y/N confirmation."""
+    """Delete a .jsonl file from the chat history directory after Y/N confirmation."""
     from pathlib import Path
     import re
     from ...constants import CHAT_HISTORY_DIR
