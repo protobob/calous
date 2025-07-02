@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Changelog
 
+  ## [1.4.4.dev] - 2025-01-02
+
+  ### Fixed
+  - **Container configuration issues** - Updated Dockerfile to use correct ~/.calous directory structure instead of legacy /root/calous
+  - **Signal handling robustness** - Enhanced CTRL-C shutdown in daemon mode to properly save configurations even when clients disconnect
+  - **Rich markup parsing gaps** - Expanded cx_rust Rich tag parser to handle bold color variants and line-ending patterns
+  - **Path consistency across deployment** - Aligned container volume mounts with updated .calous directory structure
+
+  ### Technical Improvements
+  - **Improved error handling in signal handlers** - Added comprehensive exception handling for config saving during daemon shutdown
+  - **Enhanced Rich text parsing** - Added support for bold color combinations like `[bold white]` and `[bold grey50]`
+  - **Container deployment fixes** - Fixed volume mount mappings and directory creation in containerized deployments
+
   ## [1.4.3-dev] - 2025-01-02
 
   ### Added

@@ -3,13 +3,12 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Install only the non-standard dependencies
-RUN pip install --no-cache-dir \
-    ollama>=0.5.2 \
+RUN pip install --no-cache-dir ollama>=0.5.2
 # Create the calous directory for data persistence
-RUN mkdir -p /root/calousd
+RUN mkdir -p /root/.calous
 
 # Set up volume mount point
-VOLUME ["/root/calousd"]
+VOLUME ["/root/.calous"]
 
 # Set PYTHONPATH so imports work
 ENV PYTHONPATH=/app

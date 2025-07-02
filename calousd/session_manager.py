@@ -216,7 +216,12 @@ class ChatSessionManager:
     
     def save_all_configs(self):
         """Save configurations for all chat instances."""
-        self._output("\n[bold]Exiting and saving configurations.[/bold]")
+        # Only try to output if we have a client connection
+        if self.socket_mode and self.current_connection:
+            try:
+                self._output("\n[bold]Exiting and saving configurations.[/bold]")
+            except:
+                pass  # Don't let output issues prevent saving
         
         # Log session end
         unified_logger.log_session_end()
@@ -435,9 +440,31 @@ class ChatSessionManager:
         server.listen(1)
 
         def handle_exit(signum, frame):
-            self.save_all_configs()
-            server.close()
-            exit(0)
+            try:
+                # Save configs without client output to avoid issues
+                unified_logger.log_session_end()
+                for chat in self.chats:
+                    try:
+                        chat.save_config()
+                    except Exception as e:
+                        # Log error but continue saving other configs
+                        unified_logger._write_log_entry("ERROR", f"Failed to save config for chat {chat.instance_index}: {e}")
+            except Exception as e:
+                # Log critical error but still try to clean up
+                unified_logger._write_log_entry("CRITICAL", f"Failed to save configs during shutdown: {e}")
+            finally:
+                # Always clean up socket
+                try:
+                    server.close()
+                except:
+                    pass
+                # Remove socket file
+                try:
+                    if os.path.exists(SOCKET_PATH):
+                        os.remove(SOCKET_PATH)
+                except:
+                    pass
+                exit(0)
 
         signal.signal(signal.SIGINT, handle_exit)
             
