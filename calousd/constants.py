@@ -46,7 +46,6 @@ PERSONA_DIR = CALOUS_DIR / "persona"
 CONTEXT_DIR = CALOUS_DIR / "contexts"
 CHAT_HISTORY_DIR = CALOUS_DIR / "chat_history"
 CONFIG_PATH = CALOUS_DIR / "config.json"  # Changed from Path.home() / ".hiollama_config_unified.json"
-CLI_HISTORY_PATH = CALOUS_DIR / ".cli_history"
 
 # File size limits (in bytes)
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
@@ -79,13 +78,9 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "1.4.1.dev"
-
-# Multi-chat configuration
-DEFAULT_NUM_CHATS = 4  # default if no config
+APP_VERSION = "1.4.2.dev"
 
 # Chat session defaults
-MAX_CHATS = 14
 TWIST_PREVIEW_LENGTH = 100
 SWITCH_PREVIEW_LENGTH = 50
 

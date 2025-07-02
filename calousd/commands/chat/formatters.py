@@ -8,30 +8,12 @@ class ChatFormatter(CommandFormatter):
     """Formatter for chat command outputs."""
     
     
-    @staticmethod
-    def format_add_chat_result(result: ChatOperationResult):
-        """Format add chat operation result."""
-        if result.success:
-            message = f"[bold green]Adding new chat session...[/bold green] Creating Chat {result.chat_number}"
-            ChatFormatter._output(message)
-        else:
-            ChatFormatter.print_error(result.error_message)
     
     @staticmethod
     def format_switch_error(error_message: str):
         """Format chat switch error."""
         ChatFormatter.print_error(error_message)
     
-    @staticmethod
-    def format_remove_error(error_message: str):
-        """Format chat remove error."""
-        ChatFormatter.print_error(error_message)
-    
-    @staticmethod
-    def format_remove_chat(chat_number: int):
-        """Format chat removal message."""
-        message = f"[bold yellow]Removing Chat {chat_number}...[/bold yellow] Configuration will be preserved."
-        ChatFormatter._output(message)
     
     @staticmethod
     def format_twist_error(error_message: str):

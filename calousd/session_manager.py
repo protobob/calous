@@ -4,7 +4,7 @@ import os
 from .types import ActionType, CommandResult  # Import from types instead
 from .utils import get_chat_color, print_rainbow_header, format_message_preview
 from .config import ConfigManager
-from .constants import DEFAULT_NUM_CHATS, TWIST_PREVIEW_LENGTH, SWITCH_PREVIEW_LENGTH, SOCKET_PATH
+from .constants import SERVER_DEFAULT_NUM_CHATS, TWIST_PREVIEW_LENGTH, SWITCH_PREVIEW_LENGTH, SOCKET_PATH
 from .unified_logger import unified_logger
 
 # Use TYPE_CHECKING to avoid circular import
@@ -13,17 +13,16 @@ if TYPE_CHECKING:
 
 class ChatSessionManager:    
     def _output(self, message: str, message_type: str = "response"):
-        """Send output to client or print to console."""
+        """Send output to client (daemon mode only)."""
         if self.socket_mode and self.current_connection:
             self.send_to_client(message, message_type)
-        else:
-            print(message)
+        # In daemon mode, no fallback to print - output should only go through socket
     
     def __init__(self, num_chats: Optional[int] = None, debug: bool = False):  # Remove hardcoded default
         self.chats: List['Chat'] = []
         self.active_chat_index: int = 0
         # Use constant for default
-        self.num_chats = num_chats if num_chats is not None else DEFAULT_NUM_CHATS
+        self.num_chats = num_chats if num_chats is not None else SERVER_DEFAULT_NUM_CHATS
         
         # Connection tracking for daemon mode
         self.current_connection = None
@@ -174,76 +173,7 @@ class ChatSessionManager:
         
         return updated_count
     
-    def add_chat(self) -> bool:
-        """Add a new chat session dynamically."""        
-        from .app import Chat
-          # Create new chat instance
-        new_chat_index = self.num_chats
-        new_chat = Chat(new_chat_index)
-        new_chat.session_manager = self
         
-        # Inject shared plugin manager
-        new_chat.plugin_manager = self.plugin_manager  # type: ignore
-        
-        # Ensure new chat has global context window setting
-        new_chat.num_ctx = ConfigManager.get_global_num_ctx()
-        
-        # Add to chats list
-        self.chats.append(new_chat)
-        
-        # Update num_chats
-        self.num_chats += 1
-        
-        # Update global config
-        ConfigManager.update_global_config({"num_chats": self.num_chats})
-        
-        # Log the addition
-        unified_logger.log_channel_switch(-1, new_chat_index, "addchat")
-        
-        self.send_to_client(f"[bold green]✓[/bold green] Chat {new_chat_index + 1} added successfully!")
-        return True
-        
-    def remove_chat(self, target_index: int) -> bool:
-        """Remove a chat session dynamically."""
-        if target_index < 0 or target_index >= self.num_chats:
-            return False
-        
-        # Save the chat's configuration before removing it
-        chat_to_remove = self.chats[target_index]
-        try:
-            chat_to_remove.save_config()
-            self._output(f"[grey70]Saved configuration for Chat {target_index + 1}[/grey70]")
-        except Exception as e:
-            self._output(f"[bold yellow]Warning:[/bold yellow] Could not save config for Chat {target_index + 1}: {e}")
-        
-        # Remove the chat from the list
-        removed_chat = self.chats.pop(target_index)
-        
-        # Update num_chats
-        self.num_chats -= 1
-        
-        # Update global config (preserves chat configs in unified file)
-        ConfigManager.update_global_config({"num_chats": self.num_chats})
-        
-        # Adjust active_chat_index if necessary
-        if self.active_chat_index >= self.num_chats:
-            # If we removed the last chat and it was active, switch to the new last chat
-            self.active_chat_index = self.num_chats - 1
-        elif self.active_chat_index > target_index:
-            # If we removed a chat before the active one, adjust the index
-            self.active_chat_index -= 1
-        
-        # Update instance indices for remaining chats
-        for i, chat in enumerate(self.chats):
-            chat.instance_index = i
-            chat.active_chat_index = i
-        
-        # Log the removal
-        unified_logger.log_channel_switch(target_index, -1, "removechat")
-        
-        self.send_to_client(f"[bold green]✓[/bold green] Chat {target_index + 1} removed successfully!")
-        self.send_to_client(f"[grey70]Configuration preserved in unified config file.[/grey70]")
-        return True
 
     def process_command_result(self, result: CommandResult) -> bool:
         """Process a command result and take appropriate action.
@@ -251,11 +181,7 @@ class ChatSessionManager:
         Returns:
             True if the main loop should continue, False if it should exit
         """
-        if result.action == ActionType.QUIT:
-            self.save_all_configs()
-            return False
-        
-        elif result.action == ActionType.SWITCH:
+        if result.action == ActionType.SWITCH:
             data = result.data or {}
             target_index = data.get('target_chat')
             if self.switch_to_chat(target_index):
@@ -271,18 +197,6 @@ class ChatSessionManager:
                 # Remove the duplicate _display_chat_context() call here
                 # twist_to_chat() already handles the display
         
-        elif result.action == ActionType.ADDCHAT:
-            if self.add_chat():
-                # Switch to the new chat and display its context
-                self.active_chat_index = self.num_chats - 1
-                self._display_chat_context()
-        
-        elif result.action == ActionType.REMOVECHAT:
-            data = result.data or {}
-            target_index = data.get('target_index', self.num_chats - 1)
-            if self.remove_chat(target_index):
-                # Display context for the current active chat
-                self._display_chat_context()
     
         # CONTINUE action requires no special handling
         return True
@@ -339,9 +253,11 @@ class ChatSessionManager:
     
     def _display_startup_header(self):
         """Display the application startup header."""
-        os.system('cls' if os.name == 'nt' else 'clear')
+        # Skip clear screen in daemon mode as it would affect stdout
+        if not self.socket_mode:
+            os.system('cls' if os.name == 'nt' else 'clear')
         from .utils import print_rainbow_header
-        print_rainbow_header()
+        print_rainbow_header(self._output)
 
     def send_to_client(self, message: str, message_type: str = "response", conn=None):
         """
@@ -611,8 +527,6 @@ class ChatSessionManager:
                     try:
                         action = json.loads(content).get("action")
                         if action:
-                            # Set non-interactive mode for socket commands
-                            active_chat.non_interactive = True
                             
                             try:
                                 # Set up output buffering for command
@@ -649,8 +563,7 @@ class ChatSessionManager:
                                 delattr(self, '_command_output_buffer')
                                     
                             finally:
-                                # Reset non-interactive mode
-                                active_chat.non_interactive = False
+                                pass
                         else:
                             response = {"error": "Missing action in command."}
                     except json.JSONDecodeError:

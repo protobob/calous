@@ -16,10 +16,6 @@ def cmd_sys_help(handler, category: str = None, command: str = None) -> CommandR
     return SysService.show_help(handler, category, command)
 
 
-# @registry.register("sys.quit", "Exit and save configuration", aliases=["quit"], category=CommandCategory.GENERAL)
-# def cmd_sys_quit(handler) -> CommandResult:
-#     """Exit the application."""
-#     return SysService.quit_application(handler)
 
 
 @registry.register("sys.help.all", "List all commands by category", category=CommandCategory.GENERAL)

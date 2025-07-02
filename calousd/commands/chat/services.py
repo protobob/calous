@@ -1,6 +1,5 @@
 """Chat management services."""
 from typing import Optional, NamedTuple
-from ...constants import MAX_CHATS
 
 
 class ChatOperationResult(NamedTuple):
@@ -23,20 +22,6 @@ class ChatService:
     def __init__(self, app):
         self.app = app
     
-    def add_chat(self) -> ChatOperationResult:
-        """Add a new chat session with validation."""
-        current_num_chats = self.app.session_manager.num_chats
-        
-        if current_num_chats >= MAX_CHATS:
-            return ChatOperationResult(
-                success=False,
-                error_message=f"Maximum number of chats ({MAX_CHATS}) reached."
-            )
-        
-        return ChatOperationResult(
-            success=True,
-            chat_number=current_num_chats + 1
-        )
     
     def validate_switch(self, chat_number: Optional[int]) -> ChatOperationResult:
         """Validate chat switch operation."""
@@ -60,34 +45,6 @@ class ChatService:
             target_index=target_index
         )
     
-    def validate_remove(self, chat_number: Optional[int]) -> ChatOperationResult:
-        """Validate chat removal operation."""
-        current_num_chats = self.app.session_manager.num_chats
-        
-        # Must have at least 1 chat
-        if current_num_chats <= 1:
-            return ChatOperationResult(
-                success=False,
-                error_message="Cannot remove the last remaining chat."
-            )
-        
-        # If no chat number specified, remove the last chat
-        if chat_number is None:
-            target_index = current_num_chats - 1  # Last chat (0-based)
-            chat_number = current_num_chats  # For display (1-based)
-        else:
-            if chat_number < 1 or chat_number > current_num_chats:
-                return ChatOperationResult(
-                    success=False,
-                    error_message=f"Chat number must be between 1 and {current_num_chats}."
-                )
-            target_index = chat_number - 1  # Convert to 0-based index
-        
-        return ChatOperationResult(
-            success=True,
-            chat_number=chat_number,
-            target_index=target_index
-        )
     
     def validate_twist(self, target_chat: Optional[int]) -> ChatOperationResult:
         """Validate twist operation."""

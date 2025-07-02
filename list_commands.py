@@ -1,8 +1,4 @@
-#!/usr/binfrom calous.commands.registry import registry
-from calousd.commands.types import CommandCategory
-
-# Import all command modules so they get registered
-import calousd.commandspython3
+#!/usr/bin/env python3
 """Script to list all registered commands in CALOUS."""
 
 import sys

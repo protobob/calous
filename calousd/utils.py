@@ -19,33 +19,34 @@ def format_message_preview(content: Any, max_length: int = MAX_PREVIEW_LENGTH) -
     has_more = len(first_line) > max_length or len(content.split('\n')) > 1
     return first_line[:max_length] + ('...' if has_more else '')
 
-def print_rainbow_header() -> None:
+def print_rainbow_header(output_func=None) -> None:
     """Print the CALOUS! header in rainbow colors with the version below."""
     rainbow_text = ""
     for i, char in enumerate(RAINBOW_TEXT):
         color = RAINBOW_COLORS[i % len(RAINBOW_COLORS)]
         rainbow_text += f"[{color}]{char}[/{color}]"
     
-    # Print the rainbow header
-    self._output(f"\n[bold]{rainbow_text}[/bold]")
-    
-    # Print the version below the header in darker grey
-    self._output(f"[grey30]v.{APP_VERSION}[/grey30]\n")
+    # Send the rainbow header through provided output function or skip in daemon mode
+    if output_func:
+        output_func(f"\n[bold]{rainbow_text}[/bold]")
+        output_func(f"[grey30]v.{APP_VERSION}[/grey30]\n")
 
-def print_chat_header(chat_index: int) -> str:
+def print_chat_header(chat_index: int, output_func=None) -> str:
     """Print the chat header and return the chat color."""
     chat_color = get_chat_color(chat_index)
     
-    # Print chat header with color
-    self._output(f"[bold {chat_color}]CHAT {chat_index + 1}{HEADER_SEPARATOR}[/bold {chat_color}]")
+    # Send chat header through provided output function or skip in daemon mode
+    if output_func:
+        output_func(f"[bold {chat_color}]CHAT {chat_index + 1}{HEADER_SEPARATOR}[/bold {chat_color}]")
     
     return chat_color
 
-def print_message_with_bar(chat_color: str, role: str, content: Any) -> None:
+def print_message_with_bar(chat_color: str, role: str, content: Any, output_func=None) -> None:
     """Print a message with a colored vertical bar and role prefix."""
     preview = format_message_preview(content)
     prefix = f"{role}: " if role else ""
-    self._output(f"[bold {chat_color}]|[/bold {chat_color}] [grey42]{prefix}{preview}[/grey42]")
+    if output_func:
+        output_func(f"[bold {chat_color}]|[/bold {chat_color}] [grey42]{prefix}{preview}[/grey42]")
 
 def find_last_messages(chat_history) -> Dict[str, Any]:
     """Find the last user and assistant messages in chat history."""

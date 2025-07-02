@@ -39,15 +39,6 @@ class SysService:
             handler.app.ui.help_menu()
         return CommandResult(ActionType.CONTINUE)
     
-    @staticmethod
-    def quit_application(handler) -> CommandResult:
-        """Save configuration and exit."""
-        # Prevent quit command in socket/non-interactive mode
-        if getattr(handler.app, 'non_interactive', False):
-            CommandFormatter._output(f"\n[bold red]Error:[/bold red] Quit command not available in socket mode")
-            return CommandResult(ActionType.CONTINUE)
-        
-        return CommandResult(ActionType.QUIT)
     
     @staticmethod
     def show_model_variables(handler) -> CommandResult:

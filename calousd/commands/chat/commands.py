@@ -7,22 +7,6 @@ from .services import ChatService
 from .formatters import ChatFormatter
 
 
-@registry.register("chat.add", "Add a new chat session", category=CommandCategory.NAVIGATION)
-def cmd_chat_add(handler) -> CommandResult:
-    """Add a new chat session."""
-    # Prevent chat.add command in socket/non-interactive mode
-    if getattr(handler.app, 'non_interactive', False):
-        ChatFormatter._output(f"\n[bold red]Error:[/bold red] Chat add command not available in socket mode")
-        return CommandResult(ActionType.CONTINUE)
-    
-    service = ChatService(handler.app)
-    result = service.add_chat()
-    ChatFormatter.format_add_chat_result(result)
-    
-    if result.success:
-        return CommandResult(ActionType.ADDCHAT)
-    return CommandResult(ActionType.CONTINUE)
-
 
 @registry.register("chat.switch", "Switch between chat sessions", category=CommandCategory.NAVIGATION)
 def cmd_chat_switch(handler, chat_number: Optional[int] = None) -> CommandResult:
@@ -37,23 +21,6 @@ def cmd_chat_switch(handler, chat_number: Optional[int] = None) -> CommandResult
     return CommandResult(ActionType.SWITCH, {"target_chat": result.target_index})
 
 
-@registry.register("chat.remove", "Remove a chat session", category=CommandCategory.NAVIGATION)
-def cmd_chat_remove(handler, chat_number: Optional[int] = None) -> CommandResult:
-    """Remove a chat session."""
-    # Prevent chat.remove command in socket/non-interactive mode
-    if getattr(handler.app, 'non_interactive', False):
-        ChatFormatter._output(f"\n[bold red]Error:[/bold red] Chat remove command not available in socket mode")
-        return CommandResult(ActionType.CONTINUE)
-    
-    service = ChatService(handler.app)
-    result = service.validate_remove(chat_number)
-    
-    if not result.success:
-        ChatFormatter.format_remove_error(result.error_message)
-        return CommandResult(ActionType.CONTINUE)
-    
-    ChatFormatter.format_remove_chat(result.chat_number)
-    return CommandResult(ActionType.REMOVECHAT, {"target_index": result.target_index})
 
 
 @registry.register("chat.twist", "Copy AI response to another chat", category=CommandCategory.NAVIGATION)

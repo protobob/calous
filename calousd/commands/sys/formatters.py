@@ -16,7 +16,3 @@ class SysFormatter:
         # Variables formatting is handled by the UI manager's show_variables() method
         return ""
     
-    @staticmethod
-    def format_quit_message() -> str:
-        """Format quit confirmation message."""
-        return "Goodbye!"

@@ -1,6 +1,6 @@
 """Configuration management for Hi, Ollama!"""
 import json
-from .constants import CONFIG_PATH, DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS, DEFAULT_NUM_CHATS, DEFAULT_NUM_CTX, DEFAULT_KEEP_ALIVE
+from .constants import CONFIG_PATH, DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS, SERVER_DEFAULT_NUM_CHATS, DEFAULT_NUM_CTX, DEFAULT_KEEP_ALIVE
 from .unified_logger import unified_logger
 
 class ConfigManager:
@@ -19,7 +19,7 @@ class ConfigManager:
     def _generate_default_unified_config(num_chats=None):
         """Generate default unified configuration for any number of chats."""
         if num_chats is None:
-            num_chats = DEFAULT_NUM_CHATS
+            num_chats = SERVER_DEFAULT_NUM_CHATS
             
         config = {
             "global": {
@@ -110,7 +110,7 @@ class ConfigManager:
     def get_global_config():
         """Get global configuration settings."""
         unified_config = ConfigManager.load_unified_config()
-        return unified_config.get("global", {"selected_model": DEFAULT_MODEL, "num_chats": DEFAULT_NUM_CHATS, "num_ctx": DEFAULT_NUM_CTX, "keep_alive": DEFAULT_KEEP_ALIVE})
+        return unified_config.get("global", {"selected_model": DEFAULT_MODEL, "num_chats": SERVER_DEFAULT_NUM_CHATS, "num_ctx": DEFAULT_NUM_CTX, "keep_alive": DEFAULT_KEEP_ALIVE})
     
     @staticmethod
     def get_global_num_ctx():
@@ -127,7 +127,7 @@ class ConfigManager:
     def get_num_chats():
         """Get the configured number of chats."""
         global_config = ConfigManager.get_global_config()
-        return global_config.get("num_chats", DEFAULT_NUM_CHATS)
+        return global_config.get("num_chats", SERVER_DEFAULT_NUM_CHATS)
     
     @staticmethod
     def get_keep_alive():

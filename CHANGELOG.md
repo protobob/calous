@@ -6,6 +6,60 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.2.dev] - 2025-07-02
+
+### Removed
+- **Deprecated Chat Management Commands**: Eliminated `/chat.add` and `/chat.remove` commands
+  - Commands no longer make sense in service-only mode where chat count should be consistent
+  - Removed command handlers, service methods, formatters, and UI help references
+  - Simplified architecture by removing dynamic chat management complexity
+- **Unused Constants**: Cleaned up deprecated configuration constants
+  - Removed `MAX_CHATS` and `DEFAULT_NUM_CHATS` constants (replaced by `SERVER_DEFAULT_NUM_CHATS`)
+  - Updated all imports and references to use the single server constant (14 chats)
+  - Consistent daemon architecture with fixed chat count
+- **Quit Command System**: Completely removed quit functionality for daemon mode
+  - Removed `/sys.quit` command registration, service methods, and ActionType enum value
+  - Eliminated quit handling logic in session manager and UI help references
+  - Daemon services should not have quit functionality - managed by system process control
+- **Auto-Confirm Workaround Code**: Removed obsolete `non_interactive` mode system
+  - Eliminated auto-confirm code that was a workaround before socket confirmations worked
+  - Removed `non_interactive` attribute setting/unsetting throughout the codebase
+  - Simplified confirmation logic since socket-based y/n confirmations now work properly with cx client
+
+### Fixed
+- **Critical Daemon Output Issues**: Resolved print statements that would fail when stdout is disabled
+  - Fixed `_output()` method in session manager to not fall back to print() in daemon mode
+  - Updated utility functions (`print_rainbow_header`, `print_chat_header`, `print_message_with_bar`) to accept output callback parameters
+  - Removed stdout dependencies that would cause daemon crashes when stdout is redirected/closed
+  - All output now properly routes through socket system in daemon mode
+
+### Code Quality
+- **Major Dead Code Cleanup**: Removed 200+ lines of unused/deprecated code
+  - Deleted 142-line deprecated `listen_for_socket_deprecated()` method from app.py
+  - Removed unused `output.py` module entirely (placeholder code never used)
+  - Fixed corrupted imports in `list_commands.py` (broken shebang and malformed imports)
+  - Removed `CLI_HISTORY_PATH` constant - not needed in daemon-only mode
+  - Cleaned up file structure and eliminated broken/obsolete code
+
+### Changed
+- **Entry Point Simplification**: Updated `__main__.py` for daemon-only operation
+  - Removed dynamic chat management flags and deprecated constant references
+  - Simplified argument parsing to reflect fixed server chat count
+  - Clear indication that CALOUS runs only in service/daemon mode
+
+### Technical
+- **Architecture Consistency**: Streamlined codebase for daemon-only operation
+  - All chat management now uses fixed `SERVER_DEFAULT_NUM_CHATS` (14) consistently
+  - Removed redundant/conflicting configuration constants and their references
+  - Eliminated interactive CLI remnants and auto-confirm workarounds
+  - Proper separation between socket output routing and legacy print fallbacks
+
+### Impact
+- **Improved Daemon Reliability**: Fixed critical stdout dependencies that could crash daemon
+- **Cleaner Architecture**: Removed confusion between interactive and daemon modes
+- **Better Maintainability**: Eliminated 200+ lines of dead code and simplified configuration
+- **Consistent Operation**: Fixed server chat count at 14 with no dynamic add/remove operations
+
 ## [1.4.1.dev] - 2025-07-01
 
 ### Fixed

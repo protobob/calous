@@ -1,6 +1,6 @@
 """User interface elements for Hi, Ollama!"""
 from .utils import get_chat_color, print_message_with_bar, find_last_messages
-from .constants import APP_VERSION, MAX_PREVIEW_LENGTH, CLI_HISTORY_PATH
+from .constants import APP_VERSION, MAX_PREVIEW_LENGTH
 from .config import ConfigManager
 from typing import Dict, Any
 import os
@@ -73,15 +73,12 @@ class UIManager:
         self._output("System Commands:")
         self._output("  /sys.help                Show streamlined help overview")
         self._output("  /sys.help all            Show this comprehensive help menu")
-        self._output("  /sys.quit                Exit the program and save configuration")
         self._output("")
 
         # Chat Commands
         self._output("Chat Commands:")
         self._output(f"  /chat.switch [NUMBER]    Switch between chats (1-{num_chats}). Default switches to next chat")
         self._output(f"  /chat.twist [NUMBER]     Copy AI's last response to target chat (1-{num_chats}). Default uses next chat")
-        self._output("  /chat.add                Add a new chat session")
-        self._output("  /chat.remove             Remove a chat session")
         self._output("  /chat.reset              Reset chat to factory defaults")
         self._output("  /chat.vars               Display chat-specific variables only")
         self._output("")
@@ -382,16 +379,16 @@ class UIManager:
         if last_messages:
             # Show the current chat's detailed context
             from .utils import print_chat_header
-            print_chat_header(self.app.active_chat_index)
+            print_chat_header(self.app.active_chat_index, self._output)
             
             # Use the passed chat_color parameter instead of recalculating
             # Display the last user message
             if last_messages.get('user'):
-                print_message_with_bar(chat_color, "YOU", last_messages['user'].get('content', ''))
+                print_message_with_bar(chat_color, "YOU", last_messages['user'].get('content', ''), self._output)
             
             # Display the last assistant message
             if last_messages.get('assistant'):
-                print_message_with_bar(chat_color, "LLM", last_messages['assistant'].get('content', ''))
+                print_message_with_bar(chat_color, "LLM", last_messages['assistant'].get('content', ''), self._output)
     
     def show_category_help(self, category: str):
         """Display help for a specific command category."""
@@ -727,8 +724,6 @@ class UIManager:
         self._output(f"[white]SESSION MANAGEMENT[/white]\n")
         
         self._output(f" [bold {command_color}]/chat.switch[/bold {command_color}]  [white]Switch between chat sessions[/white]")
-        self._output(f" [bold {command_color}]/chat.add[/bold {command_color}]     [white]Add a new chat session[/white]")
-        self._output(f" [bold {command_color}]/chat.remove[/bold {command_color}]", "[white]Remove a chat session.[/white]")
         self._output(f" [bold {command_color}]/chat.reset[/bold {command_color}]", "[white]Reset current chat to factory defaults.[/white]")
         self._output("")
         
@@ -850,14 +845,13 @@ class UIManager:
         
         self._output(f" [bold {command_color}]/sys.help (aliases: help)[/bold {command_color}]  [white]Show this command reference[/white]")
         self._output(f" [bold {command_color}]/sys.help all[/bold {command_color}]              [white]Show comprehensive help menu[/white]")
-        self._output(f" [bold {command_color}]/sys.quit (aliases: quit)[/bold {command_color}]  [white]Exit and save configuration[/white]")
         self._output("")
         self._output(f"[white]MORE HELP[/white]\n")
         
         self._output(f" [bold {command_color}]/sys.help[/bold {command_color}]                  [white]shows this help screen[/white]")
         self._output("")
         self._output(f"[grey50]Use /sys.help <command> for detailed help on specific commands[/grey50]")
-        self._output(f"[grey50]Example: /sys.help sys.quit[/grey50]")
+        self._output(f"[grey50]Example: /sys.help sys.help[/grey50]")
     
     def _show_file_help(self):
         """Display file help in the custom format from HELP.md."""
