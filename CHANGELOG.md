@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Changelog
 
+## [1.7.1.dev] - 2025-07-04
+
+### Added
+- **Active Chat Persistence**: Chat selection now persists across daemon restarts
+  - Active chat index automatically saved to config when switching chats
+  - Daemon remembers last used chat and restores on startup
+  - Eliminates annoying reset to Chat 1 behavior on restart
+
+### Fixed
+- **UnifiedLogger Initialization**: Fixed debug logging not working with `--debug` flag
+  - **Root cause**: `set_debug_enabled()` updated flag but didn't reinitialize logger levels  
+  - **Solution**: Added `_setup_loggers()` call in `set_debug_enabled()` to update logger levels
+  - **Impact**: Debug messages now properly appear in `debug.log` when using `--debug` flag
+- **Code Quality**: Eliminated all print statements across the codebase
+  - Replaced print fallbacks in `_output()` methods with `unified_logger` calls
+  - Converted legacy CLI debug prints to proper debug routing
+  - Ensured no debug information leaks to socket clients
+
+### Enhanced
+- **Configuration Management**: Extended global config to include active chat state
+  - New `ConfigManager.get_active_chat_index()` and `ConfigManager.set_active_chat_index()` methods
+  - Automatic persistence for permanent chat switches (`/chat.switch`, `/chat.twist`)
+  - Temporary chat targeting (socket commands) doesn't affect saved state
+
 ## [1.7.0.dev] - 2025-07-04
 
 ### Added

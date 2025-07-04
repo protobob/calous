@@ -14,7 +14,8 @@ class ChatHistory:
         elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
             self.app.session_manager.send_to_client(message, message_type)
         else:
-            print(message)
+            # Use unified_logger as fallback instead of print
+            unified_logger.info(message, stream='app', component='chat_history_fallback')
     
     def __init__(self, app, instance_index):
         self.app = app

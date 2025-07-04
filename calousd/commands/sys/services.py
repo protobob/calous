@@ -2,6 +2,7 @@
 from ...types import CommandResult, ActionType
 from ..registry import registry
 from ..formatters import CommandFormatter
+from ...unified_logger import unified_logger
 
 
 class SysService:
@@ -14,7 +15,7 @@ class SysService:
         elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
             self.app.session_manager.send_to_client(message, message_type)
         else:
-            print(message)
+            unified_logger.info(message, stream='app', component='sys_service_fallback')
     
     @staticmethod
     def show_help(handler, category: str = None, command: str = None) -> CommandResult:

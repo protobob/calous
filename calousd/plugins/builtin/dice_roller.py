@@ -8,13 +8,11 @@ This plugin only provides function calling capabilities, not user commands.
 import json
 import random
 import re
-import logging
 from typing import Dict, Any, List, Optional, Tuple, Union
 from datetime import datetime
 
 from ..base import FunctionCallingPlugin, PluginCapability
-
-logger = logging.getLogger(__name__)
+from ...unified_logger import unified_logger
 
 
 class DiceRollResult:
@@ -55,7 +53,8 @@ class DiceRollerPlugin(FunctionCallingPlugin):
         )
 
     def initialize(self) -> bool:
-        logger.info("Dice roller plugin initialized successfully")
+        unified_logger.info("Dice roller plugin initialized successfully", 
+                           stream='app', component='dice_plugin')
         return True
 
     def get_function_schemas(self) -> List[Dict[str, Any]]:

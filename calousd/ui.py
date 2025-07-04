@@ -2,6 +2,7 @@
 from .utils import get_chat_color, print_message_with_bar, find_last_messages
 from .constants import APP_VERSION, MAX_PREVIEW_LENGTH
 from .config import ConfigManager
+from .unified_logger import unified_logger
 from typing import Dict, Any
 import os
 
@@ -229,7 +230,7 @@ class UIManager:
         prompt_text = self.generate_prompt_text()
         lines = prompt_text.splitlines()
         for line in lines:
-            print(line)
+            self._output(line)
         user_input = input()
         return user_input.strip()
     def clear_screen(self):

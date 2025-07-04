@@ -20,7 +20,9 @@ class ChatSessionManager:
     
     def __init__(self, num_chats: Optional[int] = None, debug: bool = False):  # Remove hardcoded default
         self.chats: List['Chat'] = []
-        self.active_chat_index: int = 0
+        # Load saved active chat index from config
+        from .config import ConfigManager
+        self.active_chat_index: int = ConfigManager.get_active_chat_index()
         # Use constant for default
         self.num_chats = num_chats if num_chats is not None else SERVER_DEFAULT_NUM_CHATS
         
@@ -91,6 +93,9 @@ class ChatSessionManager:
                 # Log the channel switch
                 unified_logger.log_channel_switch(previous_chat_index, target_index, "manual")
             self.active_chat_index = target_index
+            # Save the new active chat index to config
+            from .config import ConfigManager
+            ConfigManager.set_active_chat_index(target_index)
             return True
         
         self.send_to_client(f"\n[1;31mError:[0m Invalid chat number. Available chats: 1-{self.num_chats}", "error")
@@ -120,6 +125,9 @@ class ChatSessionManager:
 
         # Switch to target chat FIRST
         self.active_chat_index = target_index
+        # Save the new active chat index to config
+        from .config import ConfigManager
+        ConfigManager.set_active_chat_index(target_index)
 
         # Clear screen and show FULL context for the target chat (including chat summary)
         target_chat = self.chats[target_index]

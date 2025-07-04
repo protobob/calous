@@ -1,6 +1,7 @@
 """File command formatters module."""
 from ..formatters import CommandFormatter
 from ...constants import Colors, Messages
+from ...unified_logger import unified_logger
 
 
 class FileFormatter(CommandFormatter):
@@ -13,7 +14,7 @@ class FileFormatter(CommandFormatter):
         elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
             self.app.session_manager.send_to_client(message, message_type)
         else:
-            print(message)
+            unified_logger.info(message, stream='app', component='file_formatter_fallback')
     
     @staticmethod
     def file_not_found_error(filepath: str, resolved_path):

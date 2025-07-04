@@ -343,6 +343,8 @@ class UnifiedLogger:
     def set_debug_enabled(self, enabled: bool):
         """Enable or disable debug logging."""
         self.debug_enabled = enabled
+        # Reinitialize loggers with new debug setting
+        self._setup_loggers()
         self.info(f"Debug logging {'enabled' if enabled else 'disabled'}", stream='app')
     
     def set_structured_format(self, structured: bool):

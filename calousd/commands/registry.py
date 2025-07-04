@@ -7,6 +7,7 @@ import sys
 from contextlib import redirect_stdout
 from typing import Dict, Optional, List, Union, get_origin, get_args
 from .types import CommandDefinition, CommandCategory
+from ..unified_logger import unified_logger
 
 
 class CommandRegistry:
@@ -19,7 +20,7 @@ class CommandRegistry:
         elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
             self.app.session_manager.send_to_client(message, message_type)
         else:
-            print(message)
+            unified_logger.info(message, stream='app', component='command_registry_fallback')
     
     def __init__(self):
         self.commands: Dict[str, CommandDefinition] = {}

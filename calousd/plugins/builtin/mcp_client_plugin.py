@@ -2,6 +2,7 @@ import socket
 import json
 from typing import Dict, Any, List, Optional
 from ..base import FunctionCallingPlugin, PluginCapability
+from ...unified_logger import unified_logger
 
 class MCPClientPlugin(FunctionCallingPlugin):
     def _output(self, message: str, message_type: str = "response"):
@@ -11,7 +12,7 @@ class MCPClientPlugin(FunctionCallingPlugin):
         elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
             self.app.session_manager.send_to_client(message, message_type)
         else:
-            print(message)
+            unified_logger.info(message, stream='app', component='mcp_plugin_fallback')
     
     def __init__(self):
         super().__init__(

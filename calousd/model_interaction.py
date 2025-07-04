@@ -6,6 +6,7 @@ import sys
 import os
 from typing import Optional, NamedTuple, Dict, Any, List
 from .utils import get_chat_color
+from .unified_logger import unified_logger
 
 def _output_helper(message, message_type="response"):
     """Helper to route output to client or console."""
@@ -327,24 +328,39 @@ class ModelInteraction:
                 chat_options['tools'] = tools
             
             # Debug message showing what's being sent to the model
-            # Only show when debug env var is explicitly set
-            show_debug = os.environ.get('CALOUS_DEBUG', '').lower() in ['1', 'true', 'yes']
+            # Only show when debug is enabled via --debug flag
+            try:
+                show_debug = unified_logger.debug_enabled
+            except Exception:
+                show_debug = False
             
             if show_debug:
-                self._output(f"[DEBUG] Sending to model {self.app.selected_model}:", file=sys.stderr)
-                self._output(f"[DEBUG] Messages: {len(messages)} messages", file=sys.stderr)
-                self._output(f"[DEBUG] Options: num_ctx={self.app.num_ctx}, temp={self.app.temperature}", file=sys.stderr)
-                if tools:
-                    self._output(f"[DEBUG] Tools: {len(tools)} available", file=sys.stderr)
-                
-                # Show all messages being sent
-                self._output(f"[DEBUG] Full conversation:", file=sys.stderr)
-                for i, msg in enumerate(messages):
-                    role = msg.get('role', 'unknown')
-                    content = msg.get('content', '')
-                    if len(content) > 300:
-                        content = content[:300] + "..."
-                    self._output(f"[DEBUG]   {i+1}. {role}: {content}", file=sys.stderr)
+                # Route debug info ONLY to debug.log, not to client
+                try:
+                    unified_logger.debug_model(
+                        f"Sending to model {self.app.selected_model}",
+                        metadata={
+                            'messages_count': len(messages),
+                            'num_ctx': self.app.num_ctx,
+                            'temperature': self.app.temperature,
+                            'tools_count': len(tools) if tools else 0,
+                            'stream': stream,
+                            'model': self.app.selected_model
+                        }
+                    )
+                    
+                    # Log full conversation to debug.log for troubleshooting
+                    unified_logger.debug("Full conversation being sent to model", stream='debug', 
+                                       component='model_interaction', model=self.app.selected_model)
+                    for i, msg in enumerate(messages):
+                        role = msg.get('role', 'unknown')
+                        content = msg.get('content', '')
+                        content_preview = content[:300] + "..." if len(content) > 300 else content
+                        unified_logger.debug(f"Message {i+1}: {role}", stream='debug', 
+                                           component='model_interaction', content_preview=content_preview)
+                except Exception:
+                    # If unified_logger fails, silently continue without debug output
+                    pass
             
             # Try to use native thinking API, fall back to without think parameter
             try:
@@ -439,8 +455,6 @@ class ModelInteraction:
         return []
     def _handle_function_calls(self, tool_calls: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Handle function calls from the model."""
-        from .unified_logger import unified_logger
-        
         results = []
         
         if not hasattr(self.app, 'plugin_manager') or not self.app.plugin_manager:
@@ -460,10 +474,13 @@ class ModelInteraction:
             self._output(f"[2;33m🔧 Using LLM tool: {function_name}[0m")
             
             # Log function call attempt
-            unified_logger._write_log_entry(
-                entry_type="PLUGIN_FUNCTION_CALL",
-                content=f"Function: {function_name}, Args: {function_args}"
-            )
+            try:
+                unified_logger._write_log_entry(
+                    entry_type="PLUGIN_FUNCTION_CALL",
+                    content=f"Function: {function_name}, Args: {function_args}"
+                )
+            except Exception:
+                pass
             
             # Find plugin that can handle this function
             result = None
@@ -485,16 +502,22 @@ class ModelInteraction:
                         "success": False
                     }
                     # Log function not found
-                    unified_logger._write_log_entry(
-                        entry_type="PLUGIN_FUNCTION_ERROR",
-                        content=f"Function: {function_name}, Error: Function not found"
-                    )
+                    try:
+                        unified_logger._write_log_entry(
+                            entry_type="PLUGIN_FUNCTION_ERROR",
+                            content=f"Function: {function_name}, Error: Function not found"
+                        )
+                    except Exception:
+                        pass
                 else:
                     # Log successful function result
-                    unified_logger._write_log_entry(
-                        entry_type="PLUGIN_FUNCTION_RESULT",
-                        content=f"Plugin: {plugin_name}, Function: {function_name}, Result: {result}"
-                    )
+                    try:
+                        unified_logger._write_log_entry(
+                            entry_type="PLUGIN_FUNCTION_RESULT",
+                            content=f"Plugin: {plugin_name}, Function: {function_name}, Result: {result}"
+                        )
+                    except Exception:
+                        pass
                     
             except Exception as e:
                 result = {
@@ -502,10 +525,13 @@ class ModelInteraction:
                     "success": False
                 }
                 # Log function execution error
-                unified_logger._write_log_entry(
-                    entry_type="PLUGIN_FUNCTION_ERROR",
-                    content=f"Plugin: {plugin_name}, Function: {function_name}, Error: {str(e)}"
-                )
+                try:
+                    unified_logger._write_log_entry(
+                        entry_type="PLUGIN_FUNCTION_ERROR",
+                        content=f"Plugin: {plugin_name}, Function: {function_name}, Error: {str(e)}"
+                    )
+                except Exception:
+                    pass
             
             # Format result for model
             tool_result = {

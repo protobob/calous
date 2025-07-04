@@ -2,6 +2,7 @@
 from typing import Optional, Dict, Any
 from .constants import MAX_PREVIEW_LENGTH, RAINBOW_COLORS, EXTENDED_RAINBOW_COLORS, RAINBOW_TEXT, HEADER_SEPARATOR, APP_VERSION
 from pathlib import Path
+from .unified_logger import unified_logger
 
 def get_chat_color(chat_index: int) -> str:
     """Return the ANSI color code for a specific chat index using extended rainbow progression."""
@@ -74,7 +75,8 @@ class Utils:
         elif hasattr(self, 'app') and hasattr(self.app, 'session_manager') and self.app.session_manager and self.app.session_manager.socket_mode:
             self.app.session_manager.send_to_client(message, message_type)
         else:
-            print(message)
+            # Use unified_logger as fallback instead of print
+            unified_logger.info(message, stream='app', component='utils_fallback')
     
     @staticmethod
     def load_file_as_prompt(filepath, instructions=""):

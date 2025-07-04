@@ -26,7 +26,8 @@ class ConfigManager:
                 "selected_model": DEFAULT_MODEL,
                 "num_chats": num_chats,
                 "num_ctx": DEFAULT_NUM_CTX,
-                "keep_alive": DEFAULT_KEEP_ALIVE
+                "keep_alive": DEFAULT_KEEP_ALIVE,
+                "active_chat_index": 0
             },
             "chats": {}
         }
@@ -110,7 +111,7 @@ class ConfigManager:
     def get_global_config():
         """Get global configuration settings."""
         unified_config = ConfigManager.load_unified_config()
-        return unified_config.get("global", {"selected_model": DEFAULT_MODEL, "num_chats": SERVER_DEFAULT_NUM_CHATS, "num_ctx": DEFAULT_NUM_CTX, "keep_alive": DEFAULT_KEEP_ALIVE})
+        return unified_config.get("global", {"selected_model": DEFAULT_MODEL, "num_chats": SERVER_DEFAULT_NUM_CHATS, "num_ctx": DEFAULT_NUM_CTX, "keep_alive": DEFAULT_KEEP_ALIVE, "active_chat_index": 0})
     
     @staticmethod
     def get_global_num_ctx():
@@ -178,3 +179,14 @@ class ConfigManager:
     def list_aliases():
         """List all user-defined command aliases."""
         return ConfigManager.get_aliases()
+    
+    @staticmethod
+    def get_active_chat_index():
+        """Get the saved active chat index."""
+        global_config = ConfigManager.get_global_config()
+        return global_config.get("active_chat_index", 0)
+    
+    @staticmethod
+    def set_active_chat_index(index):
+        """Save the active chat index."""
+        ConfigManager.update_global_config({"active_chat_index": index})
