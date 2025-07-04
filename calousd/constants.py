@@ -91,7 +91,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "1.7.1.dev"
+APP_VERSION = "1.7.2.dev"
 
 # Chat session defaults
 TWIST_PREVIEW_LENGTH = 100

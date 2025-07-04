@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Changelog
 
+## [1.7.2.dev] - 2025-07-04
+
+### Improved
+- **UnifiedLogger Refactoring**: Major cleanup and performance improvements to logging system
+  - **Removed legacy daily log functionality**: Eliminated YYYY-MM-DD.txt file creation and dual logging paths
+  - **Performance optimization**: Fixed `set_debug_enabled()` to only update debug logger level instead of recreating all loggers
+  - **Code deduplication**: Added `_truncate_content()` helper method to eliminate duplicate content preview logic
+  - **Standardized API**: Unified parameter naming across debug methods for consistency
+  - **Simplified architecture**: All logging now uses single multi-stream paradigm instead of legacy+new hybrid
+
+### Enhanced
+- **Backward Compatibility**: Added intelligent legacy compatibility wrapper
+  - Routes old `_write_log_entry()` calls to appropriate new log streams
+  - Maps legacy entry types (ERROR, PLUGIN, etc.) to correct destinations
+  - Preserves all existing functionality while using improved logging backend
+- **Code Quality**: Reduced UnifiedLogger from ~470 to 371 lines with cleaner, more maintainable code
+
 ## [1.7.1.dev] - 2025-07-04
 
 ### Added

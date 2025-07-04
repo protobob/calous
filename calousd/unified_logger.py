@@ -18,7 +18,6 @@ class UnifiedLogger:
         'model': 'model.log',       # Model interactions, API calls, responses
         'audit': 'audit.log',       # Command execution, user actions
         'error': 'error.log',       # Errors and exceptions
-        'legacy': None              # Legacy daily log (YYYY-MM-DD.txt)
     }
     
     def __init__(self, debug_enabled: bool = False):
@@ -43,8 +42,6 @@ class UnifiedLogger:
         logging.getLogger().setLevel(logging.WARNING)
         
         for stream_name, filename in self.STREAMS.items():
-            if filename is None:  # Skip legacy stream for now
-                continue
                 
             logger = logging.getLogger(f"calous.{stream_name}")
             
@@ -112,139 +109,91 @@ class UnifiedLogger:
             
             logger.log(level, f"{message}{context_str}")
     
-    # Legacy compatibility methods (reimplemented using new system)
-    def _get_log_file_path(self) -> Path:
-        """Get the current log file path based on today's date (legacy method)."""
-        timestamp = datetime.now()
-        return LOG_DIR / f"{timestamp.strftime('%Y-%m-%d')}.txt"
-    
-    def _write_log_entry(self, entry_type: str, content: str, chat_index: Optional[int] = None):
-        """Write a formatted log entry to the legacy daily log file."""
-        if not self.enabled:
-            return
-            
-        try:
-            timestamp = datetime.now().strftime('%H:%M:%S')
-            log_file = self._get_log_file_path()
-            
-            # Format the log entry
-            chat_info = f"[Chat {chat_index + 1}]" if chat_index is not None else "[System]"
-            log_entry = f"[{timestamp}] {chat_info} {entry_type}: {content}\n"
-            
-            with open(log_file, "a", encoding="utf-8") as f:
-                f.write(log_entry)
-                
-        except Exception as e:
-            # Use new error logging instead of _output
-            self.error(f"Failed to write legacy log: {e}", component='legacy_logging')
+    def _truncate_content(self, content: str, max_length: int = 100) -> str:
+        """Truncate content for preview display."""
+        preview = content.replace('\n', ' ').strip()
+        return preview[:max_length] + "..." if len(preview) > max_length else preview
     
     def log_conversation(self, chat_index: int, role: str, content: str, model: Optional[str] = None):
         """Log a conversation message."""
-        # Log to both legacy format and new structured logging
         if role.lower() == "user":
-            self._write_log_entry("USER", content, chat_index)
             self.info(f"User message", stream='app', chat_channel=chat_index, 
                      role=role, content_length=len(content))
         elif role.lower() == "assistant":
-            model_info = f" ({model})" if model else ""
-            self._write_log_entry(f"ASSISTANT{model_info}", content, chat_index)
             self.model_interaction(request="", response=content, model=model, chat_channel=chat_index)
         else:
-            self._write_log_entry(f"{role.upper()}", content, chat_index)
             self.info(f"Message from {role}", stream='app', chat_channel=chat_index, 
                      role=role, content_length=len(content))
     
     def log_channel_switch(self, from_chat: int, to_chat: int, reason: str = "manual"):
         """Log channel switching events."""
-        message = f"From Chat {from_chat + 1} to Chat {to_chat + 1} ({reason})"
-        self._write_log_entry("CHANNEL_SWITCH", message)
         self.audit("chat.switch", result=f"from_{from_chat}_to_{to_chat}", reason=reason)
     
     def log_twist_action(self, from_chat: int, to_chat: int, content_preview: str):
         """Log twist actions between channels."""
-        preview = content_preview.replace('\n', ' ').strip()
-        if len(preview) > 100:
-            preview = preview[:100] + "..."
-        message = f"From Chat {from_chat + 1} to Chat {to_chat + 1}: \"{preview}\""
-        self._write_log_entry("TWIST", message)
+        preview = self._truncate_content(content_preview)
         self.audit("chat.twist", result=f"from_{from_chat}_to_{to_chat}", 
                   content_preview=preview)
     
     def log_system_prompt_change(self, chat_index: int, new_prompt: str):
         """Log system prompt changes."""
-        preview = new_prompt.replace('\n', ' ').strip()
-        if len(preview) > 100:
-            preview = preview[:100] + "..."
-        self._write_log_entry("SYSTEM_PROMPT", f"\"{preview}\"", chat_index)
+        preview = self._truncate_content(new_prompt)
         self.audit("system_prompt.change", chat_channel=chat_index, 
                   prompt_preview=preview, prompt_length=len(new_prompt))
     
     def log_command_execution(self, chat_index: int, command: str, result: Optional[str] = None):
         """Log command execution."""
-        if result:
-            self._write_log_entry("COMMAND", f"{command} -> {result}", chat_index)
-        else:
-            self._write_log_entry("COMMAND", command, chat_index)
-        
         self.audit(command, chat_channel=chat_index, result=result)
     
     def log_model_change(self, new_model: str, chat_count: int):
         """Log global model changes."""
-        message = f"Changed to {new_model} (affecting {chat_count} chats)"
-        self._write_log_entry("MODEL_CHANGE", message)
         self.audit("model.change", result=new_model, affected_chats=chat_count)
     
     def log_session_start(self, num_chats: int, model: str):
         """Log session startup."""
-        message = f"Started with {num_chats} chats using model {model}"
-        self._write_log_entry("SESSION_START", message)
         self.info(f"Session started", stream='app', num_chats=num_chats, model=model)
     
     def log_session_end(self):
         """Log session shutdown."""
-        self._write_log_entry("SESSION_END", "Application shutdown")
         self.info("Session ended", stream='app')
     
     def log_chat_history_clear(self, chat_index: int):
         """Log when chat history is cleared."""
-        self._write_log_entry("HISTORY_CLEAR", "Chat history cleared", chat_index)
         self.audit("history.clear", chat_channel=chat_index)
     
     def log_export_action(self, chat_index: int, filename: str):
         """Log chat export actions."""
-        self._write_log_entry("EXPORT", f"Chat exported to {filename}", chat_index)
         self.audit("chat.export", chat_channel=chat_index, filename=filename)
     
     def toggle_logging(self) -> bool:
         """Toggle unified logging on/off."""
         self.enabled = not self.enabled
-        self._write_log_entry("LOGGING_TOGGLE", f"Logging {'enabled' if self.enabled else 'disabled'}")
         self.info(f"Logging {'enabled' if self.enabled else 'disabled'}", stream='app')
         return self.enabled
     
     def add_separator(self, label: Optional[str] = None):
-        """Add a visual separator to the legacy log file."""
-        if not self.enabled:
-            return
-            
-        try:
-            log_file = self._get_log_file_path()
-            separator = "=" * 50
-            if label:
-                separator = f"=== {label} " + "=" * (44 - len(label))
-            
-            with open(log_file, "a", encoding="utf-8") as f:
-                f.write(f"\n{separator}\n\n")
-            
-            if label:
-                self.info(f"Log separator added: {label}", stream='app')
-        except Exception as e:
-            self.error(f"Failed to write log separator: {e}", component='legacy_logging')
+        """Add a visual separator to the logs."""
+        if label:
+            self.info(f"Log separator added: {label}", stream='app')
             
     def log_plugin_event(self, event_type: str, message: str):
         """Log plugin-related events."""
-        self._write_log_entry(f"PLUGIN_{event_type.upper()}", message)
         self.info(f"Plugin {event_type}: {message}", stream='app', component='plugin')
+    
+    def _write_log_entry(self, entry_type: str, content: str, chat_index: Optional[int] = None):
+        """Legacy compatibility method - routes to appropriate new logging methods."""
+        # Map common legacy entry types to appropriate streams
+        if entry_type in ["ERROR", "CRITICAL"]:
+            self.error(f"{entry_type}: {content}", component='legacy', chat_channel=chat_index)
+        elif entry_type in ["WARNING", "WARN"]:
+            self.warning(f"{entry_type}: {content}", component='legacy', chat_channel=chat_index)
+        elif entry_type.startswith("PLUGIN"):
+            self.info(f"{entry_type}: {content}", stream='app', component='plugin', chat_channel=chat_index)
+        elif entry_type in ["CONTEXT_CHANGE", "SESSION_START", "SESSION_END"]:
+            self.info(f"{entry_type}: {content}", stream='app', component='legacy', chat_channel=chat_index)
+        else:
+            # Default to app stream for other legacy entries
+            self.info(f"{entry_type}: {content}", stream='app', component='legacy', chat_channel=chat_index)
     
     # Enhanced logging methods with proper debug routing
     def debug(self, message: str, stream: str = 'debug', **kwargs):
@@ -306,14 +255,14 @@ class UnifiedLogger:
         self.debug(f"Processing command: {command}", stream='debug', 
                   component='command', args=args, chat_channel=chat_channel)
     
-    def debug_model(self, prompt: str, response: Optional[str] = None, metadata: Optional[Dict] = None):
+    def debug_model(self, message: str, response: Optional[str] = None, metadata: Optional[Dict] = None):
         """Route model interaction debug info to debug.log."""
         debug_data = {'component': 'model'}
         if metadata:
             debug_data.update(metadata)
         
-        self.debug(f"Model debug info", stream='debug', 
-                  prompt_length=len(prompt), response_length=len(response) if response else 0, 
+        self.debug(message, stream='debug', 
+                  message_length=len(message), response_length=len(response) if response else 0, 
                   **debug_data)
     
     # Context management
@@ -343,8 +292,9 @@ class UnifiedLogger:
     def set_debug_enabled(self, enabled: bool):
         """Enable or disable debug logging."""
         self.debug_enabled = enabled
-        # Reinitialize loggers with new debug setting
-        self._setup_loggers()
+        # Only update debug logger level, not all loggers
+        if 'debug' in self.loggers:
+            self.loggers['debug'].setLevel(logging.DEBUG if enabled else logging.INFO)
         self.info(f"Debug logging {'enabled' if enabled else 'disabled'}", stream='app')
     
     def set_structured_format(self, structured: bool):
