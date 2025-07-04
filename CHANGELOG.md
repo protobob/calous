@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Changelog
 
+## [1.7.0.dev] - 2025-07-04
+
+### Added
+- **Enhanced UnifiedLogger System**: Complete overhaul of logging architecture with multi-stream support and debug routing separation
+  - **Multi-stream logging**: Separate log files for different event types (`app.log`, `debug.log`, `model.log`, `audit.log`, `error.log`)
+  - **Debug routing methods**: New `debug_socket()`, `debug_command()`, `debug_model()` methods that route ONLY to log files, never to clients
+  - **Structured logging**: JSON formatting support with context fields and correlation tracking
+  - **Context management**: `log_context()` context manager for grouped logging operations with automatic field injection
+  - **Level-based logging**: Standard logging levels (DEBUG, INFO, WARNING, ERROR, CRITICAL) with configurable thresholds
+
+### Fixed
+- **CRITICAL: Debug Information Leakage**: Resolved debug info being sent to socket clients instead of log files
+  - **Root cause**: `session_manager.py` was using `self._output(f"[Debug] ...")` for internal debugging, sending debug info directly to clients
+  - **Solution**: Replaced 23 problematic debug calls with proper routing methods (`unified_logger.debug_socket()`, `unified_logger.debug_command()`, etc.)
+  - **Impact**: Socket clients now receive clean output only; debug information stays in dedicated log files
+- **Socket Communication**: Debug messages no longer contaminate client responses or command outputs
+- **Session Management**: Fixed debug routing for connection handling, command processing, and error scenarios
+
+### Changed
+- **Logging Architecture**: Migrated from single daily log file to categorized multi-stream logging system
+- **Debug Control**: Enhanced debug flag handling with dual-level control (session manager + logger level)
+- **Output Separation**: Clear separation between client output and debug/diagnostic information
+- **Configuration**: Debug logging now controlled by `--debug` flag at both generation and writing levels
+
+### Enhanced
+- **Log File Organization**: 
+  ```
+  ~/.calous/logs/
+  ├── app.log          # Application events
+  ├── debug.log        # Debug info (NOT sent to clients!)
+  ├── model.log        # Model interactions
+  ├── audit.log        # Command execution tracking
+  ├── error.log        # Errors and exceptions
+  └── 2025-07-04.txt   # Legacy daily log (maintained)
+  ```
+- **Developer Experience**: Rich debug information available in log files without affecting client experience
+- **Socket Server Reliability**: Eliminated debug contamination that could break client parsing or user workflows
+
+### Technical
+- **Service Integration**: All 23 debug calls in `session_manager.py` converted to use enhanced logger methods
+- **Backward Compatibility**: Legacy logging methods preserved while adding new capabilities
+- **Performance**: Debug message generation skipped when debug mode disabled
+- **Architecture**: Clean separation between logging infrastructure and client communication
+
+### Impact
+- **Production Ready**: Debug information no longer leaks to production socket clients
+- **Development Friendly**: Comprehensive debug information available in structured log files
+- **Maintainable**: Centralized logging configuration and consistent debug routing patterns
+- **Scalable**: Foundation for advanced logging features like log aggregation and analysis tools
+
   ## [1.6.0.dev] - 2025-01-04
 
   ### Removed

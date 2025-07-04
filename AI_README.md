@@ -33,13 +33,13 @@ User Input → Registry (routing) → Service (logic) → Formatter (ANSI output
 All new commands must:
 - Register via the command registry
 - Isolate logic in service classes
-- Use formatters for ANSI output (socket clients get automatic ANSI stripping)
+- Use formatters for ANSI output (client handles color stripping)
 
 ### 4. Output Format System
 All commands generate ANSI-formatted output by default:
 - Direct ANSI escape sequences for colors and styles
-- Socket clients specify `format: "plain"` or `format: "rich"` in JSON requests
-- `format: "rich"` sends ANSI codes directly, `format: "plain"` strips ANSI codes
+- Daemon always sends ANSI codes to clients
+- Client-side color control via `--no-color` flag for stripping ANSI codes
 - Single codebase - no dual formatters needed
 
 ### 5. Model Context Isolation
@@ -71,7 +71,7 @@ All commands generate ANSI-formatted output by default:
 
 ## Architecture Clarification
 
-**Important**: CALOUS uses direct ANSI escape sequences for all color formatting. Commands generate ANSI-formatted output, and socket compatibility is achieved through automatic ANSI stripping in `session_manager.send_to_client()` when clients request `format: "plain"`.
+**Important**: CALOUS uses direct ANSI escape sequences for all color formatting. Commands generate ANSI-formatted output, and color control is handled client-side via the `--no-color` flag on the `cx` Rust client.
 
 **Operational Mode**: CALOUS runs as a daemon service accepting connections via Unix socket (`/tmp/calous.sock`). External clients (like the `cx` Rust tool) connect to this socket to interact with the system. There is no direct terminal/CLI mode - all interaction happens through socket-based clients.
 

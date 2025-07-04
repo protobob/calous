@@ -91,7 +91,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "1.6.0.dev"
+APP_VERSION = "1.7.0.dev"
 
 # Chat session defaults
 TWIST_PREVIEW_LENGTH = 100
@@ -130,3 +130,18 @@ class Confirmations:
     YES_NO = ["y", "n"]
     DEFAULT_NO = "n"
     DEFAULT_YES = "y"
+
+# Enhanced logging configuration
+class LogConfig:
+    """Logging configuration constants."""
+    DEFAULT_DEBUG_ENABLED = True
+    DEFAULT_STRUCTURED_FORMAT = False
+    LOG_ROTATION_DAYS = 30
+    MAX_LOG_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+    
+    # Log stream names
+    STREAM_APP = 'app'
+    STREAM_DEBUG = 'debug'
+    STREAM_MODEL = 'model'
+    STREAM_AUDIT = 'audit'
+    STREAM_ERROR = 'error'

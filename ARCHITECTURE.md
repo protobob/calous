@@ -47,18 +47,18 @@
 
 ### Socket Interface Architecture
 - **Unix Socket**: `/tmp/calous.sock` enables external client communication
-- **Format Handling**: Clients specify `"format": "plain"` or `"format": "rich"` in JSON requests
-- **Automatic ANSI Stripping**: ANSI codes automatically removed in `session_manager.send_to_client()` for plain clients
-- **Single Output Path**: Commands always generate ANSI formatting; socket interface handles conversion
+- **ANSI Output**: Daemon always sends ANSI-formatted output to clients
+- **Client-Side Color Control**: Clients use `--no-color` flag to strip ANSI codes locally
+- **Single Output Path**: Commands always generate ANSI formatting; client handles color preferences
 - **Protocol**: JSON-based message protocol for universal client compatibility
 - **External Integration**: Any application can connect and interact with CALOUS
 
 ### Output Formatting System
 - **ANSI by Default**: All commands and formatters generate ANSI-formatted output with colors and styling using direct escape sequences
-- **Client-Controlled Conversion**: Socket clients specify `format: "plain"` or `format: "rich"` in JSON requests
-- **Automatic Stripping**: `session_manager.send_to_client()` strips ANSI codes for plain clients, sends codes directly for rich clients
-- **Single Codebase**: No dual formatter patterns needed - conversion happens at the socket boundary
-- **Backward Compatible**: All output uses ANSI codes; socket clients get appropriate formatting automatically
+- **Client-Side Color Control**: Socket clients use `--no-color` flag to strip ANSI codes locally
+- **Consistent Server Output**: Daemon always sends ANSI codes; color preferences handled by client
+- **Single Codebase**: No dual formatter patterns needed - color control is entirely client-side
+- **Backward Compatible**: All output uses ANSI codes; clients control their display preferences
 
 
 ### UI Management (`ui.py`)
@@ -90,7 +90,7 @@
 - **Formatter Distribution**: 
   - Central base formatter (`commands/formatters.py`) with CommandFormatter base class
   - Specialized formatters in each category directory (`chat/formatters.py`, `file/formatters.py`, etc.)
-- **Output Responsibility**: Formatters handle ANSI formatting, session_manager handles ANSI stripping for socket clients
+- **Output Responsibility**: Formatters handle ANSI formatting, clients handle color preferences via flags
 - **Rule**: Focus on bug fixes and minor enhancements only
 - **NO MAJOR RESTRUCTURING**: The current system works and is familiar to users
 
@@ -107,21 +107,15 @@
   - Interactive mode (`-i`): REPL-like interface
   - Stdin support: Pipe data from shell commands
   - Debug output: Enhanced logging with `-d` flag
+  - Color control: `--no-color` flag strips ANSI codes client-side
 - **Status**: ✅ Fully functional, provides seamless external integration
 - **Architecture Role**: Reference implementation and primary external client
 
 ### Socket API for External Integration
 - **Universal Interface**: Any application can connect to `/tmp/calous.sock`
 - **JSON Protocol**: Standardized message format for interoperability
-- **Format Control**: Clients specify output format in requests:
-  ```json
-  {
-    "type": "cmd",
-    "data": "{\"action\": \"/help\"}",
-    "format": "plain"  // or "rich" for ANSI codes
-  }
-  ```
-- **Automatic Conversion**: `session_manager.send_to_client()` strips ANSI codes for plain clients, sends directly for rich clients
+- **Consistent ANSI Output**: Daemon always sends ANSI-formatted responses
+- **Client-Side Color Control**: Clients handle color preferences locally (e.g., `--no-color` flag)
 - **Potential Clients**: 
   - IDE extensions (VS Code, Neovim, Emacs)
   - Browser extensions for web development
@@ -236,8 +230,8 @@ To keep the codebase maintainable and consistent, commands are structured using 
 - **Formatter Classes** (`commands/*/formatters.py`): Handle all user-facing output, prompts, and confirmation dialogs using ANSI escape sequences. This keeps UI logic separate from business logic.
 
 **Current Reality vs. AI Guidelines**:
-- **Current Pattern**: Commands → Formatters (ANSI output) → Socket ANSI stripping (via session_manager.send_to_client())
-- **Socket Compatibility**: Achieved through automatic ANSI stripping in `session_manager.send_to_client()` method
+- **Current Pattern**: Commands → Formatters (ANSI output) → Client-side color control (via --no-color flag)
+- **Socket Compatibility**: Achieved through client-side ANSI stripping when desired
 
 **Example Pattern:**
 
@@ -277,11 +271,9 @@ The CALOUS daemon runs as a background service, accepting commands and input exc
 ```
 External Client → Unix Socket → JSON Parser → CommandHandler.process()
     ↓
-Service.execute() → Formatter.format() (ANSI Output) → session_manager.send_to_client()
-    ↓
-ANSI Strip (if format="plain") → JSON Response → Socket → External Client
-    ↓
-UnifiedLogger.log() → Daily Log File
+Service.execute() → Formatter.format() (ANSI Output) → JSON Response → Socket → External Client
+    ↓                                                          ↓
+UnifiedLogger.log() → Daily Log File              Client handles color stripping (--no-color)
 ```
 
 ### Multi-Channel Communication via /twist
@@ -356,12 +348,13 @@ Both channels maintain separate histories
 - **Simplicity**: No need for authentication, CORS, or web server complexity
 - **Local-First**: Designed for same-machine integration, not web services
 
-### Why Single ANSI Output with Socket Stripping?
-- **Backward Compatibility**: Existing ANSI formatters work unchanged
-- **Maintainability**: Single formatter codebase, automatic socket compatibility
-- **Consistency**: Same visual output translates to clean text in socket mode via ANSI stripping
+### Why Single ANSI Output with Client-Side Color Control?
+- **Simplicity**: Daemon always sends consistent ANSI-formatted output
+- **Client Flexibility**: Each client controls its own color preferences
+- **Maintainability**: Single formatter codebase, no server-side format negotiation
+- **Performance**: No server-side format processing overhead
 - **Development Speed**: No need to maintain separate output paths
-- **Client Control**: Socket clients specify their preferred format (`"plain"` or `"rich"`) in JSON requests
+- **Better Separation**: Color control is entirely a client-side concern
 
 ### Why Multi-Chat Support in Socket Mode?
 - **Feature Parity**: Socket mode provides the same multi-chat capabilities as CLI mode

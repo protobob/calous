@@ -281,10 +281,9 @@ class ChatSessionManager:
         # Always send ANSI codes directly - client handles color stripping if needed
         clean_message = message
         
-        # If we're in command processing mode, buffer the output UNLESS it's a confirmation request or debug message
+        # If we're in command processing mode, buffer the output UNLESS it's a confirmation request
         if (hasattr(self, '_command_output_buffer') and 
-            message_type not in ["confirmation_request", "debug"] and 
-            not message.startswith("[Debug]")):
+            message_type not in ["confirmation_request"]):
             self._command_output_buffer.append(clean_message)
             return
         
@@ -492,8 +491,8 @@ class ChatSessionManager:
             try:
                 decoded_data = data.decode('utf-8')
                 if debug:
-                    self._output(f"[Debug] Raw data received: {decoded_data[:200]}{'...' if len(decoded_data) > 200 else ''} at {timestamp}")
-                    self._output(f"[Debug] Total data size: {len(data)} bytes")
+                    unified_logger.debug_socket(f"Raw data received: {decoded_data[:200]}{'...' if len(decoded_data) > 200 else ''} at {timestamp}")
+                    unified_logger.debug_socket(f"Total data size: {len(data)} bytes")
                 
                 req = json.loads(decoded_data)
                 msg_type = req.get("type")
@@ -507,7 +506,7 @@ class ChatSessionManager:
                     self.supports_confirmations = True
                 
                 if debug:
-                    self._output(f"[Debug] Parsed request: type={msg_type}, data length={len(content)} chars, target_chat={target_chat} at {timestamp}")
+                    unified_logger.debug_socket(f"Parsed request: type={msg_type}, data length={len(content)} chars, target_chat={target_chat} at {timestamp}")
                 
                 # Handle chat targeting
                 original_active_chat = self.active_chat_index
@@ -517,7 +516,7 @@ class ChatSessionManager:
                     if 0 <= target_index < self.num_chats:
                         self.active_chat_index = target_index
                         if debug:
-                            self._output(f"[Debug] Switched to chat {target_chat} for this command")
+                            unified_logger.debug_socket(f"Switched to chat {target_chat} for this command", connection_id=str(id(conn)))
                     else:
                         response = {"error": f"Invalid chat number: {target_chat}. Available chats: 1-{self.num_chats}"}
                         conn.sendall(json.dumps(response).encode())
@@ -539,15 +538,15 @@ class ChatSessionManager:
                     # Handle prompt message - model will send output via send_to_client
                     active_chat.chat_history.add_message("user", content)
                     if debug:
-                        self._output(f"[Debug] About to call talk_to_model")
+                        unified_logger.debug("About to call talk_to_model", stream='model', chat_channel=active_chat.instance_index)
                     model_response = active_chat.model.talk_to_model(content, stream=False)
                     if debug:
-                        self._output(f"[Debug] Model response received: {model_response}")
+                        unified_logger.debug(f"Model response received: {model_response}", stream='model', chat_channel=active_chat.instance_index)
                     # Send JSON response with the content for compatibility
                     response_text = model_response.get("message", {}).get("content", "") if model_response else ""
                     response = {"response": response_text}
                     if debug:
-                        self._output(f"[Debug] Sending JSON response: {response}")
+                        unified_logger.debug_socket(f"Sending JSON response: {response}")
                     
                 elif msg_type == "cmd":
                     try:
@@ -564,15 +563,15 @@ class ChatSessionManager:
                                 
                                 # Process command using active chat
                                 if debug:
-                                    self._output(f"[Debug] Processing command: {action}")
+                                    unified_logger.debug_command(f"Processing command: {action}", chat_channel=active_chat.instance_index)
                                 
                                 try:
                                     cmd_result = active_chat.process_input(f"{action}")
                                     if debug:
-                                        self._output(f"[Debug] Command result: {cmd_result}")
+                                        unified_logger.debug_command(f"Command result: {cmd_result}", chat_channel=active_chat.instance_index)
                                 except Exception as e:
                                     if debug:
-                                        self._output(f"[Debug] Error in process_input: {e}")
+                                        unified_logger.error(f"Error in process_input: {e}", component='command_processing', chat_channel=active_chat.instance_index)
                                     raise
                                 
                                 # Process the command result through session manager
@@ -580,10 +579,10 @@ class ChatSessionManager:
                                 try:
                                     self.process_command_result(cmd_result)
                                     if debug:
-                                        self._output(f"[Debug] Command result processed successfully")
+                                        unified_logger.debug_command("Command result processed successfully", chat_channel=active_chat.instance_index)
                                 except Exception as e:
                                     if debug:
-                                        self._output(f"[Debug] Error in process_command_result: {e}")
+                                        unified_logger.error(f"Error in process_command_result: {e}", component='session_management')
                                     raise
                                 
                                 # Send buffered output as single JSON response
@@ -591,11 +590,11 @@ class ChatSessionManager:
                                     combined_output = "\n".join(self._command_output_buffer)
                                     response = {"response": combined_output}
                                     if debug:
-                                        self._output(f"[Debug] Sending buffered output: {len(self._command_output_buffer)} lines")
+                                        unified_logger.debug_socket(f"Sending buffered output: {len(self._command_output_buffer)} lines")
                                 else:
                                     response = {"response": "Command completed"}
                                     if debug:
-                                        self._output(f"[Debug] No buffered output, sending completion message")
+                                        unified_logger.debug_socket("No buffered output, sending completion message")
                                     
                                 # Send the buffered response immediately instead of letting the main handler do it
                                 import json
@@ -607,7 +606,7 @@ class ChatSessionManager:
                                     
                             except Exception as e:
                                 if debug:
-                                    self._output(f"[Debug] Exception in command processing: {e}")
+                                    unified_logger.error(f"Exception in command processing: {e}", component='command_execution')
                                 # Make sure to clean up buffer even on error
                                 if hasattr(self, '_command_output_buffer'):
                                     delattr(self, '_command_output_buffer')
@@ -623,26 +622,26 @@ class ChatSessionManager:
                 if target_chat is not None and original_active_chat != self.active_chat_index:
                     self.active_chat_index = original_active_chat
                     if debug:
-                        self._output(f"[Debug] Restored active chat to {original_active_chat + 1}")
+                        unified_logger.debug_socket(f"Restored active chat to {original_active_chat + 1}")
                     
             except json.JSONDecodeError as e:
                 if debug:
                     try:
                         decoded_data = data.decode('utf-8', errors='replace')
-                        self._output(f"[Debug] JSON decode error: {e}")
-                        self._output(f"[Debug] Problematic data: {decoded_data[:500]}...")
+                        unified_logger.error(f"JSON decode error: {e}", component='socket_parsing')
+                        unified_logger.debug_socket(f"Problematic data: {decoded_data[:500]}...")
                     except:
-                        self._output(f"[Debug] JSON decode error: {e}")
-                        self._output(f"[Debug] Raw bytes: {data[:100]}...")
+                        unified_logger.error(f"JSON decode error: {e}", component='socket_parsing')
+                        unified_logger.debug_socket(f"Raw bytes: {data[:100]}...")
                 response = {"error": f"Invalid JSON in request: {str(e)}"}
             except UnicodeDecodeError as e:
                 if debug:
-                    self._output(f"[Debug] Unicode decode error: {e}")
-                    self._output(f"[Debug] Raw bytes: {data[:100]}...")
+                    unified_logger.error(f"Unicode decode error: {e}", component='socket_parsing')
+                    unified_logger.debug_socket(f"Raw bytes: {data[:100]}...")
                 response = {"error": f"Invalid UTF-8 in request: {str(e)}"}
             except Exception as e:
                 if debug:
-                    self._output(f"[Debug] Unexpected error: {e}")
+                    unified_logger.error(f"Unexpected error: {e}", component='socket_handler')
                 response = {"error": f"Server error: {str(e)}"}
                 
             # Send response back to client (for errors and acknowledgments)

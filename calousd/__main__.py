@@ -20,6 +20,9 @@ def main():
     if args.num_chats is not None:
         unified_logger._write_log_entry("WARNING", f"Chat channel argument '{args.num_chats}' ignored in socket mode. Using {SERVER_DEFAULT_NUM_CHATS} chat channels.")
 
+    # Configure unified logger debug setting based on --debug flag
+    unified_logger.set_debug_enabled(args.debug)
+    
     session_manager = ChatSessionManager(num_chats=num_chats, debug=args.debug)
     session_manager.listen_for_socket(debug=args.debug)
 
