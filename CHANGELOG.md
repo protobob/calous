@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Changelog
 
+## [1.7.4.dev] - 2025-07-04
+
+### Improved
+- **ModelInteraction Refactoring**: Major code quality improvements and deduplication
+  - **Removed complex frame inspection**: Eliminated fragile `_output_helper()` function that used stack frame inspection
+  - **Consolidated error handling**: Unified 4 separate error handler methods into single `_handle_error()` method
+  - **Helper method extraction**: Added `_build_chat_options()`, `_setup_thinking_mode()`, and `_log_debug_info()` to eliminate code duplication
+  - **Removed duplicate streaming method**: Eliminated `_handle_streaming()` method that duplicated logic from `_handle_model_response()`
+  - **Proper dependency injection**: Fixed output routing to use session manager directly instead of frame inspection
+  - **Disabled redundant headers**: Removed model response headers that weren't needed for client communication
+
+### Enhanced
+- **Logging Modernization**: Updated legacy `_write_log_entry()` calls to use new unified_logger API
+  - Function call logging now uses structured logging with proper component tagging
+  - Error logging routes to appropriate streams with better context information
+  - Consistent logging patterns across model interaction components
+- **Code Quality**: Reduced ModelInteraction complexity while preserving all functionality
+  - Maintained full streaming and non-streaming support
+  - Preserved function calling and thinking mode capabilities
+  - Better separation of concerns with helper methods
+  - Improved type annotations for better IDE support
+
 ## [1.7.3.dev] - 2025-07-04
 
 ### Improved

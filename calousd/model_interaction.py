@@ -8,27 +8,6 @@ from typing import Optional, NamedTuple, Dict, Any, List
 from .utils import get_chat_color
 from .unified_logger import unified_logger
 
-def _output_helper(message, message_type="response"):
-    """Helper to route output to client or console."""
-    try:
-        # Try to get session manager from various contexts
-        import inspect
-        frame = inspect.currentframe()
-        while frame:
-            local_vars = frame.f_locals
-            if 'self' in local_vars:
-                obj = local_vars['self']
-                if hasattr(obj, 'session_manager') and obj.session_manager and obj.session_manager.socket_mode:
-                    obj.session_manager.send_to_client(message, message_type)
-                    return
-                elif hasattr(obj, 'app') and hasattr(obj.app, 'session_manager') and obj.app.session_manager and obj.app.session_manager.socket_mode:
-                    obj.app.session_manager.send_to_client(message, message_type)
-                    return
-            frame = frame.f_back
-        # Fallback to regular print
-        print(message)
-    except:
-        print(message)
 
 
 class ContextWindowInfo(NamedTuple):
@@ -43,14 +22,108 @@ class ContextWindowInfo(NamedTuple):
 
 class ModelInteraction:
     def _output(self, message: str, message_type: str = "response", **kwargs):
-        """Send output to client or discard if no client connected."""
-        # For now, just discard all model output to avoid double responses
-        # The JSON response will contain the model's text content
-        pass
+        """Send output to client via session manager if available."""
+        if (hasattr(self.app, 'session_manager') and 
+            self.app.session_manager and 
+            self.app.session_manager.socket_mode):
+            self.app.session_manager.send_to_client(message, message_type)
+        # In daemon mode, no fallback to print - output should only go through socket
     
     def __init__(self, app):
         self.app = app    
         self._context_cache = {}  # Cache context window info to avoid repeated API calls
+    
+    def _build_chat_options(self, messages: List[Dict], stream: bool = True, tools: Optional[List] = None) -> Dict[str, Any]:
+        """Build chat options dictionary for ollama requests."""
+        options = {
+            'model': self.app.selected_model,
+            'messages': messages,
+            'stream': stream,
+            'options': {'num_ctx': self.app.num_ctx, 'temperature': self.app.temperature},
+            'keep_alive': self.app.keep_alive
+        }
+        if tools:
+            options['tools'] = tools
+        return options
+    
+    def _print_model_header(self):
+        """Print the model response header."""
+        # Header printing disabled - not needed for client
+        pass
+    
+    def _setup_thinking_mode(self, chat_options: Dict[str, Any]) -> Any:
+        """Setup thinking mode with fallback handling. Returns ollama response object."""
+        try:
+            chat_options['think'] = self.app.thinking_enabled
+            return ollama.chat(**chat_options)
+        except (TypeError, ollama.ResponseError) as e:
+            if isinstance(e, ollama.ResponseError) and "thinking" in str(e).lower():
+                if self.app.thinking_enabled:
+                    self._output(f"\n[33m⚠️  Model '{self.app.selected_model}' doesn't support thinking mode.[0m")
+                    self._output(f"[90mTry updating the model with: ollama pull {self.app.selected_model}[0m")
+                    self._output(f"[90mContinuing without thinking mode...[0m\n")
+            chat_options.pop('think', None)
+            return ollama.chat(**chat_options)
+    
+    def _log_debug_info(self, messages: List[Dict], tools: Optional[List] = None, stream: bool = True):
+        """Log debug information if debug mode is enabled."""
+        try:
+            show_debug = unified_logger.debug_enabled
+        except Exception:
+            show_debug = False
+        
+        if show_debug:
+            try:
+                unified_logger.debug_model(
+                    f"Sending to model {self.app.selected_model}",
+                    metadata={
+                        'messages_count': len(messages),
+                        'num_ctx': self.app.num_ctx,
+                        'temperature': self.app.temperature,
+                        'tools_count': len(tools) if tools else 0,
+                        'stream': stream,
+                        'model': self.app.selected_model
+                    }
+                )
+                
+                unified_logger.debug("Full conversation being sent to model", stream='debug', 
+                                   component='model_interaction', model=self.app.selected_model)
+                for i, msg in enumerate(messages):
+                    role = msg.get('role', 'unknown')
+                    content = msg.get('content', '')
+                    content_preview = content[:300] + "..." if len(content) > 300 else content
+                    unified_logger.debug(f"Message {i+1}: {role}", stream='debug', 
+                                       component='model_interaction', content_preview=content_preview)
+            except Exception:
+                pass
+    
+    def _handle_error(self, error: Exception) -> Dict[str, Any]:
+        """Consolidated error handling for all error types."""
+        if isinstance(error, ollama.ResponseError):
+            if "model not found" in str(error).lower() or ("model" in str(error).lower() and "not found" in str(error).lower()):
+                self._output(f"\n[1;31mModel Error:[0m Model '{self.app.selected_model}' not found.")
+                self._output(f"[90mTry: /model to select an available model[0m")
+                available_models = self.list_ollama_models()
+                if available_models:
+                    self._output(f"\033[90mAvailable models: {', '.join(available_models[:3])}{'...' if len(available_models) > 3 else ''}\033[0m")
+            else:
+                self._output(f"\n[1;31mOllama API Error:[0m {error}")
+            return {"message": {"content": "[Error: Model response failed.]"}}
+        
+        elif isinstance(error, ConnectionError):
+            self._output(f"\n[1;31mConnection Error:[0m Cannot connect to Ollama server.")
+            self._output(f"[90mTry: 'ollama serve' in another terminal or check if port 11434 is accessible[0m")
+            return {"message": {"content": "[Error: Cannot connect to Ollama server.]"}}
+        
+        elif isinstance(error, TimeoutError):
+            self._output(f"\n[1;31mTimeout Error:[0m Request timed out.")
+            self._output(f"[90mThe model may be processing a complex request. Try again or use a smaller model.[0m")
+            return {"message": {"content": "[Error: Request timed out.]"}}
+        
+        else:
+            self._output(f"\n[1;31mUnexpected Error:[0m {error}")
+            self._output(f"[90mIf this persists, try restarting Ollama with 'ollama serve'[0m")
+            return {"message": {"content": "[Error: An unexpected error occurred.]"}}
     
     def get_context_window_info(self, model_name: str) -> Optional[ContextWindowInfo]:
         """Get context window information for a model."""
@@ -306,16 +379,18 @@ class ModelInteraction:
         return self._handle_model_response(messages, user_prompt, tools, stream=stream)
 
     def _handle_model_response(self, messages, user_prompt, tools=None, stream=True):
-        """Handle model response from the model with optional function calling. Supports streaming and non-streaming."""
+        """Handle model response with unified streaming/non-streaming logic."""
         full_response = ""
         thinking_content = ""
         response_dict = None
         tool_calls = []
         try:
-            # Print the header before response starts
-            chat_index = getattr(self.app, 'active_chat_index', 0)
-            chat_color = get_chat_color(chat_index)
-            self._output(f"\n\033[1m{chat_color}|\033[0m\033[1m{chat_color}{chat_index + 1})\033[0m[4m{self.app.selected_model}[0m:\n")
+            # Header printing disabled - not needed for client
+            if False:  # Disable header printing
+                chat_index = getattr(self.app, 'active_chat_index', 0)
+                chat_color = get_chat_color(chat_index)
+                self._output(f"\n\033[1m{chat_color}|\033[0m\033[1m{chat_color}{chat_index + 1})\033[0m[4m{self.app.selected_model}[0m:\n")
+            
             # Prepare chat options
             chat_options = {
                 'model': self.app.selected_model,
@@ -397,8 +472,7 @@ class ModelInteraction:
                 self._output("")  # newline after stream
             else:
                 # Non-streaming path
-                if show_debug:
-                    self._output(f"[DEBUG] Non-streaming raw response: {response}")  # <--- Debug print
+                # Debug output already handled by _log_debug_info()
                 if hasattr(response, 'message'):
                     content = getattr(response.message, 'content', '')
                     if content:
@@ -432,14 +506,8 @@ class ModelInteraction:
                 final_response['eval_duration'] = response_dict.eval_duration
             self._process_response(user_prompt, final_response, full_response)
             return final_response
-        except ollama.ResponseError as e:
-            return self._handle_response_error(e)
-        except ConnectionError as e:
-            return self._handle_connection_error(e)
-        except TimeoutError as e:
-            return self._handle_timeout_error(e)
         except Exception as e:
-            return self._handle_unexpected_error(e)
+            return self._handle_error(e)
 
     def _get_function_tools(self) -> List[Dict[str, Any]]:
         """Get function tools from the plugin system."""
@@ -475,10 +543,8 @@ class ModelInteraction:
             
             # Log function call attempt
             try:
-                unified_logger._write_log_entry(
-                    entry_type="PLUGIN_FUNCTION_CALL",
-                    content=f"Function: {function_name}, Args: {function_args}"
-                )
+                unified_logger.info(f"Function call: {function_name}", stream='app', 
+                                   component='plugin_function', function_args=str(function_args))
             except Exception:
                 pass
             
@@ -503,19 +569,16 @@ class ModelInteraction:
                     }
                     # Log function not found
                     try:
-                        unified_logger._write_log_entry(
-                            entry_type="PLUGIN_FUNCTION_ERROR",
-                            content=f"Function: {function_name}, Error: Function not found"
-                        )
+                        unified_logger.error(f"Function not found: {function_name}", stream='error', 
+                                            component='plugin_function')
                     except Exception:
                         pass
                 else:
                     # Log successful function result
                     try:
-                        unified_logger._write_log_entry(
-                            entry_type="PLUGIN_FUNCTION_RESULT",
-                            content=f"Plugin: {plugin_name}, Function: {function_name}, Result: {result}"
-                        )
+                        unified_logger.info(f"Function result: {function_name}", stream='app', 
+                                           component='plugin_function', plugin=plugin_name, 
+                                           result_preview=str(result)[:200])
                     except Exception:
                         pass
                     
@@ -526,10 +589,8 @@ class ModelInteraction:
                 }
                 # Log function execution error
                 try:
-                    unified_logger._write_log_entry(
-                        entry_type="PLUGIN_FUNCTION_ERROR",
-                        content=f"Plugin: {plugin_name}, Function: {function_name}, Error: {str(e)}"
-                    )
+                    unified_logger.error(f"Function execution error: {function_name}", stream='error', 
+                                        component='plugin_function', plugin=plugin_name, error=str(e))
                 except Exception:
                     pass
             
@@ -542,144 +603,6 @@ class ModelInteraction:
             results.append(tool_result)
         
         return results    
-    def _handle_streaming(self, messages, user_prompt, tools=None):
-        """Handle streaming response from the model with optional function calling."""
-        full_response = ""
-        thinking_content = ""
-        response_dict = None
-        tool_calls = []
-        
-        try:
-            # Print the header before streaming starts
-            chat_index = getattr(self.app, 'active_chat_index', 0)
-            chat_color = get_chat_color(chat_index)
-            self._output(f"\n\033[1m{chat_color}|\033[0m \033[1m{chat_color}{chat_index + 1})\033[0m[4m{self.app.selected_model}[0m:\n")
-            
-            # Prepare chat options
-            chat_options = {
-                'model': self.app.selected_model,
-                'messages': messages,
-                'stream': True,
-                'options': {'num_ctx': self.app.num_ctx, 'temperature': self.app.temperature},
-                'keep_alive': self.app.keep_alive
-            }
-            
-            # Add tools if available
-            if tools:
-                chat_options['tools'] = tools
-              # Try to use native thinking API, fall back to without think parameter
-            try:
-                chat_options['think'] = self.app.thinking_enabled
-                chunks = ollama.chat(**chat_options)
-            except (TypeError, ollama.ResponseError) as e:
-                # Handle both unsupported client versions and unsupported models
-                if isinstance(e, ollama.ResponseError) and "thinking" in str(e).lower():
-                    if self.app.thinking_enabled:
-                        self._output(f"\n[33m⚠️  Model '{self.app.selected_model}' doesn't support thinking mode.[0m")
-                        self._output(f"[90mTry updating the model with: ollama pull {self.app.selected_model}[0m")
-                        self._output(f"[90mContinuing without thinking mode...[0m\n")
-                    # Disable thinking for this request and continue
-                    chat_options.pop('think', None)
-                    chunks = ollama.chat(**chat_options)
-                else:
-                    # Fallback for older ollama client that doesn't support think parameter
-                    chat_options.pop('think', None)
-                    chunks = ollama.chat(**chat_options)
-            
-            for chunk in chunks:
-                # Handle both content and thinking from the new API
-                if hasattr(chunk, 'message'):
-                    # Regular content (always clean with native API)
-                    content = getattr(chunk.message, 'content', '')
-                    if content:
-                        full_response += content
-                        self._output(content, end='', flush=True)
-                    
-                    # Handle tool calls
-                    if hasattr(chunk.message, 'tool_calls') and chunk.message.tool_calls:
-                        tool_calls.extend(chunk.message.tool_calls)
-                    
-                    # Thinking content (only displayed when thinking is enabled)
-                    if self.app.thinking_enabled and hasattr(chunk.message, 'thinking'):
-                        thinking = getattr(chunk.message, 'thinking', '')
-                        if thinking:
-                            thinking_content += thinking
-                            # Display thinking in a different style (dim cyan for reasoning)
-                            self._output(f"[2;36m{thinking}[0m", end='', flush=True)
-                
-                # Store the last chunk to get eval data if available
-                response_dict = chunk
-            
-            self._output("")  # newline after stream
-            
-            # Handle function calls if present
-            if tool_calls:
-                tool_results = self._handle_function_calls(tool_calls)
-                if tool_results:
-                    # Add tool calls to messages and call model again
-                    messages.append({"role": "assistant", "content": full_response, "tool_calls": tool_calls})
-                    messages.extend(tool_results)
-                    self._output(f"[2;32m🔄 Processing function results...[0m")
-                    # Make follow-up call without tools to get final response
-                    return self._handle_streaming(messages, user_prompt, tools=None)
-            
-            # With native API, full_response is always clean (no manual stripping needed)
-            clean_response = full_response
-                
-            if not clean_response:
-                clean_response = "[No valid response received from the model.]"
-            
-            # Create response object with cleaned content for history and twist operations
-            final_response = {"message": {"content": clean_response}}
-            
-            # Add eval data if available from the last chunk
-            if response_dict and hasattr(response_dict, 'eval_count'):
-                final_response['eval_count'] = response_dict.eval_count
-            if response_dict and hasattr(response_dict, 'eval_duration'):
-                final_response['eval_duration'] = response_dict.eval_duration
-            
-            # Process the complete response (this handles history, logging, etc.)
-            self._process_response(user_prompt, final_response, full_response)
-            return final_response
-
-        except ollama.ResponseError as e:
-            return self._handle_response_error(e)
-        except ConnectionError as e:
-            return self._handle_connection_error(e)
-        except TimeoutError as e:
-            return self._handle_timeout_error(e)
-        except Exception as e:
-            return self._handle_unexpected_error(e)
-
-    def _handle_response_error(self, e):
-        """Handle ResponseError with detailed messaging."""
-        if "model not found" in str(e).lower() or "model" in str(e).lower() and "not found" in str(e).lower():
-            self._output(f"\n[1;31mModel Error:[0m Model '{self.app.selected_model}' not found.")
-            self._output(f"[90mTry: /model to select an available model[0m")
-            available_models = self.list_ollama_models()
-            if available_models:
-                self._output(f"\033[90mAvailable models: {', '.join(available_models[:3])}{'...' if len(available_models) > 3 else ''}\033[0m")
-        else:
-            self._output(f"\n[1;31mOllama API Error:[0m {e}")
-        return {"message": {"content": "[Error: Model response failed.]"}}
-
-    def _handle_connection_error(self, e):
-        """Handle ConnectionError with helpful messaging."""
-        self._output(f"\n[1;31mConnection Error:[0m Cannot connect to Ollama server.")
-        self._output(f"[90mTry: 'ollama serve' in another terminal or check if port 11434 is accessible[0m")
-        return {"message": {"content": "[Error: Cannot connect to Ollama server.]"}}
-
-    def _handle_timeout_error(self, e):
-        """Handle TimeoutError with helpful messaging."""
-        self._output(f"\n[1;31mTimeout Error:[0m Request timed out.")
-        self._output(f"[90mThe model may be processing a complex request. Try again or use a smaller model.[0m")
-        return {"message": {"content": "[Error: Request timed out.]"}}    
-    
-    def _handle_unexpected_error(self, e):
-        """Handle unexpected errors with helpful messaging."""
-        self._output(f"\n[1;31mUnexpected Error:[0m {e}")
-        self._output(f"[90mIf this persists, try restarting Ollama with 'ollama serve'[0m")
-        return {"message": {"content": "[Error: An unexpected error occurred.]"}}
 
     def _process_response(self, user_input, response, full_response_for_logging=None):
         """Process response for history and logging (no output printing since streaming already printed)."""
@@ -689,7 +612,7 @@ class ModelInteraction:
 
         # CRITICAL: For twist operations, last_response must ALWAYS contain clean content (no thinking)
         # This ensures twist never sends model reasoning to other chats
-        self.app.last_response = response  # This already contains clean content from _handle_streaming
+        self.app.last_response = response  # This already contains clean content from model response processing
 
         # The response already contains cleaned content (thoughts stripped)
         clean_response = raw_response
