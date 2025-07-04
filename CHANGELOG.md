@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Changelog
 
+  ## [1.5.0.dev] - 2025-01-04
+
+  ### Breaking Changes
+  - **Replaced Rich markup with ANSI codes** - Migrated from Rich library markup to direct ANSI escape sequences for color formatting
+  - **Simplified cx_rust client** - Removed Rich tag processing logic in favor of direct ANSI code display
+  - **Updated socket protocol behavior** - Changed "plain" format to mean "send ANSI codes directly" instead of stripped text
+
+  ### Added
+  - **Single source of authority for colors** - All color formatting now handled exclusively by calousd using ANSI codes
+  - **Direct ANSI code support** - Color constants now contain ANSI escape sequences instead of color names
+  - **Simplified color handling** - Streamlined `get_chat_color()` function to return ANSI codes directly
+
+  ### Removed
+  - **Rich library dependency for markup** - Eliminated Rich tag patterns like `[bold red]`, `[/bold]`, etc.
+  - **Dual formatting systems** - Removed redundant color conversion between Rich markup and ANSI codes
+  - **Complex Rich text processing in cx_rust** - Removed `parse_and_print_rich_text()` and related formatting functions
+
+  ### Technical Improvements
+  - **Cleaner architecture** - Eliminated the "two sources of authority" problem for color formatting
+  - **Reduced complexity** - Simplified both calousd and cx_rust codebases by removing Rich conversion logic
+  - **Better performance** - Direct ANSI code output without intermediate markup processing
+  - **Maintained protocol compatibility** - Kept socket protocol interface intact for backward compatibility
+
   ## [1.4.4.dev] - 2025-01-02
 
   ### Fixed

@@ -61,19 +61,19 @@ class PluginManager:
             
             if self.enabled_plugin_names is None:
                 if self.debug:
-                    self._output(f"[blue]Plugin config:[/blue] Loading all available plugins (no filtering)")
+                    self._output(f"[34mPlugin config:[0m Loading all available plugins (no filtering)")
                 unified_logger.log_plugin_event("CONFIG", "Loading all available plugins (no filtering)")
             elif len(self.enabled_plugin_names) == 0:
                 if self.debug:
-                    self._output(f"[blue]Plugin config:[/blue] All plugins disabled (empty set in config)")
+                    self._output(f"[34mPlugin config:[0m All plugins disabled (empty set in config)")
                 unified_logger.log_plugin_event("CONFIG", "All plugins disabled (empty set in config)")
             else:
                 plugins_list = ', '.join(self.enabled_plugin_names)
                 if self.debug:
-                    self._output(f"[blue]Plugin filtering active:[/blue] Only loading: {plugins_list}")
+                    self._output(f"[34mPlugin filtering active:[0m Only loading: {plugins_list}")
                 unified_logger.log_plugin_event("CONFIG", f"Only loading these plugins: {plugins_list}")
         except Exception as e:
-            self._output(f"[yellow]Warning:[/yellow] Could not load plugin configuration: {e}")
+            self._output(f"[33mWarning:[0m Could not load plugin configuration: {e}")
             unified_logger.log_plugin_event("ERROR", f"Could not load plugin configuration: {e}")
             self.enabled_plugin_names = None  # Load all plugins if config not present
 
@@ -116,7 +116,7 @@ class PluginManager:
             try:
                 self._load_plugin_file(plugin_file)
             except Exception as e:
-                self._output(f"[yellow]Warning:[/yellow] Failed to load plugin {plugin_file.name}: {e}")
+                self._output(f"[33mWarning:[0m Failed to load plugin {plugin_file.name}: {e}")
                 unified_logger.log_plugin_event("ERROR", f"Failed to load plugin {plugin_file.name}: {e}")
     
     def _load_plugin_file(self, plugin_file: Path) -> None:
@@ -125,7 +125,7 @@ class PluginManager:
         if hasattr(self, "enabled_plugin_names") and self.enabled_plugin_names is not None:
             if plugin_file.stem not in self.enabled_plugin_names:
                 if self.debug:
-                    self._output(f"[blue]Skipping disabled plugin:[/blue] {plugin_file.stem}")
+                    self._output(f"[34mSkipping disabled plugin:[0m {plugin_file.stem}")
                 unified_logger.log_plugin_event("SKIP", f"Skipping disabled plugin: {plugin_file.stem}")
                 return
                 
@@ -160,7 +160,7 @@ class PluginManager:
                     plugin_instance = attr()  # type: ignore # Plugin classes define their own constructors
                     self.register_plugin(plugin_instance)
                 except Exception as e:
-                    self._output(f"[yellow]Warning:[/yellow] Failed to instantiate plugin {attr_name}: {e}")
+                    self._output(f"[33mWarning:[0m Failed to instantiate plugin {attr_name}: {e}")
     
     def register_plugin(self, plugin: PluginBase) -> bool:
         """Register a plugin instance."""        
@@ -198,7 +198,7 @@ class PluginManager:
                     self.hook_plugins.append(plugin)
             
             # Print success message for all loaded plugins
-            self._output(f"[green]✓[/green] Loaded plugin: {plugin.name} v{plugin.version}")
+            self._output(f"[32m✓[0m Loaded plugin: {plugin.name} v{plugin.version}")
             unified_logger.log_plugin_event("SUCCESS", f"Loaded plugin: {plugin.name} v{plugin.version}")
             return True
             
@@ -206,7 +206,7 @@ class PluginManager:
             plugin.error = str(e)
             plugin.loaded = False
             self.plugins[plugin.name] = plugin
-            self._output(f"[red]✗[/red] Failed to register plugin {plugin.name}: {e}")
+            self._output(f"[31m✗[0m Failed to register plugin {plugin.name}: {e}")
             unified_logger.log_plugin_event("ERROR", f"Failed to register plugin {plugin.name}: {e}")
             return False
     
@@ -239,7 +239,7 @@ class PluginManager:
                 try:
                     schemas.extend(plugin.get_function_schemas())
                 except Exception as e:
-                    self._output(f"[yellow]Warning:[/yellow] Error getting schemas from {plugin.name}: {e}")
+                    self._output(f"[33mWarning:[0m Error getting schemas from {plugin.name}: {e}")
         return schemas
     
     def execute_function(self, function_name: str, **kwargs) -> str:
@@ -260,7 +260,7 @@ class PluginManager:
         try:
             return self.plugin_commands[command_name](*args, **kwargs)
         except Exception as e:
-            self._output(f"[red]Error executing plugin command {command_name}:[/red] {e}")
+            self._output(f"[31mError executing plugin command {command_name}:[0m {e}")
             return None
     
     def apply_pre_message_hooks(self, user_input: str, context: Dict[str, Any]) -> str:
@@ -271,7 +271,7 @@ class PluginManager:
                 try:
                     processed_input = hook_plugin.pre_message_hook(processed_input, context)
                 except Exception as e:
-                    self._output(f"[yellow]Warning:[/yellow] Error in pre-message hook from {hook_plugin.name}: {e}")
+                    self._output(f"[33mWarning:[0m Error in pre-message hook from {hook_plugin.name}: {e}")
         return processed_input
     
     def apply_post_message_hooks(self, response: str, context: Dict[str, Any]) -> str:
@@ -282,7 +282,7 @@ class PluginManager:
                 try:
                     processed_response = hook_plugin.post_message_hook(processed_response, context)
                 except Exception as e:
-                    self._output(f"[yellow]Warning:[/yellow] Error in post-message hook from {hook_plugin.name}: {e}")
+                    self._output(f"[33mWarning:[0m Error in post-message hook from {hook_plugin.name}: {e}")
         return processed_response
     
     def get_plugin_info(self, plugin_name: str) -> Optional[Dict[str, Any]]:
@@ -334,7 +334,7 @@ class PluginManager:
             try:
                 plugin.cleanup()
             except Exception as e:
-                self._output(f"[yellow]Warning:[/yellow] Error cleaning up {plugin.name}: {e}")
+                self._output(f"[33mWarning:[0m Error cleaning up {plugin.name}: {e}")
         
         # Clear all registries
         self.plugins.clear()

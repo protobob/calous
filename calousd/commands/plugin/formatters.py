@@ -16,12 +16,12 @@ class PluginFormatter(CommandFormatter):
     @staticmethod
     def plugin_system_not_available():
         """Print plugin system not available message."""
-        PluginFormatter._output("[bold red]Plugin system not available[/bold red]")
+        PluginFormatter._output("[1;31mPlugin system not available[0m")
     
     @staticmethod
     def no_plugins_loaded():
         """Print no plugins loaded message."""
-        PluginFormatter._output("[yellow]No plugins loaded[/yellow]")
+        PluginFormatter._output("[33mNo plugins loaded[0m")
     
     @staticmethod
     def create_plugin_table():
@@ -59,39 +59,39 @@ class PluginFormatter(CommandFormatter):
     def show_function_calling_plugins(function_plugins):
         """Show function calling plugins."""
         if function_plugins:
-            PluginFormatter._output(f"\n[bold cyan]Available LLM Tools:[/bold cyan]")
+            PluginFormatter._output(f"\n[1;36mAvailable LLM Tools:[0m")
             for plugin in function_plugins:
                 schemas = plugin.get_function_schemas()
                 for schema in schemas:
                     function_info = schema.get('function', {})
                     func_name = function_info.get('name', 'Unknown')
                     func_desc = function_info.get('description', 'No description')
-                    PluginFormatter._output(f"  • [bold]{func_name}[/bold]: {func_desc}")
+                    PluginFormatter._output(f"  • [1m{func_name}[0m: {func_desc}")
     
     @staticmethod
     def missing_plugin_name():
         """Print missing plugin name error."""
-        PluginFormatter._output("[bold red]Error:[/bold red] Please specify a plugin name")
-        PluginFormatter._output("[grey50]Usage: /plugin.info <plugin_name>[/grey50]")
+        PluginFormatter._output("[1;31mError:[0m Please specify a plugin name")
+        PluginFormatter._output("[90mUsage: /plugin.info <plugin_name>[0m")
     
     @staticmethod
     def plugin_not_found(plugin_name):
         """Print plugin not found error."""
-        PluginFormatter._output(f"[bold red]Plugin '{plugin_name}' not found[/bold red]")
-        PluginFormatter._output("[grey50]Use /plugin.list to see available plugins[/grey50]")
+        PluginFormatter._output(f"[1;31mPlugin '{plugin_name}' not found[0m")
+        PluginFormatter._output("[90mUse /plugin.list to see available plugins[0m")
     
     @staticmethod
     def show_plugin_details(plugin):
         """Show detailed plugin information."""
-        PluginFormatter._output(f"\n[bold cyan]Plugin Details: {plugin.name}[/bold cyan]")
-        PluginFormatter._output(f"[bold]Version:[/bold] {getattr(plugin, 'version', '1.0.0')}")
-        PluginFormatter._output(f"[bold]Description:[/bold] {plugin.description}")
-        PluginFormatter._output(f"[bold]Status:[/bold] {'✓ Active' if plugin.is_active else '✗ Inactive'}")
+        PluginFormatter._output(f"\n[1;36mPlugin Details: {plugin.name}[0m")
+        PluginFormatter._output(f"[1mVersion:[0m {getattr(plugin, 'version', '1.0.0')}")
+        PluginFormatter._output(f"[1mDescription:[0m {plugin.description}")
+        PluginFormatter._output(f"[1mStatus:[0m {'✓ Active' if plugin.is_active else '✗ Inactive'}")
     
     @staticmethod
     def show_plugin_capabilities(capabilities):
         """Show plugin capabilities."""
-        PluginFormatter._output(f"[bold]Capabilities:[/bold]")
+        PluginFormatter._output(f"[1mCapabilities:[0m")
         for cap in capabilities:        
             if cap.name == "FUNCTION_CALLING":
                 PluginFormatter._output("  • 🔧 LLM Tools - Provides capabilities for LLM use")
@@ -106,46 +106,46 @@ class PluginFormatter(CommandFormatter):
     def show_plugin_functions(schemas):
         """Show plugin functions."""
         if schemas:
-            PluginFormatter._output(f"\n[bold]Available LLM Tools:[/bold]")
+            PluginFormatter._output(f"\n[1mAvailable LLM Tools:[0m")
             for schema in schemas:
                 function_info = schema.get('function', {})
                 func_name = function_info.get('name', 'Unknown')
                 func_desc = function_info.get('description', 'No description')
-                PluginFormatter._output(f"  • [bold]{func_name}[/bold]")
+                PluginFormatter._output(f"  • [1m{func_name}[0m")
                 PluginFormatter._output(f"    {func_desc}")
                 
                 # Show parameters
                 params = function_info.get('parameters', {}).get('properties', {})
                 if params:
-                    PluginFormatter._output(f"    [dim]Parameters:[/dim]")
+                    PluginFormatter._output(f"    [2mParameters:[0m")
                     required_params = function_info.get('parameters', {}).get('required', [])
                     for param_name, param_info in params.items():
                         param_type = param_info.get('type', 'unknown')
                         param_desc = param_info.get('description', 'No description')
                         required = param_name in required_params
-                        req_marker = " [red]*[/red]" if required else ""
+                        req_marker = " [31m*[0m" if required else ""
                         PluginFormatter._output(f"      - {param_name} ({param_type}){req_marker}: {param_desc}")
     
     @staticmethod
     def reload_warning():
         """Print plugin reload warning."""
-        PluginFormatter._output("[bold yellow]Warning:[/bold yellow] This will reload all plugins from disk.")
+        PluginFormatter._output("[1;33mWarning:[0m This will reload all plugins from disk.")
         PluginFormatter._output("Any plugin state will be lost and all plugins will be reinitialized.")
     
     @staticmethod
     def reload_starting():
         """Print plugin reload starting message."""
-        PluginFormatter._output("[blue]Reloading plugins...[/blue]")
+        PluginFormatter._output("[34mReloading plugins...[0m")
     
     @staticmethod
     def reload_complete():
         """Print plugin reload complete message."""
-        PluginFormatter._output("[green]✓[/green] Plugin reload complete!")
+        PluginFormatter._output("[32m✓[0m Plugin reload complete!")
     
     @staticmethod
     def reload_directory_error():
         """Print plugin reload directory error."""
-        PluginFormatter._output("[bold red]Error:[/bold red] Could not locate plugin directory")
+        PluginFormatter._output("[1;31mError:[0m Could not locate plugin directory")
     
     @staticmethod
     def reload_cancelled():
@@ -155,4 +155,4 @@ class PluginFormatter(CommandFormatter):
     @staticmethod
     def show_plugin_directory(plugin_dir):
         """Show plugin directory path."""
-        PluginFormatter._output(f"[grey50]Plugin directory: {plugin_dir}[/grey50]")
+        PluginFormatter._output(f"[90mPlugin directory: {plugin_dir}[0m")

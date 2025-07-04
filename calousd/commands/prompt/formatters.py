@@ -37,26 +37,26 @@ class PromptFormatter(CommandFormatter):
     @staticmethod
     def using_prompt(chat_color: str, slot: int, prompt_text: str):
         """Print message when using a prompt."""
-        PromptFormatter._output(f"\n[bold {chat_color}]|[/bold {chat_color}] Using Prompt {slot}: [grey70]{prompt_text}[/grey70]")
+        PromptFormatter._output(f"\n\033[1m{chat_color}|\033[0m Using Prompt {slot}: [37m{prompt_text}[0m")
     
     @staticmethod
     def show_single_prompt(chat_color: str, active_chat_index: int, slot: int, prompt_content: str):
         """Print a single prompt with styling."""
-        PromptFormatter._output(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]CHAT {active_chat_index + 1} PROMPT {slot}[/bold {chat_color}]\n")
-        PromptFormatter._output(f"[bold {chat_color}]|[/bold {chat_color}] {'Prompt Content:':<20} [grey70]{prompt_content}[/grey70]\n")
+        PromptFormatter._output(f"\n\033[1m{chat_color}|\033[0m \033[1m{chat_color}CHAT {active_chat_index + 1} PROMPT {slot}\033[0m\n")
+        PromptFormatter._output(f"\033[1m{chat_color}|\033[0m {'Prompt Content:':<20} [37m{prompt_content}[0m\n")
     
     @staticmethod
     def show_prompt_list_header(chat_color: str, active_chat_index: int):
         """Print header for prompt list."""
-        PromptFormatter._output(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]CHAT {active_chat_index + 1} SAVED PROMPTS[/bold {chat_color}]\n")
+        PromptFormatter._output(f"\n\033[1m{chat_color}|\033[0m \033[1m{chat_color}CHAT {active_chat_index + 1} SAVED PROMPTS\033[0m\n")
     
     @staticmethod
     def show_prompt_list_item(chat_color: str, slot: int, content: str):
         """Print a prompt list item."""
         if content:
-            PromptFormatter._output(f"[bold {chat_color}]|[/bold {chat_color}] {'Prompt' + str(slot) + ':':<20} [grey70]{content}[/grey70]")
+            PromptFormatter._output(f"\033[1m{chat_color}|\033[0m {'Prompt' + str(slot) + ':':<20} [37m{content}[0m")
         else:
-            PromptFormatter._output(f"[bold {chat_color}]|[/bold {chat_color}] {'Prompt' + str(slot) + ':':<20} [grey70](not set)[/grey70]")
+            PromptFormatter._output(f"\033[1m{chat_color}|\033[0m {'Prompt' + str(slot) + ':':<20} [37m(not set)[0m")
     
     @staticmethod
     def add_spacing():

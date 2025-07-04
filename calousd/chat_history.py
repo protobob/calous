@@ -50,11 +50,11 @@ class ChatHistory:
                 if messages_loaded > 0:
                     # Only show loading message in debug mode
                     if hasattr(self.app, 'session_manager') and hasattr(self.app.session_manager, 'debug') and self.app.session_manager.debug:
-                        self._output(f"[dim green]Loaded {messages_loaded} messages from chat history[/dim green]")
+                        self._output(f"[2;32mLoaded {messages_loaded} messages from chat history[0m")
                     
         except Exception as e:
             # Don't crash if loading fails, just start with empty history
-            self._output(f"[dim red]Warning: Failed to load chat history: {e}[/dim red]")
+            self._output(f"[2;31mWarning: Failed to load chat history: {e}[0m")
             self.history = []
     
     def _get_history_filename(self):
@@ -81,7 +81,7 @@ class ChatHistory:
                 
         except Exception as e:
             # Don't crash the app if history saving fails, just log it
-            self._output(f"[dim red]Warning: Failed to save message to history file: {e}[/dim red]")
+            self._output(f"[2;31mWarning: Failed to save message to history file: {e}[0m")
     
     def _delete_history_file(self):
         """Delete the current chat's history file."""
@@ -89,9 +89,9 @@ class ChatHistory:
         if history_file.exists():
             try:
                 history_file.unlink()
-                self._output(f"[dim green]History file deleted: {history_file.name}[/dim green]")
+                self._output(f"[2;32mHistory file deleted: {history_file.name}[0m")
             except Exception as e:
-                self._output(f"[dim red]Warning: Failed to delete history file: {e}[/dim red]")
+                self._output(f"[2;31mWarning: Failed to delete history file: {e}[0m")
     
     def add_message(self, role, content):
         """Add a message to the chat history."""
@@ -117,27 +117,27 @@ class ChatHistory:
         chat_color = get_chat_color(self.app.active_chat_index)
         
         # Start header with CHAT # in the chat color
-        self._output(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]START CHAT {self.app.active_chat_index + 1} HISTORY[/bold {chat_color}]\n")
+        self._output(f"\n\033[1m{chat_color}|\033[0m \033[1m{chat_color}START CHAT {self.app.active_chat_index + 1} HISTORY\033[0m\n")
         
         if not self.history:
-            self._output(f"[bold {chat_color}]|[/bold {chat_color}] [grey70]No messages in history.[/grey70]")
+            self._output(f"\033[1m{chat_color}|\033[0m [37mNo messages in history.[0m")
         else:
             for i, msg in enumerate(self.history, 1):
                 role = msg.get("role", "unknown").upper()
                 content = msg.get("content", "")
                 
-                # Color code the role
+                # Color code the role with ANSI codes
                 if role == "USER":
-                    role_color = "bold"
+                    role_color = "\033[1m"  # bold
                 elif role == "ASSISTANT":
-                    role_color = "cyan"
+                    role_color = "\033[36m"  # cyan
                 else:
-                    role_color = "grey70"
+                    role_color = "\033[90m"  # grey
                 
                 # Display message with consistent formatting
-                self._output(f"[bold {chat_color}]|[/bold {chat_color}] [{role_color}]{role}[/{role_color}]: [grey70]{content}[/grey70]")
+                self._output(f"\033[1m{chat_color}|\033[0m {role_color}{role}\033[0m: [37m{content}[0m")
           # End header with CHAT # in the chat color
-        self._output(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]END CHAT {self.app.active_chat_index + 1} HISTORY[/bold {chat_color}]\n")
+        self._output(f"\n\033[1m{chat_color}|\033[0m \033[1m{chat_color}END CHAT {self.app.active_chat_index + 1} HISTORY\033[0m\n")
 
     def clear(self):
         """Clear the chat history."""

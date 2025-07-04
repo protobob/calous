@@ -12,8 +12,6 @@ use rustyline::highlight::Highlighter;
 use rustyline::hint::Hinter;
 use rustyline::validate::Validator;
 use rustyline::Editor;
-use crossterm::style::Color;
-use regex::Regex;
 
 #[derive(Serialize, Deserialize, Clone)]
 struct CxConfig {
@@ -36,7 +34,7 @@ impl Default for CxConfig {
             default_chat: None,
             auto_truncate: true,
             truncate_length: 8192, // 8KB default
-            rich_output: true, // Enable rich output by default
+            rich_output: false, // Use ANSI codes directly
         }
     }
 }
@@ -45,7 +43,7 @@ fn default_debug() -> bool { false }
 fn default_chat() -> Option<u8> { None }
 fn default_auto_truncate() -> bool { true }
 fn default_truncate_length() -> usize { 8192 }
-fn default_rich_output() -> bool { true }
+fn default_rich_output() -> bool { false }
 
 #[derive(Serialize)]
 struct CxCommand {
@@ -239,145 +237,6 @@ impl Validator for CommandCompleter {}
 
 impl rustyline::Helper for CommandCompleter {}
 
-fn parse_and_print_rich_text(text: &str, use_rich: bool) {
-    if !use_rich {
-        print!("{}", text);
-        return;
-    }
-
-    // Process text line by line to handle end-of-line patterns
-    let lines: Vec<&str> = text.lines().collect();
-    let mut processed_lines = Vec::new();
-    
-    for line in lines {
-        let mut processed_line = line.to_string();
-        
-        // Rich tag patterns
-        let rich_patterns = [
-            // Basic colors with full closing tags
-            (r"\[red\](.*?)\[/red\]", Color::Red),
-            (r"\[green\](.*?)\[/green\]", Color::Green),
-            (r"\[blue\](.*?)\[/blue\]", Color::Blue),
-            (r"\[yellow\](.*?)\[/yellow\]", Color::Yellow),
-            (r"\[magenta\](.*?)\[/magenta\]", Color::Magenta),
-            (r"\[cyan\](.*?)\[/cyan\]", Color::Cyan),
-            (r"\[white\](.*?)\[/white\]", Color::White),
-            (r"\[grey50\](.*?)\[/grey50\]", Color::DarkGrey),
-            
-            // Simple color closing tags with [/]
-            (r"\[red\](.*?)\[/\]", Color::Red),
-            (r"\[green\](.*?)\[/\]", Color::Green),
-            (r"\[blue\](.*?)\[/\]", Color::Blue),
-            (r"\[yellow\](.*?)\[/\]", Color::Yellow),
-            (r"\[cyan\](.*?)\[/\]", Color::Cyan),
-            (r"\[white\](.*?)\[/\]", Color::White),
-            (r"\[grey50\](.*?)\[/\]", Color::DarkGrey),
-            (r"\[magenta\](.*?)\[/\]", Color::Magenta),
-            
-            // Colors that continue to end of line (no explicit closing)
-            (r"\[red\](.*?)$", Color::Red),
-            (r"\[green\](.*?)$", Color::Green),
-            (r"\[blue\](.*?)$", Color::Blue),
-            (r"\[yellow\](.*?)$", Color::Yellow),
-            (r"\[cyan\](.*?)$", Color::Cyan),
-            (r"\[white\](.*?)$", Color::White),
-            (r"\[grey50\](.*?)$", Color::DarkGrey),
-            (r"\[magenta\](.*?)$", Color::Magenta),
-        ];
-        
-        // Process each pattern
-        for (pattern, color) in &rich_patterns {
-            if let Ok(re) = Regex::new(pattern) {
-                while let Some(cap) = re.captures(&processed_line) {
-                    if let Some(matched_text) = cap.get(1) {
-                        let replacement = format_with_color(matched_text.as_str(), *color);
-                        processed_line = re.replace(&processed_line, replacement.as_str()).to_string();
-                    } else {
-                        break;
-                    }
-                }
-            }
-        }
-        
-        processed_lines.push(processed_line);
-    }
-    
-    let mut output = processed_lines.join("\n");
-    
-    // Handle bold tags separately
-    if let Ok(bold_re) = Regex::new(r"\[bold\](.*?)\[/bold\]") {
-        while let Some(cap) = bold_re.captures(&output) {
-            if let Some(matched_text) = cap.get(1) {
-                let replacement = format_with_bold(matched_text.as_str());
-                output = bold_re.replace(&output, replacement.as_str()).to_string();
-            } else {
-                break;
-            }
-        }
-    }
-    
-    // Handle bold colors (patterns that use bold + color but render as just bold color)
-    let bold_color_patterns = [
-        (r"\[bold red\](.*?)\[/bold red\]", Color::Red),
-        (r"\[bold green\](.*?)\[/bold green\]", Color::Green),
-        (r"\[bold blue\](.*?)\[/bold blue\]", Color::Blue),
-        (r"\[bold yellow\](.*?)\[/bold yellow\]", Color::Yellow),
-        (r"\[bold cyan\](.*?)\[/bold cyan\]", Color::Cyan),
-        (r"\[bold white\](.*?)\[/bold white\]", Color::White),
-        (r"\[bold grey50\](.*?)\[/bold grey50\]", Color::DarkGrey),
-        (r"\[bold magenta\](.*?)\[/bold magenta\]", Color::Magenta),
-    ];
-    
-    for (pattern, color) in &bold_color_patterns {
-        if let Ok(re) = Regex::new(pattern) {
-            while let Some(cap) = re.captures(&output) {
-                if let Some(matched_text) = cap.get(1) {
-                    let replacement = format_with_bold_color(matched_text.as_str(), *color);
-                    output = re.replace(&output, replacement.as_str()).to_string();
-                } else {
-                    break;
-                }
-            }
-        }
-    }
-    
-    print!("{}", output);
-}
-
-fn format_with_color(text: &str, color: Color) -> String {
-    // We'll use ANSI escape codes directly since crossterm's execute! is for stdout
-    let color_code = match color {
-        Color::Red => "\x1b[31m",
-        Color::Green => "\x1b[32m",
-        Color::Blue => "\x1b[34m", 
-        Color::Yellow => "\x1b[33m",
-        Color::Magenta => "\x1b[35m",
-        Color::Cyan => "\x1b[36m",
-        Color::White => "\x1b[37m",
-        Color::DarkGrey => "\x1b[90m",
-        _ => "\x1b[0m",
-    };
-    format!("{}{}\x1b[0m", color_code, text)
-}
-
-fn format_with_bold(text: &str) -> String {
-    format!("\x1b[1m{}\x1b[0m", text)
-}
-
-fn format_with_bold_color(text: &str, color: Color) -> String {
-    let color_code = match color {
-        Color::Red => "\x1b[1;31m",
-        Color::Green => "\x1b[1;32m",
-        Color::Blue => "\x1b[1;34m",
-        Color::Yellow => "\x1b[1;33m",
-        Color::Magenta => "\x1b[1;35m",
-        Color::Cyan => "\x1b[1;36m",
-        Color::White => "\x1b[1;37m",
-        Color::DarkGrey => "\x1b[1;90m",
-        _ => "\x1b[1m",
-    };
-    format!("{}{}\x1b[0m", color_code, text)
-}
 
 fn create_command(data: String, message_type: &str, chat: Option<u8>, rich_output: bool) -> CxCommand {
     let format_type = if rich_output { "rich" } else { "plain" };
@@ -393,7 +252,7 @@ fn create_command(data: String, message_type: &str, chat: Option<u8>, rich_outpu
     }
 }
 
-fn handle_server_response(response: &str, _debug: bool, rich_output: bool) -> Result<(), String> {
+fn handle_server_response(response: &str, _debug: bool, _rich_output: bool) -> Result<(), String> {
     let result: CxResponse = serde_json::from_str(response).unwrap_or(CxResponse {
         response: None,
         result: None,
@@ -407,9 +266,9 @@ fn handle_server_response(response: &str, _debug: bool, rich_output: bool) -> Re
     if let Some(err) = result.error {
         eprintln!("Error: {}", err);
     } else if let Some(res) = result.response {
-        parse_and_print_rich_text(&res, rich_output);
+        print!("{}", res);
     } else if let Some(res) = result.result {
-        parse_and_print_rich_text(&res, rich_output);
+        print!("{}", res);
     } else {
         println!("[No output]");
     }

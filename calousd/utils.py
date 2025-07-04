@@ -4,7 +4,7 @@ from .constants import MAX_PREVIEW_LENGTH, RAINBOW_COLORS, EXTENDED_RAINBOW_COLO
 from pathlib import Path
 
 def get_chat_color(chat_index: int) -> str:
-    """Return the color for a specific chat index using extended rainbow progression."""
+    """Return the ANSI color code for a specific chat index using extended rainbow progression."""
     return EXTENDED_RAINBOW_COLORS[chat_index % len(EXTENDED_RAINBOW_COLORS)]
 
 def format_message_preview(content: Any, max_length: int = MAX_PREVIEW_LENGTH) -> str:
@@ -24,12 +24,12 @@ def print_rainbow_header(output_func=None) -> None:
     rainbow_text = ""
     for i, char in enumerate(RAINBOW_TEXT):
         color = RAINBOW_COLORS[i % len(RAINBOW_COLORS)]
-        rainbow_text += f"[{color}]{char}[/{color}]"
+        rainbow_text += f"{color}{char}\033[0m"
     
     # Send the rainbow header through provided output function or skip in daemon mode
     if output_func:
-        output_func(f"\n[bold]{rainbow_text}[/bold]")
-        output_func(f"[grey30]v.{APP_VERSION}[/grey30]\n")
+        output_func(f"\n[1m{rainbow_text}[0m")
+        output_func(f"[90mv.{APP_VERSION}[0m\n")
 
 def print_chat_header(chat_index: int, output_func=None) -> str:
     """Print the chat header and return the chat color."""
@@ -37,7 +37,7 @@ def print_chat_header(chat_index: int, output_func=None) -> str:
     
     # Send chat header through provided output function or skip in daemon mode
     if output_func:
-        output_func(f"[bold {chat_color}]CHAT {chat_index + 1}{HEADER_SEPARATOR}[/bold {chat_color}]")
+        output_func(f"\033[1m{chat_color}CHAT {chat_index + 1}{HEADER_SEPARATOR}\033[0m")
     
     return chat_color
 
@@ -46,7 +46,7 @@ def print_message_with_bar(chat_color: str, role: str, content: Any, output_func
     preview = format_message_preview(content)
     prefix = f"{role}: " if role else ""
     if output_func:
-        output_func(f"[bold {chat_color}]|[/bold {chat_color}] [grey42]{prefix}{preview}[/grey42]")
+        output_func(f"\033[1m{chat_color}|\033[0m [90m{prefix}{preview}[0m")
 
 def find_last_messages(chat_history) -> Dict[str, Any]:
     """Find the last user and assistant messages in chat history."""

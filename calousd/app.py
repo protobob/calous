@@ -121,7 +121,7 @@ class Chat:
             # Store the last response for twist operations
             self.last_response = response
         except Exception as e:
-            self._output(f"[bold red]Error processing input:[/bold red] {e}")
+            self._output(f"[1;31mError processing input:[0m {e}")
 
     def confirm(self, question, default=True):
         """Prompt the user for confirmation via socket or direct input."""

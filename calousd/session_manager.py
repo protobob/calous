@@ -94,7 +94,7 @@ class ChatSessionManager:
             self.active_chat_index = target_index
             return True
         
-        self.send_to_client(f"\n[bold red]Error:[/bold red] Invalid chat number. Available chats: 1-{self.num_chats}", "error")
+        self.send_to_client(f"\n[1;31mError:[0m Invalid chat number. Available chats: 1-{self.num_chats}", "error")
         return False
     def twist_to_chat(self, content: str, target_index: Optional[int] = None) -> bool:
         """Twist content to specified chat or next chat if no index provided."""
@@ -105,7 +105,7 @@ class ChatSessionManager:
             target_index = (self.active_chat_index + 1) % self.num_chats
 
         if not (0 <= target_index < self.num_chats):
-            self.send_to_client(f"\n[bold red]Error:[/bold red] Invalid chat number. Available chats: 1-{self.num_chats}", "error")
+            self.send_to_client(f"\n[1;31mError:[0m Invalid chat number. Available chats: 1-{self.num_chats}", "error")
             return False
 
         # Log the twist action
@@ -116,8 +116,8 @@ class ChatSessionManager:
         target_color = get_chat_color(target_index)
 
         preview = format_message_preview(content, 50)
-        self.send_to_client(f"[bold {source_color}]↪ Twisting to Chat {target_index + 1}: "
-              f"[/bold {source_color}][italic {target_color}]\"{preview}\"[/italic {target_color}]")
+        self.send_to_client(f"\033[1m{source_color}↪ Twisting to Chat {target_index + 1}: "
+              f"\033[0m\033[3m{target_color}\"{preview}\"\033[0m")
 
         # Switch to target chat FIRST
         self.active_chat_index = target_index
@@ -137,8 +137,8 @@ class ChatSessionManager:
             twist_preview = twist_preview[:TWIST_PREVIEW_LENGTH] + "..."
 
         # Use SOURCE_COLOR instead of target_color for the TWIST CONTENT display
-        self.send_to_client(f"\n[bold {source_color}]|[/bold {source_color}] [bold {source_color}]TWIST CONTENT:[/bold {source_color}]")
-        self.send_to_client(f"[bold {source_color}]|[/bold {source_color}] [grey70]{twist_preview}[/grey70]\n")
+        self.send_to_client(f"\n\033[1m{source_color}|\033[0m \033[1m{source_color}TWIST CONTENT:\033[0m")
+        self.send_to_client(f"\033[1m{source_color}|\033[0m [37m{twist_preview}[0m\n")
 
         # Send the content as a prompt (which will trigger AI response)
         target_chat.handle_regular_input(content)
@@ -219,7 +219,7 @@ class ChatSessionManager:
         # Only try to output if we have a client connection
         if self.socket_mode and self.current_connection:
             try:
-                self._output("\n[bold]Exiting and saving configurations.[/bold]")
+                self._output("\n[1mExiting and saving configurations.[0m")
             except:
                 pass  # Don't let output issues prevent saving
         
@@ -282,15 +282,12 @@ class ChatSessionManager:
             
         # Handle message formatting based on client preference
         if hasattr(self, 'client_format') and self.client_format == "rich":
-            # Client wants rich formatting - keep Rich markup but strip ANSI codes
+            # Legacy rich format - strip ANSI codes (no longer used, but kept for compatibility)
             ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
             processed_message = ansi_escape.sub('', message)
         else:
-            # Client wants plain text - strip both ANSI codes and Rich markup
-            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-            rich_markup = re.compile(r'\[/?[^\]]*\]')
-            processed_message = ansi_escape.sub('', message)
-            processed_message = rich_markup.sub('', processed_message)
+            # Plain format - send ANSI codes directly (no processing needed)
+            processed_message = message
         
         clean_message = processed_message
         

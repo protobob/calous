@@ -36,12 +36,12 @@ class LogFormatter(CommandFormatter):
     def format_today_result(result: LogOperationResult):
         """Format today's log display result."""
         if result.success:
-            LogFormatter._output(f"\n[bold green]{result.message}:[/bold green]")
+            LogFormatter._output(f"\n[1;32m{result.message}:[0m")
             LogFormatter._output("=" * 60)
             LogFormatter._output(result.data)
             LogFormatter._output("=" * 60)
         else:
-            LogFormatter._output(f"\n[bold yellow]{result.message}[/bold yellow]")
+            LogFormatter._output(f"\n[1;33m{result.message}[0m")
     
     @staticmethod
     def format_operation_cancelled():

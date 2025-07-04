@@ -23,14 +23,14 @@ class ChatFormatter(CommandFormatter):
     @staticmethod
     def format_reset_warning(chat_info: ChatInfo):
         """Print chat reset warning with colored chat identification."""
-        warning_msg = f"\n{Colors.WARNING}Warning:{Colors.RESET} This will {Colors.ERROR}RESET{Colors.RESET} [bold {chat_info.color}]CHAT {chat_info.number}[/bold {chat_info.color}] to factory defaults.\n"
+        warning_msg = f"\n{Colors.WARNING}Warning:{Colors.RESET} This will {Colors.ERROR}RESET{Colors.RESET} \033[1m{chat_color}CHAT {chat_info.number}\033[0m to factory defaults.\n"
         warning_msg += f"This will {Colors.ERROR}CLEAR{Colors.RESET} history, system prompt, and all saved prompts."
         ChatFormatter._output(warning_msg)
     
     @staticmethod
     def format_reset_success(chat_info: ChatInfo):
         """Print chat reset success message."""
-        message = f"[bold {chat_info.color}]CHAT {chat_info.number}[/bold {chat_info.color}] reset to factory defaults successfully!"
+        message = f"\033[1m{chat_color}CHAT {chat_info.number}\033[0m reset to factory defaults successfully!"
         ChatFormatter._output(message)
     
     @staticmethod

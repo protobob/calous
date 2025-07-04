@@ -3,15 +3,27 @@ SERVER_DEFAULT_NUM_CHATS = 14
 """Constants for the calous package."""
 from pathlib import Path
 
-# Rainbow text colors for logo
-RAINBOW_COLORS = ["red", "orange1", "yellow1", "green", "blue", "purple", "magenta"]
+# Rainbow text colors for logo (ANSI codes)
+RAINBOW_COLORS = ["\033[31m", "\033[38;5;208m", "\033[93m", "\033[32m", "\033[34m", "\033[35m", "\033[35m"]
 
-# Extended rainbow colors for more chats (original + darker variants)
+# Extended rainbow colors for more chats (ANSI codes)
 EXTENDED_RAINBOW_COLORS = [
     # Original bright colors (chats 1-7)
-    "red", "orange1", "yellow1", "green", "blue", "purple", "magenta",
+    "\033[31m",      # red
+    "\033[38;5;208m", # orange1
+    "\033[93m",      # yellow1
+    "\033[32m",      # green
+    "\033[34m",      # blue
+    "\033[35m",      # purple
+    "\033[35m",      # magenta
     # Darker variants (chats 8-14)
-    "dark_red", "orange3", "yellow3", "dark_green", "blue3", "purple3", "magenta3"
+    "\033[31m",      # dark_red (same as red)
+    "\033[38;5;172m", # orange3
+    "\033[33m",      # yellow3
+    "\033[32m",      # dark_green (same as green)
+    "\033[34m",      # blue3 (same as blue)
+    "\033[35m",      # purple3 (same as purple)
+    "\033[35m",      # magenta3 (same as magenta)
 ]
 
 # Rainbow text constant for logo display
@@ -79,7 +91,7 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "1.4.4.dev"
+APP_VERSION = "1.5.0.dev"
 
 # Chat session defaults
 TWIST_PREVIEW_LENGTH = 100
@@ -98,14 +110,14 @@ class MessageTypes:
 
 # UI Formatting Constants
 class Colors:
-    """Rich color constants for consistent UI formatting."""
-    ERROR = "[bold red]"
-    SUCCESS = "[green]"
-    WARNING = "[yellow]"
-    INFO = "[bold cyan]"
-    HINT = "[grey50]"
-    COMMAND = "[cyan]"
-    RESET = ""
+    """ANSI color constants for consistent UI formatting."""
+    ERROR = "\033[1;31m"      # bold red
+    SUCCESS = "\033[32m"      # green
+    WARNING = "\033[33m"      # yellow
+    INFO = "\033[1;36m"       # bold cyan
+    HINT = "\033[90m"         # grey50 (dark grey)
+    COMMAND = "\033[36m"      # cyan
+    RESET = "\033[0m"         # reset
 
 class Messages:
     """Standard message templates."""

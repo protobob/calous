@@ -87,7 +87,7 @@ class FileFormatter(CommandFormatter):
     @staticmethod
     def image_loaded_success(image_info: dict):
         """Print successful image load message."""
-        CommandFormatter._output(f"[green]✓[/green] Image loaded: {image_info['name']} ({image_info['size_mb']} MB)")
+        CommandFormatter._output(f"[32m✓[0m Image loaded: {image_info['name']} ({image_info['size_mb']} MB)")
     
     @staticmethod
     def show_content_preview(content: str, preview_length: int = 100):

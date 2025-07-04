@@ -143,7 +143,7 @@ class ModelInteraction:
             return context_info
             
         except Exception as e:
-            self._output(f"[yellow]Warning: Could not get context window info for {model_name}: {e}[/yellow]")
+            self._output(f"[33mWarning: Could not get context window info for {model_name}: {e}[0m")
             return None
     
     def _parse_num_ctx_parameter(self, parameters: str) -> Optional[int]:
@@ -273,8 +273,8 @@ class ModelInteraction:
         """Send a prompt to the selected model and return the model response (streaming or non-streaming)."""
         # Check if model is selected before making API call
         if not self.app.selected_model or self.app.selected_model.strip() == "":
-            self._output(f"\n[bold red]No Model Selected:[/bold red] Please select a model first.")
-            self._output(f"[grey50]Use /model to choose an available model[/grey50]")
+            self._output(f"\n[1;31mNo Model Selected:[0m Please select a model first.")
+            self._output(f"[90mUse /model to choose an available model[0m")
             return {"message": {"content": "[Error: No model selected. Use /model to choose a model.]"}}
         
         messages = []
@@ -314,7 +314,7 @@ class ModelInteraction:
             # Print the header before response starts
             chat_index = getattr(self.app, 'active_chat_index', 0)
             chat_color = get_chat_color(chat_index)
-            self._output(f"\n[bold {chat_color}]|[/bold {chat_color}][bold {chat_color}]{chat_index + 1})[/bold {chat_color}][underline]{self.app.selected_model}[/underline]:\n")
+            self._output(f"\n\033[1m{chat_color}|\033[0m\033[1m{chat_color}{chat_index + 1})\033[0m[4m{self.app.selected_model}[0m:\n")
             # Prepare chat options
             chat_options = {
                 'model': self.app.selected_model,
@@ -353,9 +353,9 @@ class ModelInteraction:
             except (TypeError, ollama.ResponseError) as e:
                 if isinstance(e, ollama.ResponseError) and "thinking" in str(e).lower():
                     if self.app.thinking_enabled:
-                        self._output(f"\n[yellow]⚠️  Model '{self.app.selected_model}' doesn't support thinking mode.[/yellow]")
-                        self._output(f"[grey50]Try updating the model with: ollama pull {self.app.selected_model}[/grey50]")
-                        self._output(f"[grey50]Continuing without thinking mode...[/grey50]\n")
+                        self._output(f"\n[33m⚠️  Model '{self.app.selected_model}' doesn't support thinking mode.[0m")
+                        self._output(f"[90mTry updating the model with: ollama pull {self.app.selected_model}[0m")
+                        self._output(f"[90mContinuing without thinking mode...[0m\n")
                     chat_options.pop('think', None)
                     response = ollama.chat(**chat_options)
                 else:
@@ -376,7 +376,7 @@ class ModelInteraction:
                             thinking = getattr(chunk.message, 'thinking', '')
                             if thinking:
                                 thinking_content += thinking
-                                self._output(f"[dim cyan]{thinking}[/dim cyan]", end='', flush=True)
+                                self._output(f"[2;36m{thinking}[0m", end='', flush=True)
                     response_dict = chunk
                 self._output("")  # newline after stream
             else:
@@ -394,7 +394,7 @@ class ModelInteraction:
                         thinking = getattr(response.message, 'thinking', '')
                         if thinking:
                             thinking_content += thinking
-                            self._output(f"[dim cyan]{thinking}[/dim cyan]", end='', flush=True)
+                            self._output(f"[2;36m{thinking}[0m", end='', flush=True)
                     response_dict = response
                 self._output("")  # newline after response
             # Handle function calls if present
@@ -403,7 +403,7 @@ class ModelInteraction:
                 if tool_results:
                     messages.append({"role": "assistant", "content": full_response, "tool_calls": tool_calls})
                     messages.extend(tool_results)
-                    self._output(f"[dim green]🔄 Processing function results...[/dim green]")
+                    self._output(f"[2;32m🔄 Processing function results...[0m")
                     # Make follow-up call without tools to get final response
                     return self._handle_model_response(messages, user_prompt, tools=None, stream=stream)
             clean_response = full_response
@@ -457,7 +457,7 @@ class ModelInteraction:
                 except json.JSONDecodeError:
                     function_args = {}
             
-            self._output(f"[dim yellow]🔧 Using LLM tool: {function_name}[/dim yellow]")
+            self._output(f"[2;33m🔧 Using LLM tool: {function_name}[0m")
             
             # Log function call attempt
             unified_logger._write_log_entry(
@@ -527,7 +527,7 @@ class ModelInteraction:
             # Print the header before streaming starts
             chat_index = getattr(self.app, 'active_chat_index', 0)
             chat_color = get_chat_color(chat_index)
-            self._output(f"\n[bold {chat_color}]|[/bold {chat_color}] [bold {chat_color}]{chat_index + 1})[/bold {chat_color}][underline]{self.app.selected_model}[/underline]:\n")
+            self._output(f"\n\033[1m{chat_color}|\033[0m \033[1m{chat_color}{chat_index + 1})\033[0m[4m{self.app.selected_model}[0m:\n")
             
             # Prepare chat options
             chat_options = {
@@ -549,9 +549,9 @@ class ModelInteraction:
                 # Handle both unsupported client versions and unsupported models
                 if isinstance(e, ollama.ResponseError) and "thinking" in str(e).lower():
                     if self.app.thinking_enabled:
-                        self._output(f"\n[yellow]⚠️  Model '{self.app.selected_model}' doesn't support thinking mode.[/yellow]")
-                        self._output(f"[grey50]Try updating the model with: ollama pull {self.app.selected_model}[/grey50]")
-                        self._output(f"[grey50]Continuing without thinking mode...[/grey50]\n")
+                        self._output(f"\n[33m⚠️  Model '{self.app.selected_model}' doesn't support thinking mode.[0m")
+                        self._output(f"[90mTry updating the model with: ollama pull {self.app.selected_model}[0m")
+                        self._output(f"[90mContinuing without thinking mode...[0m\n")
                     # Disable thinking for this request and continue
                     chat_options.pop('think', None)
                     chunks = ollama.chat(**chat_options)
@@ -579,7 +579,7 @@ class ModelInteraction:
                         if thinking:
                             thinking_content += thinking
                             # Display thinking in a different style (dim cyan for reasoning)
-                            self._output(f"[dim cyan]{thinking}[/dim cyan]", end='', flush=True)
+                            self._output(f"[2;36m{thinking}[0m", end='', flush=True)
                 
                 # Store the last chunk to get eval data if available
                 response_dict = chunk
@@ -593,7 +593,7 @@ class ModelInteraction:
                     # Add tool calls to messages and call model again
                     messages.append({"role": "assistant", "content": full_response, "tool_calls": tool_calls})
                     messages.extend(tool_results)
-                    self._output(f"[dim green]🔄 Processing function results...[/dim green]")
+                    self._output(f"[2;32m🔄 Processing function results...[0m")
                     # Make follow-up call without tools to get final response
                     return self._handle_streaming(messages, user_prompt, tools=None)
             
@@ -628,31 +628,31 @@ class ModelInteraction:
     def _handle_response_error(self, e):
         """Handle ResponseError with detailed messaging."""
         if "model not found" in str(e).lower() or "model" in str(e).lower() and "not found" in str(e).lower():
-            self._output(f"\n[bold red]Model Error:[/bold red] Model '{self.app.selected_model}' not found.")
-            self._output(f"[grey50]Try: /model to select an available model[/grey50]")
+            self._output(f"\n[1;31mModel Error:[0m Model '{self.app.selected_model}' not found.")
+            self._output(f"[90mTry: /model to select an available model[0m")
             available_models = self.list_ollama_models()
             if available_models:
-                self._output(f"[grey50]Available models: {', '.join(available_models[:3])}{'...' if len(available_models) > 3 else ''}[/grey50]")
+                self._output(f"\033[90mAvailable models: {', '.join(available_models[:3])}{'...' if len(available_models) > 3 else ''}\033[0m")
         else:
-            self._output(f"\n[bold red]Ollama API Error:[/bold red] {e}")
+            self._output(f"\n[1;31mOllama API Error:[0m {e}")
         return {"message": {"content": "[Error: Model response failed.]"}}
 
     def _handle_connection_error(self, e):
         """Handle ConnectionError with helpful messaging."""
-        self._output(f"\n[bold red]Connection Error:[/bold red] Cannot connect to Ollama server.")
-        self._output(f"[grey50]Try: 'ollama serve' in another terminal or check if port 11434 is accessible[/grey50]")
+        self._output(f"\n[1;31mConnection Error:[0m Cannot connect to Ollama server.")
+        self._output(f"[90mTry: 'ollama serve' in another terminal or check if port 11434 is accessible[0m")
         return {"message": {"content": "[Error: Cannot connect to Ollama server.]"}}
 
     def _handle_timeout_error(self, e):
         """Handle TimeoutError with helpful messaging."""
-        self._output(f"\n[bold red]Timeout Error:[/bold red] Request timed out.")
-        self._output(f"[grey50]The model may be processing a complex request. Try again or use a smaller model.[/grey50]")
+        self._output(f"\n[1;31mTimeout Error:[0m Request timed out.")
+        self._output(f"[90mThe model may be processing a complex request. Try again or use a smaller model.[0m")
         return {"message": {"content": "[Error: Request timed out.]"}}    
     
     def _handle_unexpected_error(self, e):
         """Handle unexpected errors with helpful messaging."""
-        self._output(f"\n[bold red]Unexpected Error:[/bold red] {e}")
-        self._output(f"[grey50]If this persists, try restarting Ollama with 'ollama serve'[/grey50]")
+        self._output(f"\n[1;31mUnexpected Error:[0m {e}")
+        self._output(f"[90mIf this persists, try restarting Ollama with 'ollama serve'[0m")
         return {"message": {"content": "[Error: An unexpected error occurred.]"}}
 
     def _process_response(self, user_input, response, full_response_for_logging=None):
@@ -673,7 +673,7 @@ class ModelInteraction:
             if 'eval_count' in response and 'eval_duration' in response:
                 self._output(self.pull_eval_data(response))
             else:
-                self._output("[italic][grey50]Evaluation data missing in response.[/grey50][/italic]")
+                self._output("\033[3m[90mEvaluation data missing in response.[0m\033[0m")
 
         # Add to chat history (clean response without thoughts)
         self.app.chat_history.add_message("assistant", clean_response)
@@ -683,28 +683,28 @@ class ModelInteraction:
         try:
             response = ollama.list()
             if not response or not hasattr(response, 'models'):
-                self._output(f"\n[yellow]Warning:[/yellow] Unexpected response format from Ollama")
+                self._output(f"\n[33mWarning:[0m Unexpected response format from Ollama")
                 return []
             return [model.model for model in response.models]
         except ollama.ResponseError as e:
-            self._output(f"\n[bold red]Ollama API Error:[/bold red] {e}")
-            self._output(f"[grey50]Check if Ollama is running properly[/grey50]")
+            self._output(f"\n[1;31mOllama API Error:[0m {e}")
+            self._output(f"[90mCheck if Ollama is running properly[0m")
             return []
         except ConnectionError:
-            self._output(f"\n[bold red]Connection Error:[/bold red] Cannot connect to Ollama server.")
-            self._output(f"[grey50]Make sure Ollama is running: 'ollama serve'[/grey50]")
+            self._output(f"\n[1;31mConnection Error:[0m Cannot connect to Ollama server.")
+            self._output(f"[90mMake sure Ollama is running: 'ollama serve'[0m")
             return []        
         except Exception as e:
-            self._output(f"\n[bold red]Error fetching models:[/bold red] {e}")
-            self._output(f"[grey50]Check if Ollama is installed and running properly[/grey50]")
+            self._output(f"\n[1;31mError fetching models:[0m {e}")
+            self._output(f"[90mCheck if Ollama is installed and running properly[0m")
             return []
     
     def select_model(self):
         """Display available models and let the user select one."""
         models = self.list_ollama_models()
         if not models:
-            self._output("\n[bold red]No models installed.[/bold red]")
-            self._output("[grey50]Install a model with: 'ollama pull model-name'[/grey50]")
+            self._output("\n[1;31mNo models installed.[0m")
+            self._output("[90mInstall a model with: 'ollama pull model-name'[0m")
             return None
         
         self._output("\nAvailable Ollama models:")
@@ -712,7 +712,7 @@ class ModelInteraction:
             # Get context window info for display
             context_info = self.get_context_window_info(model)
             if context_info:
-                context_display = f"[cyan]{context_info.actual_context//1000}k[/cyan] ctx"
+                context_display = f"[36m{context_info.actual_context//1000}k[0m ctx"
                 self._output(f"{i}. {model} [{context_display}]")
             else:
                 self._output(f"{i}. {model}")
@@ -727,11 +727,11 @@ class ModelInteraction:
                     if 0 <= index < len(models):
                         return models[index]
                     else:
-                        self._output(f"\n[bold red]Invalid selection.[/bold red] Please choose 1-{len(models)}")
+                        self._output(f"\n[1;31mInvalid selection.[0m Please choose 1-{len(models)}")
                 else:
-                    self._output("\n[bold red]Invalid input.[/bold red] Please enter a number or 'q' to cancel")
+                    self._output("\n[1;31mInvalid input.[0m Please enter a number or 'q' to cancel")
             except KeyboardInterrupt:
-                self._output("\n[grey50]Model selection cancelled.[/grey50]")
+                self._output("\n[90mModel selection cancelled.[0m")
                 return None
 
     def pull_eval_data(self, response):
@@ -739,11 +739,11 @@ class ModelInteraction:
         eval_count = response.get('eval_count')
         eval_duration_ns = response.get('eval_duration')
         if not eval_count or not eval_duration_ns:
-            return "[italic][grey50]Invalid data: eval_count or eval_duration missing or zero.[/grey50][/italic]"
+            return "\033[3m[90mInvalid data: eval_count or eval_duration missing or zero.[0m\033[0m"
         eval_duration_s = eval_duration_ns / 1_000_000_000
         avg_per_token_ms = (eval_duration_ns / eval_count) / 1_000_000
         return (
-            f"[italic][grey50](Eval Count: {eval_count}, "
+            f"\033[3m[90m(Eval Count: {eval_count}, "
             f"Eval Duration: {eval_duration_s:.2f}s, "
-            f"Average per-token time: {avg_per_token_ms:.2f}ms)[/grey50][/italic]"
+            f"Average per-token time: {avg_per_token_ms:.2f}ms)[0m\033[0m"
         )

@@ -24,41 +24,41 @@ class UIManager:
         """Display the new streamlined help menu."""
         command_color = "grey50"
         
-        help_text = f"\n[bold white]GLOBAL HELP[/bold white]\n\n"
-        help_text += f"[white]CALOUS is a multi-channel chat service for local LLM models. Each chat[/white]\n"
-        help_text += f"[white]channel (1-14) maintains its own conversation history and persona, allowing you[/white]\n"
-        help_text += f"[white]to quickly switch between different AI contexts and personalities.[/white]\n\n"
-        help_text += f"[white]GETTING STARTED[/white]\n\n"
-        help_text += f"[white]First time? Try these commands:[/white]\n\n"
+        help_text = f"\n[1;37mGLOBAL HELP[0m\n\n"
+        help_text += f"[37mCALOUS is a multi-channel chat service for local LLM models. Each chat[0m\n"
+        help_text += f"[37mchannel (1-14) maintains its own conversation history and persona, allowing you[0m\n"
+        help_text += f"[37mto quickly switch between different AI contexts and personalities.[0m\n\n"
+        help_text += f"[37mGETTING STARTED[0m\n\n"
+        help_text += f"[37mFirst time? Try these commands:[0m\n\n"
         
         self._output(help_text)
         
-        self._output(f"[white]Choose a model:      [/white][bold {command_color}]/model.switch[/bold {command_color}]")
-        self._output(f"[white]Switch channels:     [/white][bold {command_color}]/chat.switch 2[/bold {command_color}]")
-        self._output(f"[white]Set a system prompt: [/white][bold {command_color}]/persona.set 0 You are a helpful coding assistant[/bold {command_color}]")
-        self._output(f"[white]Name your AI:        [/white][bold {command_color}]/persona.name Assistant[/bold {command_color}]")
-        self._output(f"[white]Try twist feature:   [/white][bold {command_color}]/chat.twist 3[/bold {command_color}]")
-        self._output(f"[white]View chat history:   [/white][bold {command_color}]/history.show[/bold {command_color}]")
-        self._output(f"[white]Add a command alias: [/white][bold {command_color}]/alias.add h sys.help[/bold {command_color}]")
+        self._output(f"[37mChoose a model:      [0m\033[1m\033[90m/model.switch\033[0m")
+        self._output(f"[37mSwitch channels:     [0m\033[1m\033[90m/chat.switch 2\033[0m")
+        self._output(f"[37mSet a system prompt: [0m\033[1m\033[90m/persona.set 0 You are a helpful coding assistant\033[0m")
+        self._output(f"[37mName your AI:        [0m\033[1m\033[90m/persona.name Assistant\033[0m")
+        self._output(f"[37mTry twist feature:   [0m\033[1m\033[90m/chat.twist 3\033[0m")
+        self._output(f"[37mView chat history:   [0m\033[1m\033[90m/history.show\033[0m")
+        self._output(f"[37mAdd a command alias: [0m\033[1m\033[90m/alias.add h sys.help\033[0m")
         self._output("")
-        self._output(f"[white]CATEGORY HELP[/white]\n")
-        self._output(f"[white]Chat Management      (7 commands)   [/white][bold {command_color}]/sys.help chat[/bold {command_color}]")
-        self._output(f"[white]Model Operations     (7 commands)   [/white][bold {command_color}]/sys.help model[/bold {command_color}]")
-        self._output(f"[white]Persona Management  (11 commands)   [/white][bold {command_color}]/sys.help persona[/bold {command_color}]")
-        self._output(f"[white]History Management   (9 commands)   [/white][bold {command_color}]/sys.help history[/bold {command_color}]")
-        self._output(f"[white]Logging Operations   (5 commands)   [/white][bold {command_color}]/sys.help log[/bold {command_color}]")
-        self._output(f"[white]Prompt Management    (4 commands)   [/white][bold {command_color}]/sys.help prompt[/bold {command_color}]")
-        self._output(f"[white]File Operations      (1 command)    [/white][bold {command_color}]/sys.help file[/bold {command_color}]")
-        self._output(f"[white]System Commands      (2 commands)   [/white][bold {command_color}]/sys.help sys[/bold {command_color}]")
-        self._output(f"[white]Alias Management     (4 commands)   [/white][bold {command_color}]/sys.help alias[/bold {command_color}]")
-        self._output(f"[white]Plugin System        (4 commands)   [/white][bold {command_color}]/sys.help plugin[/bold {command_color}]")
+        self._output(f"[37mCATEGORY HELP[0m\n")
+        self._output(f"[37mChat Management      (7 commands)   [0m\033[1m\033[90m/sys.help chat\033[0m")
+        self._output(f"[37mModel Operations     (7 commands)   [0m\033[1m\033[90m/sys.help model\033[0m")
+        self._output(f"[37mPersona Management  (11 commands)   [0m\033[1m\033[90m/sys.help persona\033[0m")
+        self._output(f"[37mHistory Management   (9 commands)   [0m\033[1m\033[90m/sys.help history\033[0m")
+        self._output(f"[37mLogging Operations   (5 commands)   [0m\033[1m\033[90m/sys.help log\033[0m")
+        self._output(f"[37mPrompt Management    (4 commands)   [0m\033[1m\033[90m/sys.help prompt\033[0m")
+        self._output(f"[37mFile Operations      (1 command)    [0m\033[1m\033[90m/sys.help file\033[0m")
+        self._output(f"[37mSystem Commands      (2 commands)   [0m\033[1m\033[90m/sys.help sys\033[0m")
+        self._output(f"[37mAlias Management     (4 commands)   [0m\033[1m\033[90m/sys.help alias\033[0m")
+        self._output(f"[37mPlugin System        (4 commands)   [0m\033[1m\033[90m/sys.help plugin\033[0m")
         self._output("")
         
-        self._output(f"[white]MORE HELP[/white]\n")
+        self._output(f"[37mMORE HELP[0m\n")
         
-        self._output(f"[bold {command_color}]/sys.help category[/bold {command_color}]     [white]Detailed commands for a category[/white]")
-        self._output(f"[bold {command_color}]/sys.help command[/bold {command_color}]      [white]Specific help for any command[/white]")
-        self._output(f"[bold {command_color}]/sys.help all[/bold {command_color}]          [white]List of all commands[/white]")
+        self._output(f"\033[1m\033[90m/sys.help category\033[0m     [37mDetailed commands for a category[0m")
+        self._output(f"\033[1m\033[90m/sys.help command\033[0m      [37mSpecific help for any command[0m")
+        self._output(f"\033[1m\033[90m/sys.help all\033[0m          [37mList of all commands[0m")
         self._output("")
 
     def help_menu_all(self):
@@ -67,7 +67,7 @@ class UIManager:
         # Get num_chats dynamically from session manager
         num_chats = self.app.session_manager.num_chats if hasattr(self.app, 'session_manager') and self.app.session_manager else ConfigManager.get_num_chats()
 
-        self._output(f"\n[bold grey70]GLOBAL HELP MENU[/bold grey70]\n")
+        self._output(f"\n[1;37mGLOBAL HELP MENU[0m\n")
         
         # System Commands
         self._output("System Commands:")
@@ -176,7 +176,7 @@ class UIManager:
         # Always use the dynamic version
         switch_hint = f"/switch [1-{num_chats}] to change" if num_chats > 1 else ""
         
-        self._output(f"[bold white]ACTIVE CHATS:[/bold white] [grey50]({switch_hint})[/grey50]")        
+        self._output(f"[1;37mACTIVE CHATS:[0m [90m({switch_hint})[0m")        
         for i, chat in enumerate(chat_instances):
             chat_color_for_chat = get_chat_color(i)
             
@@ -192,7 +192,7 @@ class UIManager:
             # Mark active chat with arrow (using ASCII character for Windows compatibility)            
             prefix = ">" if i == self.app.active_chat_index else " "
             
-            self._output(f"{prefix} [bold {chat_color_for_chat}]{i + 1}:[/bold {chat_color_for_chat}] [grey70]{persona_text}[/grey70]")
+            self._output(f"{prefix} \033[1m{chat_color_for_chat}{i + 1}:\033[0m [37m{persona_text}[0m")
         
         self._output("")  # Add spacing after overview
     
@@ -208,20 +208,20 @@ class UIManager:
             if usage_percentage is not None:
                 # Determine color based on percentage ranges
                 if usage_percentage <= 24:
-                    percentage_color = "green"
+                    percentage_color = "\033[32m"  # green
                 elif usage_percentage <= 49:
-                    percentage_color = "yellow"
+                    percentage_color = "\033[33m"  # yellow
                 elif usage_percentage <= 74:
-                    percentage_color = "orange1"
+                    percentage_color = "\033[38;5;208m"  # orange1
                 else:  # 75-100
-                    percentage_color = "red"
+                    percentage_color = "\033[31m"  # red
                 
-                context_display = f"Context: [{percentage_color}]{usage_percentage:.0f}%[/{percentage_color}]"
+                context_display = f"Context: {percentage_color}{usage_percentage:.0f}%\033[0m"
         # Remove the YOU: prompt entirely
         return (
             f"\n"
-            f"[grey50](type /help for help)[/grey50]\n"
-            f"[bold {chat_color}]|[/bold {chat_color}] [italic][white]{context_display}[/white][/italic] - YOU:"
+            f"[90m(type /help for help)[0m\n"
+            f"\033[1m{chat_color}|\033[0m \033[3m[37m{context_display}[0m\033[0m - YOU:"
         )
 
     def get_user_input(self):
@@ -240,14 +240,14 @@ class UIManager:
         """Display model-related variables only."""
         chat_color = get_chat_color(getattr(self.app, 'active_chat_index', 0))
         
-        self._output(f"\n[bold]MODEL VARIABLES[/bold]\n")
+        self._output(f"\n[1mMODEL VARIABLES[0m\n")
         
         # Handle case where no model is selected
         if not self.app.selected_model:
-            self._output(f"{'Selected Model:':<20} [red]None selected[/red]")
-            self._output(f"{'Status:':<20} [yellow]Use /model.switch to select a model[/yellow]")
+            self._output(f"{'Selected Model:':<20} [31mNone selected[0m")
+            self._output(f"{'Status:':<20} [33mUse /model.switch to select a model[0m")
         else:
-            self._output(f"{'Selected Model:':<20} [green]{self.app.selected_model}[/green]")
+            self._output(f"{'Selected Model:':<20} [32m{self.app.selected_model}[0m")
         
         # Show model info
         if self.app.selected_model:
@@ -262,16 +262,16 @@ class UIManager:
                         model_info += ")"                
                     elif context_info.quantization != 'unknown':
                         model_info += f" ({context_info.quantization})"
-                self._output(f"{'Model Info:':<20} [grey70]{model_info}[/grey70]")        # Context window information (now global)
+                self._output(f"{'Model Info:':<20} [37m{model_info}[0m")        # Context window information (now global)
         from .config import ConfigManager
         global_num_ctx = ConfigManager.get_global_num_ctx()
         
         # Always show global context window setting
-        self._output(f"{'Context Window:':<20} [bold cyan]{global_num_ctx:,} tokens[/bold cyan]")
+        self._output(f"{'Context Window:':<20} [1;36m{global_num_ctx:,} tokens[0m")
         
         # Show VRAM management settings
         keep_alive = ConfigManager.get_keep_alive()
-        self._output(f"{'Keep Alive:':<20} [bold magenta]{keep_alive}[/bold magenta]")
+        self._output(f"{'Keep Alive:':<20} [1;35m{keep_alive}[0m")
         
         if self.app.selected_model:
             context_info = self.app.model.get_context_window_info(self.app.selected_model)
@@ -279,7 +279,7 @@ class UIManager:
             if context_info:
                 # Display context window with model's max context for reference
                 if global_num_ctx != context_info.max_context:
-                    self._output(f"{'Model Max Context:':<20} [grey70]{context_info.max_context:,} tokens[/grey70]")
+                    self._output(f"{'Model Max Context:':<20} [37m{context_info.max_context:,} tokens[0m")
                 
                 # Show usage percentage with visual indicator
                 if usage_percentage is not None:
@@ -289,24 +289,24 @@ class UIManager:
                     bar = "█" * filled_length + "░" * (bar_length - filled_length)
                     # Color the percentage based on usage level
                     if usage_percentage <= 24:
-                        percentage_color = "green"
+                        percentage_color = "\033[32m"  # green
                     elif usage_percentage <= 49:
-                        percentage_color = "yellow"
+                        percentage_color = "\033[33m"  # yellow
                     elif usage_percentage <= 74:
-                        percentage_color = "orange1"
+                        percentage_color = "\033[38;5;208m"  # orange1
                     else:  # 75-100
-                        percentage_color = "red"
+                        percentage_color = "\033[31m"  # red
                     
-                    self._output(f"{'Context Usage:':<20} [{percentage_color}]{bar} {usage_percentage:.1f}%[/{percentage_color}]")
+                    self._output(f"{'Context Usage:':<20} {percentage_color}{bar} {usage_percentage:.1f}%\033[0m")
                   # Show estimated VRAM usage for global context window
                 user_context_info = context_info._replace(actual_context=global_num_ctx)
                 vram_estimate = self.app.model.estimate_context_vram_usage(user_context_info)                
                 if vram_estimate != "unknown":
-                    self._output(f"{'Context VRAM:':<20} [yellow]{vram_estimate}[/yellow] [grey50](est.)[/grey50]")
+                    self._output(f"{'Context VRAM:':<20} [33m{vram_estimate}[0m [90m(est.)[0m")
         else:
             # Show message when no model is selected
-            self._output(f"{'Context Usage:':<20} [grey50]N/A (no model selected)[/grey50]")
-            self._output(f"{'Context VRAM:':<20} [grey50]N/A (no model selected)[/grey50]")
+            self._output(f"{'Context Usage:':<20} [90mN/A (no model selected)[0m")
+            self._output(f"{'Context VRAM:':<20} [90mN/A (no model selected)[0m")
         
         self._output("")
 
@@ -320,10 +320,23 @@ class UIManager:
         # Print Rich-formatted output for CLI
         chat_color = get_chat_color(active_chat_index)
         
-        self._output(f"\n[bold {chat_color}]CHAT {active_chat_index + 1} VARIABLES[/bold {chat_color}]\n")
-        self._output(f"[bold {chat_color}]|[/bold {chat_color}] {'Verbosity:':<20} [bold][{'green' if verbosity else 'red'}]{verbosity}[/{'green' if verbosity else 'red'}][/bold]")
-        self._output(f"[bold {chat_color}]|[/bold {chat_color}] {'Thinking Mode:':<20} [bold][{'green' if thinking_enabled else 'red'}]{thinking_enabled}[/{'green' if thinking_enabled else 'red'}][/bold]")
-        self._output(f"[bold {chat_color}]|[/bold {chat_color}] {'Temperature:':<20} [bold {'blue' if temperature == 0.0 else 'green' if temperature < 0.7 else 'yellow' if temperature <= 1.0 else 'orange1' if temperature <= 1.5 else 'red'}]{temperature}[/bold {'blue' if temperature == 0.0 else 'green' if temperature < 0.7 else 'yellow' if temperature <= 1.0 else 'orange1' if temperature <= 1.5 else 'red'}]")
+        self._output(f"\n\033[1m{chat_color}CHAT {active_chat_index + 1} VARIABLES\033[0m\n")
+        verbosity_color = "\033[32m" if verbosity else "\033[31m"  # green if True, red if False
+        self._output(f"\033[1m{chat_color}|\033[0m {'Verbosity:':<20} \033[1m{verbosity_color}{verbosity}\033[0m")
+        thinking_color = "\033[32m" if thinking_enabled else "\033[31m"  # green if True, red if False
+        self._output(f"\033[1m{chat_color}|\033[0m {'Thinking Mode:':<20} \033[1m{thinking_color}{thinking_enabled}\033[0m")
+        # Determine temperature color based on value
+        if temperature == 0.0:
+            temp_color = "\033[34m"  # blue
+        elif temperature < 0.7:
+            temp_color = "\033[32m"  # green
+        elif temperature <= 1.0:
+            temp_color = "\033[33m"  # yellow
+        elif temperature <= 1.5:
+            temp_color = "\033[38;5;208m"  # orange1
+        else:
+            temp_color = "\033[31m"  # red
+        self._output(f"\033[1m{chat_color}|\033[0m {'Temperature:':<20} \033[1m{temp_color}{temperature}\033[0m")
         self._output("")
     
     def show_log_variables(self):
@@ -344,11 +357,12 @@ class UIManager:
         except ValueError:
             log_dir = str(LOG_DIR)
         
-        self._output(f"\n[bold]LOGGING VARIABLES[/bold]\n")
+        self._output(f"\n[1mLOGGING VARIABLES[0m\n")
         
-        self._output(f"{'Logging Enabled:':<20} [bold][{'green' if self.app.logging_enabled else 'red'}]{self.app.logging_enabled}[/{'green' if self.app.logging_enabled else 'red'}][/bold]")
-        self._output(f"{'Config Path:':<20} [grey70]~/{config_path}[/grey70]")        
-        self._output(f"{'Log Directory:':<20} [grey70]~/{log_dir}[/grey70]")
+        logging_color = "\033[32m" if self.app.logging_enabled else "\033[31m"  # green if True, red if False
+        self._output(f"{'Logging Enabled:':<20} \033[1m{logging_color}{self.app.logging_enabled}\033[0m")
+        self._output(f"{'Config Path:':<20} [37m~/{config_path}[0m")        
+        self._output(f"{'Log Directory:':<20} [37m~/{log_dir}[0m")
         
         # Show log file sizes if available
         try:
@@ -357,11 +371,11 @@ class UIManager:
             if log_path.exists():
                 log_files = list(log_path.glob("*.log"))
                 if log_files:
-                    self._output(f"{'Log Files:':<20} [cyan]{len(log_files)}[/cyan] files found")
+                    self._output(f"{'Log Files:':<20} [36m{len(log_files)}[0m files found")
                     # Show most recent log file
                     most_recent = max(log_files, key=lambda f: f.stat().st_mtime)
                     size_kb = most_recent.stat().st_size / 1024
-                    self._output(f"{'Latest Log:':<20} [grey70]{most_recent.name}[/grey70] ([yellow]{size_kb:.1f} KB[/yellow])")
+                    self._output(f"{'Latest Log:':<20} [37m{most_recent.name}[0m ([33m{size_kb:.1f} KB[0m)")
         except Exception:
             pass  # Ignore errors when checking log files
         
@@ -410,8 +424,8 @@ class UIManager:
         
         internal_category = category_mapping.get(category.lower())        
         if not internal_category:
-            self._output(f"[bold red]Error:[/bold red] Unknown category '{category}'")
-            self._output(f"[grey50]Available categories:[/grey50] {', '.join(category_mapping.keys())}")
+            self._output(f"[1;31mError:[0m Unknown category '{category}'")
+            self._output(f"[90mAvailable categories:[0m {', '.join(category_mapping.keys())}")
             return
         
         # Get commands for this category
@@ -419,7 +433,7 @@ class UIManager:
         category_commands = [cmd for cmd in all_commands.values() if cmd.category == internal_category]
         
         if not category_commands:
-            self._output(f"[bold red]Error:[/bold red] No commands found for category '{category}'")
+            self._output(f"[1;31mError:[0m No commands found for category '{category}'")
             return        # Special handling for persona category to match HELP.md format
         if category.lower() == 'persona':
             self._show_persona_help()
@@ -466,7 +480,7 @@ class UIManager:
         
         # Display category help
         category_title = category.upper()
-        self._output(f"\n[bold grey70]{category_title} COMMANDS HELP[/bold grey70]\n")
+        self._output(f"\n[1;37m{category_title} COMMANDS HELP[0m\n")
         
         # Sort commands by name for consistent display
         sorted_commands = sorted(category_commands, key=lambda x: x.name)
@@ -480,8 +494,8 @@ class UIManager:
         
         self._output("")
         self._output(f"  /sys.help {category.lower()} - shows this help screen")
-        self._output(f"\n[grey50]Use /sys.help <command> for detailed help on specific commands[/grey50]")
-        self._output(f"[grey50]Example: /sys.help {sorted_commands[0].name}[/grey50]")
+        self._output(f"\n[90mUse /sys.help <command> for detailed help on specific commands[0m")
+        self._output(f"\033[90mExample: /sys.help {sorted_commands[0].name}\033[0m")
     
     def show_command_help(self, command_name: str):
         """Display detailed help for a specific command."""
@@ -506,35 +520,35 @@ class UIManager:
                     break
         
         if not command_def:
-            self._output(f"[bold red]Error:[/bold red] Unknown command '{command_name}'")
-            self._output(f"[grey50]Use /sys.help to see all available commands[/grey50]")
+            self._output(f"[1;31mError:[0m Unknown command '{command_name}'")
+            self._output(f"[90mUse /sys.help to see all available commands[0m")
             return        # Handle special cases with existing help screens
         if command_name == "model.setctx":
-            self._output(f"\n[bold grey70]| DETAILED HELP: /model.setctx[/bold grey70]\n")
+            self._output(f"\n[1;37m| DETAILED HELP: /model.setctx[0m\n")
             # Leverage existing comprehensive help
             from calousd.commands.model.services import ModelService
             service = ModelService(self.app)
             formatter = ModelFormatter()
             formatter.format_current_context(service.get_current_context(), self.app.selected_model, service)
-            self._output(f"\n[grey50]This command accepts an optional context size parameter (2048-32768)[/grey50]")
+            self._output(f"\n[90mThis command accepts an optional context size parameter (2048-32768)[0m")
             return
         
         elif command_name.startswith("alias"):
-            self._output(f"\n[bold grey70]| DETAILED HELP: /{command_name}[/bold grey70]\n")
+            self._output(f"\n[1;37m| DETAILED HELP: /{command_name}[0m\n")
             # Leverage existing alias help
             AliasFormatter.print_alias_help()
             return
         
         # Generic command help for other commands
-        self._output(f"\n[bold grey70]| DETAILED HELP: /{command_name}[/bold grey70]\n")
+        self._output(f"\n[1;37m| DETAILED HELP: /{command_name}[0m\n")
         
         # Basic command information
-        self._output(f"[bold]Command:[/bold] /{command_name}")
-        self._output(f"[bold]Description:[/bold] {command_def.description}")
-        self._output(f"[bold]Category:[/bold] {command_def.category}")
+        self._output(f"[1mCommand:[0m /{command_name}")
+        self._output(f"[1mDescription:[0m {command_def.description}")
+        self._output(f"[1mCategory:[0m {command_def.category}")
         
         if command_def.aliases:
-            self._output(f"[bold]Aliases:[/bold] {', '.join(f'/{alias}' for alias in command_def.aliases)}")
+            self._output(f"[1mAliases:[0m {', '.join(f'/{alias}' for alias in command_def.aliases)}")
         
         # Show usage based on parser configuration
         if hasattr(command_def.parser, '_actions'):
@@ -561,18 +575,18 @@ class UIManager:
             usage_parts.extend(positional_args)
             usage_parts.extend(optional_args)
             
-            self._output(f"[bold]Usage:[/bold] {' '.join(usage_parts)}")
+            self._output(f"[1mUsage:[0m {' '.join(usage_parts)}")
         
         # Add category-specific help tips
         self._add_category_specific_tips(command_name, command_def.category)
         
-        self._output(f"\n[grey50]Use /sys.help {command_def.category.lower().replace(' ', '').replace('management', '').replace('operations', '')} to see all {command_def.category.lower()} commands[/grey50]")
+        self._output(f"\n[90mUse /sys.help {command_def.category.lower().replace(' ', '').replace('management', '').replace('operations', '')} to see all {command_def.category.lower()} commands[0m")
 
     def _add_category_specific_tips(self, command_name: str, category: str):
         """Add helpful tips based on command category."""
         
         if "chat" in command_name.lower():
-            self._output(f"\n[bold cyan]💡 Chat Tips:[/bold cyan]")
+            self._output(f"\n[1;36m💡 Chat Tips:[0m")
             if "switch" in command_name:
                 self._output(f"  • Use without number to cycle to next chat")
                 self._output(f"  • Current chat is marked with '>' in chat overview")
@@ -585,7 +599,7 @@ class UIManager:
                 self._output(f"  • Removing a chat permanently deletes its history")
         
         elif "model" in command_name.lower():
-            self._output(f"\n[bold cyan]💡 Model Tips:[/bold cyan]")
+            self._output(f"\n[1;36m💡 Model Tips:[0m")
             if "switch" in command_name:
                 self._output(f"  • Model selection applies globally to all chats")
                 self._output(f"  • Requires Ollama to be running with available models")
@@ -598,7 +612,7 @@ class UIManager:
                 self._output(f"  • Reveals the model's reasoning process (if supported)")
         
         elif "prompt" in command_name.lower() or "persona" in command_name.lower():
-            self._output(f"\n[bold cyan]💡 Prompt/Persona Tips:[/bold cyan]")
+            self._output(f"\n[1;36m💡 Prompt/Persona Tips:[0m")
             if "set" in command_name:
                 self._output(f"  • Personas can have multiple slots (0-9) for different purposes")
                 self._output(f"  • Slot 0 is typically used for the main system prompt")
@@ -607,7 +621,7 @@ class UIManager:
                 self._output(f"  • Use descriptive names for easy identification")
         
         elif "history" in command_name.lower() or "log" in command_name.lower():
-            self._output(f"\n[bold cyan]💡 History/Logging Tips:[/bold cyan]")
+            self._output(f"\n[1;36m💡 History/Logging Tips:[0m")
             if "clear" in command_name:
                 self._output(f"  • Clearing history is permanent and cannot be undone")
                 self._output(f"  • Consider using /log.today to backup important conversations")
@@ -616,12 +630,12 @@ class UIManager:
                 self._output(f"  • Use /history.save to export important conversations")
         
         elif "file" in command_name.lower():
-            self._output(f"\n[bold cyan]💡 File Tips:[/bold cyan]")
+            self._output(f"\n[1;36m💡 File Tips:[0m")
             self._output(f"  • File operations can process multiple formats")
             self._output(f"  • Use drag-and-drop for quick file loading")
         
         elif "plugin" in command_name.lower():
-            self._output(f"\n[bold cyan]💡 Plugin Tips:[/bold cyan]")
+            self._output(f"\n[1;36m💡 Plugin Tips:[0m")
             self._output(f"  • Plugins extend Hi, Ollama! functionality")
             self._output(f"  • Use /plugin.info to see detailed plugin information")
     
@@ -629,277 +643,277 @@ class UIManager:
         """Display persona help in the custom format from HELP.md."""
         command_color = "grey50"
         
-        self._output(f"\n[bold white]PERSONA COMMANDS HELP[/bold white]\n")
+        self._output(f"\n[1;37mPERSONA COMMANDS HELP[0m\n")
         
-        self._output(f"[white]The persona system allows you to create and edit a modular collection of system prompts that define how the model responds to your input, along with a name to identify the persona. You can save these personas to files and load them into the same or different chat instances for later use.[/white]\n")
+        self._output(f"[37mThe persona system allows you to create and edit a modular collection of system prompts that define how the model responds to your input, along with a name to identify the persona. You can save these personas to files and load them into the same or different chat instances for later use.[0m\n")
         
-        self._output(f"[white]PERSONA MANAGEMENT[/white]\n")
+        self._output(f"[37mPERSONA MANAGEMENT[0m\n")
         
-        self._output(f" [bold {command_color}]/persona.name[/bold {command_color}]    [white]Set the persona name[/white]")
-        self._output(f" [bold {command_color}]/persona.set[/bold {command_color}]     [white]Set a system prompt at slot 0-9[/white]")
-        self._output(f" [bold {command_color}]/persona.get[/bold {command_color}]     [white]View contents of a specific slot[/white]")
-        self._output(f" [bold {command_color}]/persona.clear[/bold {command_color}]   [white]Clear contents of a specific slot[/white]")
-        self._output(f" [bold {command_color}]/persona.show[/bold {command_color}]    [white]Show current name + all slot contents[/white]")
-        self._output(f" [bold {command_color}]/persona.reset[/bold {command_color}]   [white]Clear name and all slot contents[/white]")
+        self._output(f" \033[1m\033[90m/persona.name\033[0m    [37mSet the persona name[0m")
+        self._output(f" \033[1m\033[90m/persona.set\033[0m     [37mSet a system prompt at slot 0-9[0m")
+        self._output(f" \033[1m\033[90m/persona.get\033[0m     [37mView contents of a specific slot[0m")
+        self._output(f" \033[1m\033[90m/persona.clear\033[0m   [37mClear contents of a specific slot[0m")
+        self._output(f" \033[1m\033[90m/persona.show\033[0m    [37mShow current name + all slot contents[0m")
+        self._output(f" \033[1m\033[90m/persona.reset\033[0m   [37mClear name and all slot contents[0m")
         self._output("")
         
-        self._output(f"[white]FILE OPERATIONS[/white]\n")
+        self._output(f"[37mFILE OPERATIONS[0m\n")
         
-        self._output(f" [bold {command_color}]/persona.save[/bold {command_color}]    [white]Save current persona to file[/white]")
-        self._output(f" [bold {command_color}]/persona.load[/bold {command_color}]    [white]Load a saved persona from file[/white]")
-        self._output(f" [bold {command_color}]/persona.list[/bold {command_color}]    [white]List all saved persona files[/white]")
-        self._output(f" [bold {command_color}]/persona.delete[/bold {command_color}]  [white]Delete a saved persona file[/white]")
+        self._output(f" \033[1m\033[90m/persona.save\033[0m    [37mSave current persona to file[0m")
+        self._output(f" \033[1m\033[90m/persona.load\033[0m    [37mLoad a saved persona from file[0m")
+        self._output(f" \033[1m\033[90m/persona.list\033[0m    [37mList all saved persona files[0m")
+        self._output(f" \033[1m\033[90m/persona.delete\033[0m  [37mDelete a saved persona file[0m")
         self._output("")
         
-        self._output(f"[white]MORE HELP[/white]\n")
+        self._output(f"[37mMORE HELP[0m\n")
         
-        self._output(f" [bold {command_color}]/persona.help[/bold {command_color}]    [white]shows this help screen[/white]")
+        self._output(f" \033[1m\033[90m/persona.help\033[0m    [37mshows this help screen[0m")
         self._output("")
         
-        self._output(f"[grey50]Use /sys.help <command> for detailed help on specific commands[/grey50]")
-        self._output(f"[grey50]Example: /sys.help persona.clear[/grey50]")
+        self._output(f"[90mUse /sys.help <command> for detailed help on specific commands[0m")
+        self._output(f"[90mExample: /sys.help persona.clear[0m")
     
     def _show_model_help(self):
         """Display model help in the custom format from HELP.md."""
         command_color = "grey50"
         
-        self._output(f"\n[bold white]MODEL COMMANDS HELP[/bold white]\n")
+        self._output(f"\n[1;37mMODEL COMMANDS HELP[0m\n")
         
-        self._output(f"[white]The model system allows you to select and configure AI models for your conversations. Global settings affect all chat instances, while per-chat settings let you customize behavior for individual conversations.[/white]\n")
+        self._output(f"[37mThe model system allows you to select and configure AI models for your conversations. Global settings affect all chat instances, while per-chat settings let you customize behavior for individual conversations.[0m\n")
         
-        self._output(f"[white]GLOBAL[/white]\n")
+        self._output(f"[37mGLOBAL[0m\n")
         
-        self._output(f" [bold {command_color}]/model.switch[/bold {command_color}]   [white]Change the current model (shows list or select by number/name)[/white]")
-        self._output(f" [bold {command_color}]/model.setctx[/bold {command_color}]   [white]Set max context window size[/white]")
-        self._output(f" [bold {command_color}]/model.vars[/bold {command_color}]     [white]Show model-related variables[/white]")
+        self._output(f" \033[1m\033[90m/model.switch\033[0m   [37mChange the current model (shows list or select by number/name)[0m")
+        self._output(f" \033[1m\033[90m/model.setctx\033[0m   [37mSet max context window size[0m")
+        self._output(f" \033[1m\033[90m/model.vars\033[0m     [37mShow model-related variables[0m")
         self._output("")
         
-        self._output(f"[white]PER CHAT INSTANCE[/white]\n")
+        self._output(f"[37mPER CHAT INSTANCE[0m\n")
         
-        self._output(f" [bold {command_color}]/model.settemp[/bold {command_color}]  [white]Set temperature parameter[/white]")
-        self._output(f" [bold {command_color}]/model.eval[/bold {command_color}]     [white]Toggle evaluation display[/white]")
-        self._output(f" [bold {command_color}]/model.think[/bold {command_color}]    [white]Toggle thinking display[/white]")
+        self._output(f" \033[1m\033[90m/model.settemp\033[0m  [37mSet temperature parameter[0m")
+        self._output(f" \033[1m\033[90m/model.eval\033[0m     [37mToggle evaluation display[0m")
+        self._output(f" \033[1m\033[90m/model.think\033[0m    [37mToggle thinking display[0m")
         self._output("")
         
-        self._output(f"[white]MORE HELP[/white]\n")
+        self._output(f"[37mMORE HELP[0m\n")
         
-        self._output(f" [bold {command_color}]/model.help[/bold {command_color}]     [white]shows this help screen[/white]")
+        self._output(f" \033[1m\033[90m/model.help\033[0m     [37mshows this help screen[0m")
         self._output("")
         
-        self._output(f"[grey50]Use /sys.help <command> for detailed help on specific commands[/grey50]")
-        self._output(f"[grey50]Example: /sys.help model.eval[/grey50]")
+        self._output(f"[90mUse /sys.help <command> for detailed help on specific commands[0m")
+        self._output(f"[90mExample: /sys.help model.eval[0m")
     
     def _show_alias_help(self):
         """Display alias help in the custom format from HELP.md."""
         command_color = "grey50"
         
-        self._output(f"\n[bold white]ALIAS COMMANDS HELP[/bold white]\n")
+        self._output(f"\n[1;37mALIAS COMMANDS HELP[0m\n")
         
-        self._output(f"[white]The alias system allows you to create custom shortcuts for frequently used commands. Aliases can simplify complex commands or provide alternative names that are easier to remember.[/white]\n")
+        self._output(f"[37mThe alias system allows you to create custom shortcuts for frequently used commands. Aliases can simplify complex commands or provide alternative names that are easier to remember.[0m\n")
         
-        self._output(f"[white]ALIAS MANAGEMENT[/white]\n")
+        self._output(f"[37mALIAS MANAGEMENT[0m\n")
         
-        self._output(f" [bold {command_color}]/alias.add[/bold {command_color}]     [white]Create a new command alias[/white]")
-        self._output(f" [bold {command_color}]/alias.remove[/bold {command_color}]  [white]Remove a command alias[/white]")
-        self._output(f" [bold {command_color}]/alias.list[/bold {command_color}]    [white]List all command aliases[/white]")
-        self._output(f" [bold {command_color}]/alias.clear[/bold {command_color}]   [white]Clear all command aliases[/white]")
+        self._output(f" \033[1m\033[90m/alias.add\033[0m     [37mCreate a new command alias[0m")
+        self._output(f" \033[1m\033[90m/alias.remove\033[0m  [37mRemove a command alias[0m")
+        self._output(f" \033[1m\033[90m/alias.list\033[0m    [37mList all command aliases[0m")
+        self._output(f" \033[1m\033[90m/alias.clear\033[0m   [37mClear all command aliases[0m")
         self._output("")
         
-        self._output(f"[white]MORE HELP[/white]\n")
+        self._output(f"[37mMORE HELP[0m\n")
         
-        self._output(f" [bold {command_color}]/alias.help[/bold {command_color}]    [white]shows this help screen[/white]")
+        self._output(f" \033[1m\033[90m/alias.help\033[0m    [37mshows this help screen[0m")
         self._output("")
         
-        self._output(f"[grey50]Use /sys.help <command> for detailed help on specific commands[/grey50]")
-        self._output(f"[grey50]Example: /sys.help alias.add[/grey50]")
+        self._output(f"[90mUse /sys.help <command> for detailed help on specific commands[0m")
+        self._output(f"[90mExample: /sys.help alias.add[0m")
     
     def _show_chat_help(self):
         """Display chat help in the custom format from HELP.md."""
         command_color = "grey50"
         
-        self._output(f"\n[bold white]CHAT COMMANDS HELP[/bold white]\n")
+        self._output(f"\n[1;37mCHAT COMMANDS HELP[0m\n")
         
-        self._output(f"[white]The chat system manages multiple independent conversation sessions within a single application instance. You can switch between numbered chat sessions (1-N), add or remove sessions dynamically, and transfer AI responses between chats. Each chat maintains its own conversation history and persona settings while sharing the same AI model selection globally.[/white]\n")
+        self._output(f"[37mThe chat system manages multiple independent conversation sessions within a single application instance. You can switch between numbered chat sessions (1-N), add or remove sessions dynamically, and transfer AI responses between chats. Each chat maintains its own conversation history and persona settings while sharing the same AI model selection globally.[0m\n")
         
-        self._output(f"[white]SESSION MANAGEMENT[/white]\n")
+        self._output(f"[37mSESSION MANAGEMENT[0m\n")
         
-        self._output(f" [bold {command_color}]/chat.switch[/bold {command_color}]  [white]Switch between chat sessions[/white]")
-        self._output(f" [bold {command_color}]/chat.reset[/bold {command_color}]", "[white]Reset current chat to factory defaults.[/white]")
+        self._output(f" \033[1m\033[90m/chat.switch\033[0m  [37mSwitch between chat sessions[0m")
+        self._output(f" \033[1m\033[90m/chat.reset\033[0m", "[37mReset current chat to factory defaults.[0m")
         self._output("")
         
-        self._output(f"[white]CONTENT OPERATIONS[/white]\n")
+        self._output(f"[37mCONTENT OPERATIONS[0m\n")
         
-        self._output(f" [bold {command_color}]/chat.twist[/bold {command_color}]   [white]Copy AI response to another chat[/white]")
+        self._output(f" \033[1m\033[90m/chat.twist\033[0m   [37mCopy AI response to another chat[0m")
         self._output("")
         
-        self._output(f"[white]INFORMATION & SETTINGS[/white]\n")
+        self._output(f"[37mINFORMATION & SETTINGS[0m\n")
         
-        self._output(f" [bold {command_color}]/chat.vars[/bold {command_color}]    [white]Show chat-specific variables[/white]")
+        self._output(f" \033[1m\033[90m/chat.vars\033[0m    [37mShow chat-specific variables[0m")
         self._output("")
         
-        self._output(f"[white]MORE HELP[/white]\n")
+        self._output(f"[37mMORE HELP[0m\n")
         
-        self._output(f" [bold {command_color}]/chat.help[/bold {command_color}]    [white]shows this help screen[/white]")
+        self._output(f" \033[1m\033[90m/chat.help\033[0m    [37mshows this help screen[0m")
         self._output("")
         
-        self._output(f"[grey50]Use /sys.help <command> for detailed help on specific commands[/grey50]")
-        self._output(f"[grey50]Example: /sys.help chat.add[/grey50]")
+        self._output(f"[90mUse /sys.help <command> for detailed help on specific commands[0m")
+        self._output(f"[90mExample: /sys.help chat.add[0m")
     
     def _show_log_help(self):
         """Display log help in the custom format from HELP.md."""
         command_color = "grey50"
         
-        self._output(f"\n[bold white]LOG COMMANDS HELP[/bold white]\n")
+        self._output(f"\n[1;37mLOG COMMANDS HELP[0m\n")
         
-        self._output(f"[white]The unified logging system provides centralized conversation tracking across all chat sessions. It maintains daily log files that capture conversations from every chat instance, creating a new log file each day. Logs are stored in the user's home directory under ~/.calous/logs/, allowing you to review your interaction history organized by date.[/white]\n")
+        self._output(f"[37mThe unified logging system provides centralized conversation tracking across all chat sessions. It maintains daily log files that capture conversations from every chat instance, creating a new log file each day. Logs are stored in the user's home directory under ~/.calous/logs/, allowing you to review your interaction history organized by date.[0m\n")
         
-        self._output(f"[white]LOGGING CONTROL[/white]\n")
+        self._output(f"[37mLOGGING CONTROL[0m\n")
         
-        self._output(f" [bold {command_color}]/log.on[/bold {command_color}]     [white]Enable unified logging[/white]")
-        self._output(f" [bold {command_color}]/log.off[/bold {command_color}]    [white]Disable unified logging[/white]")
+        self._output(f" \033[1m\033[90m/log.on\033[0m     [37mEnable unified logging[0m")
+        self._output(f" \033[1m\033[90m/log.off\033[0m    [37mDisable unified logging[0m")
         self._output("")
         
-        self._output(f"[white]LOG VIEWING[/white]\n")
+        self._output(f"[37mLOG VIEWING[0m\n")
         
-        self._output(f" [bold {command_color}]/log.today[/bold {command_color}]  [white]View today's unified log[/white]")
+        self._output(f" \033[1m\033[90m/log.today\033[0m  [37mView today's unified log[0m")
         self._output("")
         
-        self._output(f"[white]INFORMATION & SETTINGS[/white]\n")
+        self._output(f"[37mINFORMATION & SETTINGS[0m\n")
         
-        self._output(f" [bold {command_color}]/log.vars[/bold {command_color}]   [white]Show logging-related variables[/white]")
+        self._output(f" \033[1m\033[90m/log.vars\033[0m   [37mShow logging-related variables[0m")
         self._output("")
         
-        self._output(f"[white]MORE HELP[/white]\n")
+        self._output(f"[37mMORE HELP[0m\n")
         
-        self._output(f" [bold {command_color}]/log.help[/bold {command_color}]   [white]shows this help screen[/white]")
+        self._output(f" \033[1m\033[90m/log.help\033[0m   [37mshows this help screen[0m")
         self._output("")
         
-        self._output(f"[grey50]Use /sys.help <command> for detailed help on specific commands[/grey50]")
-        self._output(f"[grey50]Example: /sys.help log.today[/grey50]")
+        self._output(f"[90mUse /sys.help <command> for detailed help on specific commands[0m")
+        self._output(f"[90mExample: /sys.help log.today[0m")
     
     def _show_history_help(self):
         """Display history help in the custom format from HELP.md."""
         command_color = "grey50"
         
-        self._output(f"\n[bold white]HISTORY COMMANDS HELP[/bold white]\n")
+        self._output(f"\n[1;37mHISTORY COMMANDS HELP[0m\n")
         
-        self._output(f"[white]The chat history system manages conversation records for individual chat sessions. Each chat maintains its own separate history that is automatically saved to file, ensuring your conversations persist between sessions and are not lost when you close and reopen the application. You can also control whether history recording is enabled or disabled per chat - useful for conversations with smaller models that have limited context capacity.[/white]\n")
+        self._output(f"[37mThe chat history system manages conversation records for individual chat sessions. Each chat maintains its own separate history that is automatically saved to file, ensuring your conversations persist between sessions and are not lost when you close and reopen the application. You can also control whether history recording is enabled or disabled per chat - useful for conversations with smaller models that have limited context capacity.[0m\n")
         
-        self._output(f"[white]HISTORY MANAGEMENT[/white]\n")
+        self._output(f"[37mHISTORY MANAGEMENT[0m\n")
         
-        self._output(f" [bold {command_color}]/history.show[/bold {command_color}]   [white]View the current chat history[/white]")
-        self._output(f" [bold {command_color}]/history.clear[/bold {command_color}]  [white]Clear the current chat history[/white]")
-        self._output(f" [bold {command_color}]/history.save[/bold {command_color}]   [white]Save current chat history to a file[/white]")
-        self._output(f" [bold {command_color}]/history.load[/bold {command_color}]   [white]Load chat history from a file (overwrites current history)[/white]")
-        self._output(f" [bold {command_color}]/history.list[/bold {command_color}]   [white]List all saved chat history files[/white]")
-        self._output(f" [bold {command_color}]/history.delete[/bold {command_color}] [white]Delete a saved chat history file[/white]")
-        self._output(f" [bold {command_color}]/history.purge[/bold {command_color}]  [white]Delete the most recent N messages from current chat history[/white]")
+        self._output(f" \033[1m\033[90m/history.show\033[0m   [37mView the current chat history[0m")
+        self._output(f" \033[1m\033[90m/history.clear\033[0m  [37mClear the current chat history[0m")
+        self._output(f" \033[1m\033[90m/history.save\033[0m   [37mSave current chat history to a file[0m")
+        self._output(f" \033[1m\033[90m/history.load\033[0m   [37mLoad chat history from a file (overwrites current history)[0m")
+        self._output(f" \033[1m\033[90m/history.list\033[0m   [37mList all saved chat history files[0m")
+        self._output(f" \033[1m\033[90m/history.delete\033[0m [37mDelete a saved chat history file[0m")
+        self._output(f" \033[1m\033[90m/history.purge\033[0m  [37mDelete the most recent N messages from current chat history[0m")
         self._output("")
-        self._output(f"[white]HISTORY CONTROL[/white]\n")
-        self._output(f" [bold {command_color}]/history.on[/bold {command_color}]     [white]Enable chat history recording[/white]")
-        self._output(f" [bold {command_color}]/history.off[/bold {command_color}]    [white]Disable chat history recording[/white]")
+        self._output(f"[37mHISTORY CONTROL[0m\n")
+        self._output(f" \033[1m\033[90m/history.on\033[0m     [37mEnable chat history recording[0m")
+        self._output(f" \033[1m\033[90m/history.off\033[0m    [37mDisable chat history recording[0m")
         self._output("")
-        self._output(f"[white]MORE HELP[/white]\n")
+        self._output(f"[37mMORE HELP[0m\n")
         
-        self._output(f" [bold {command_color}]/history.help[/bold {command_color}]   [white]shows this help screen[/white]")
+        self._output(f" \033[1m\033[90m/history.help\033[0m   [37mshows this help screen[0m")
         self._output("")
         
-        self._output(f"[grey50]Use /sys.help <command> for detailed help on specific commands[/grey50]")
-        self._output(f"[grey50]Example: /sys.help history.clear[/grey50]")
+        self._output(f"[90mUse /sys.help <command> for detailed help on specific commands[0m")
+        self._output(f"[90mExample: /sys.help history.clear[0m")
     
     def _show_plugin_help(self):
         """Display plugin help in the custom format from HELP.md."""
         command_color = "grey50"
         
-        self._output(f"\n[bold white]PLUGIN COMMANDS HELP[/bold white]\n")
+        self._output(f"\n[1;37mPLUGIN COMMANDS HELP[0m\n")
         
-        self._output(f"[white]The plugin system provides extensibility by allowing you to load and manage additional functionality modules. Plugins can extend the application's capabilities with custom commands, integrations, or specialized features. The system supports both built-in plugins and user-defined plugins for custom functionality.[/white]\n")
+        self._output(f"[37mThe plugin system provides extensibility by allowing you to load and manage additional functionality modules. Plugins can extend the application's capabilities with custom commands, integrations, or specialized features. The system supports both built-in plugins and user-defined plugins for custom functionality.[0m\n")
         
-        self._output(f"[white]PLUGIN DISCOVERY[/white]\n")
+        self._output(f"[37mPLUGIN DISCOVERY[0m\n")
         
-        self._output(f" [bold {command_color}]/plugin.list[/bold {command_color}]    [white]List all available plugins[/white]")
-        self._output(f" [bold {command_color}]/plugin.info[/bold {command_color}]    [white]Get details for a specific plugin[/white]")
+        self._output(f" \033[1m\033[90m/plugin.list\033[0m    [37mList all available plugins[0m")
+        self._output(f" \033[1m\033[90m/plugin.info\033[0m    [37mGet details for a specific plugin[0m")
         self._output("")
         
-        self._output(f"[white]PLUGIN MANAGEMENT[/white]\n")
+        self._output(f"[37mPLUGIN MANAGEMENT[0m\n")
         
-        self._output(f" [bold {command_color}]/plugin.reload[/bold {command_color}]  [white]Reload all plugins (for development)[/white]")
+        self._output(f" \033[1m\033[90m/plugin.reload\033[0m  [37mReload all plugins (for development)[0m")
         self._output("")
         
-        self._output(f"[white]MORE HELP[/white]\n")
+        self._output(f"[37mMORE HELP[0m\n")
         
-        self._output(f" [bold {command_color}]/plugin.help[/bold {command_color}]    [white]shows this help screen[/white]")
+        self._output(f" \033[1m\033[90m/plugin.help\033[0m    [37mshows this help screen[0m")
         self._output("")
         
-        self._output(f"[grey50]Use /sys.help <command> for detailed help on specific commands[/grey50]")
-        self._output(f"[grey50]Example: /sys.help plugin.info[/grey50]")
+        self._output(f"[90mUse /sys.help <command> for detailed help on specific commands[0m")
+        self._output(f"[90mExample: /sys.help plugin.info[0m")
     
     def _show_sys_help(self):
         """Display sys help in the custom format from HELP.md."""
         command_color = "grey50"
         
-        self._output(f"\n[bold white]SYS COMMANDS HELP[/bold white]\n")
+        self._output(f"\n[1;37mSYS COMMANDS HELP[0m\n")
         
-        self._output(f"[white]The system commands provide core application control and help functionality. These essential commands allow you to access help documentation and safely exit the application while preserving your configurations and settings.[/white]\n")
-        self._output(f"[white]APPLICATION CONTROL[/white]\n")
+        self._output(f"[37mThe system commands provide core application control and help functionality. These essential commands allow you to access help documentation and safely exit the application while preserving your configurations and settings.[0m\n")
+        self._output(f"[37mAPPLICATION CONTROL[0m\n")
         
-        self._output(f" [bold {command_color}]/sys.help (aliases: help)[/bold {command_color}]  [white]Show this command reference[/white]")
-        self._output(f" [bold {command_color}]/sys.help all[/bold {command_color}]              [white]Show comprehensive help menu[/white]")
+        self._output(f" \033[1m\033[90m/sys.help (aliases: help)\033[0m  [37mShow this command reference[0m")
+        self._output(f" \033[1m\033[90m/sys.help all\033[0m              [37mShow comprehensive help menu[0m")
         self._output("")
-        self._output(f"[white]MORE HELP[/white]\n")
+        self._output(f"[37mMORE HELP[0m\n")
         
-        self._output(f" [bold {command_color}]/sys.help[/bold {command_color}]                  [white]shows this help screen[/white]")
+        self._output(f" \033[1m\033[90m/sys.help\033[0m                  [37mshows this help screen[0m")
         self._output("")
-        self._output(f"[grey50]Use /sys.help <command> for detailed help on specific commands[/grey50]")
-        self._output(f"[grey50]Example: /sys.help sys.help[/grey50]")
+        self._output(f"[90mUse /sys.help <command> for detailed help on specific commands[0m")
+        self._output(f"[90mExample: /sys.help sys.help[0m")
     
     def _show_file_help(self):
         """Display file help in the custom format from HELP.md."""
         command_color = "grey50"
         
-        self._output(f"\n[bold white]FILE COMMANDS HELP[/bold white]\n")
+        self._output(f"\n[1;37mFILE COMMANDS HELP[0m\n")
         
-        self._output(f"[white]The file system allows you to load and process external files within your conversations. You can upload various file types and send them along with prompts to the AI model, enabling document analysis, code review, image processing (if the model has vision support), and other file-based interactions. The system handles text documents, images, and code files seamlessly. WARNING: Processing large files or using vision features on low-end local LLM setups can be rather slow.[/white]\n")
+        self._output(f"[37mThe file system allows you to load and process external files within your conversations. You can upload various file types and send them along with prompts to the AI model, enabling document analysis, code review, image processing (if the model has vision support), and other file-based interactions. The system handles text documents, images, and code files seamlessly. WARNING: Processing large files or using vision features on low-end local LLM setups can be rather slow.[0m\n")
         
-        self._output(f"[white]FILE OPERATIONS[/white]\n")
+        self._output(f"[37mFILE OPERATIONS[0m\n")
         
-        self._output(f" [bold {command_color}]/file.load[/bold {command_color}]  [white]Load a file and send it with a prompt[/white]")
+        self._output(f" \033[1m\033[90m/file.load\033[0m  [37mLoad a file and send it with a prompt[0m")
         self._output("")
         
-        self._output(f"[white]MORE HELP[/white]\n")
+        self._output(f"[37mMORE HELP[0m\n")
         
-        self._output(f" [bold {command_color}]/file.help[/bold {command_color}]  [white]shows this help screen[/white]")
+        self._output(f" \033[1m\033[90m/file.help\033[0m  [37mshows this help screen[0m")
         self._output("")
         
-        self._output(f"[grey50]Use /sys.help <command> for detailed help on specific commands[/grey50]")
-        self._output(f"[grey50]Example: /sys.help file.load[/grey50]")
+        self._output(f"[90mUse /sys.help <command> for detailed help on specific commands[0m")
+        self._output(f"[90mExample: /sys.help file.load[0m")
     
     def _show_prompt_help(self):
         """Display prompt help in the custom format from HELP.md."""
         command_color = "grey50"
         
-        self._output(f"\n[bold white]PROMPT COMMANDS HELP[/bold white]\n")
+        self._output(f"\n[1;37mPROMPT COMMANDS HELP[0m\n")
         
-        self._output(f"[white]The prompt system allows you to save and reuse frequently used prompts or prompt templates. You can store up to 10 numbered prompt slots (0-9) that persist between sessions, making it easy to quickly apply common instructions, writing styles, or analysis frameworks to your conversations. This system helps streamline repetitive tasks and maintain consistency in your interactions with the AI.[/white]\n")
+        self._output(f"[37mThe prompt system allows you to save and reuse frequently used prompts or prompt templates. You can store up to 10 numbered prompt slots (0-9) that persist between sessions, making it easy to quickly apply common instructions, writing styles, or analysis frameworks to your conversations. This system helps streamline repetitive tasks and maintain consistency in your interactions with the AI.[0m\n")
         
-        self._output(f"[white]PROMPT MANAGEMENT[/white]\n")
+        self._output(f"[37mPROMPT MANAGEMENT[0m\n")
         
-        self._output(f" [bold {command_color}]/prompt.set[/bold {command_color}]   [white]Save a prompt to a numbered slot (0-9)[/white]")
-        self._output(f" [bold {command_color}]/prompt.use[/bold {command_color}]   [white]Apply a saved prompt from a slot[/white]")
-        self._output(f" [bold {command_color}]/prompt.list[/bold {command_color}]  [white]Display saved prompts by slot number[/white]")
+        self._output(f" \033[1m\033[90m/prompt.set\033[0m   [37mSave a prompt to a numbered slot (0-9)[0m")
+        self._output(f" \033[1m\033[90m/prompt.use\033[0m   [37mApply a saved prompt from a slot[0m")
+        self._output(f" \033[1m\033[90m/prompt.list\033[0m  [37mDisplay saved prompts by slot number[0m")
         self._output("")
         
-        self._output(f"[white]MORE HELP[/white]\n")
+        self._output(f"[37mMORE HELP[0m\n")
         
-        self._output(f" [bold {command_color}]/prompt.help[/bold {command_color}]  [white]shows this help screen[/white]")
+        self._output(f" \033[1m\033[90m/prompt.help\033[0m  [37mshows this help screen[0m")
         self._output("")
         
-        self._output(f"[grey50]Use /sys.help <command> for detailed help on specific commands[/grey50]")
-        self._output(f"[grey50]Example: /sys.help prompt.set[/grey50]")
+        self._output(f"[90mUse /sys.help <command> for detailed help on specific commands[0m")
+        self._output(f"[90mExample: /sys.help prompt.set[0m")
     
     def display_shell_output(self, output: str):
         """Display shell command output in a system-style message."""
-        self._output(f"[bold magenta][SHELL][/bold magenta] {output}")
+        self._output(f"\033[1m\033[35m[SHELL]\033[0m {output}")
     
     def show_available_models(self) -> str:
         """Display available models with dual output format."""
@@ -907,14 +921,14 @@ class UIManager:
         
         if not models:
             # Rich output
-            self._output("\n[bold red]No models installed.[/bold red]")
-            self._output("[grey50]Install a model with: 'ollama pull model-name'[/grey50]")
+            self._output("\n[1;31mNo models installed.[0m")
+            self._output("[90mInstall a model with: 'ollama pull model-name'[0m")
             
             # Plain text output
             return "No models available. Install models with: ollama pull model-name"
         
         # Rich output
-        self._output("\n[bold]Available Ollama Models:[/bold]\n")
+        self._output("\n[1mAvailable Ollama Models:[0m\n")
         
         plain_text_lines = ["Available Models:"]
         
@@ -922,15 +936,15 @@ class UIManager:
             # Get context window info for display
             context_info = self.app.model.get_context_window_info(model)
             if context_info:
-                context_display = f"[cyan]{context_info.actual_context//1000}k[/cyan] ctx"
+                context_display = f"[36m{context_info.actual_context//1000}k[0m ctx"
                 self._output(f"{i:2}. {model} [{context_display}]")
                 plain_text_lines.append(f"{i}. {model} ({context_info.actual_context//1000}k ctx)")
             else:
                 self._output(f"{i:2}. {model}")
                 plain_text_lines.append(f"{i}. {model}")
         
-        self._output(f"\n[grey50]Usage:[/grey50] [bold]/model.switch NUMBER[/bold] or [bold]/model.switch MODEL_NAME[/bold]")
-        self._output(f"[grey50]Example:[/grey50] [bold]/model.switch 1[/bold] or [bold]/model.switch llama3[/bold]")
+        self._output(f"\n[90mUsage:[0m [1m/model.switch NUMBER[0m or [1m/model.switch MODEL_NAME[0m")
+        self._output(f"[90mExample:[0m [1m/model.switch 1[0m or [1m/model.switch llama3[0m")
         
         plain_text_lines.append("")
         plain_text_lines.append("Usage: /model.switch NUMBER or /model.switch MODEL_NAME")

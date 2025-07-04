@@ -30,7 +30,7 @@ def cmd_context_save(handler, name) -> CommandResult:
     save_path = CONTEXT_DIR / f"{safe_name}.json"
     
     if save_path.exists():
-        ContextFormatter._output(f"\n[yellow]Context '{safe_name}' already exists[/yellow]")
+        ContextFormatter._output(f"\n[33mContext '{safe_name}' already exists[0m")
         if not ContextFormatter.confirm_action("Overwrite?", default="n", app=handler.app):
             ContextFormatter.format_operation_cancelled()
             return CommandResult(ActionType.CONTINUE)

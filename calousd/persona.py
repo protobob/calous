@@ -42,7 +42,7 @@ class PersonaManager:
     def save_persona(self, name: str, slots: Dict[int, str]) -> bool:
         """Save persona to file."""
         if not name.strip():
-            self._output("[bold red]Error:[/bold red] Persona name cannot be empty.")
+            self._output("[1;31mError:[0m Persona name cannot be empty.")
             return False
         
         sanitized_name = self.sanitize_filename(name)
@@ -50,7 +50,7 @@ class PersonaManager:
         
         # Check for overwrite protection - skip confirmation in daemon mode
         if filepath.exists():
-            self._output(f"[bold yellow]Warning:[/bold yellow] Persona '{name}' already exists. Overwriting...")
+            self._output(f"[1;33mWarning:[0m Persona '{name}' already exists. Overwriting...")
         
         persona_data = {
             "name": name,
@@ -60,10 +60,10 @@ class PersonaManager:
         try:
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(persona_data, f, indent=2, ensure_ascii=False)
-            self._output(f"[bold green]Success:[/bold green] Persona '{name}' saved!")
+            self._output(f"[1;32mSuccess:[0m Persona '{name}' saved!")
             return True
         except Exception as e:
-            self._output(f"[bold red]Error:[/bold red] Failed to save persona: {e}")
+            self._output(f"[1;31mError:[0m Failed to save persona: {e}")
             return False
     
     def load_persona(self, name: str) -> Optional[Dict]:
@@ -72,14 +72,14 @@ class PersonaManager:
         filepath = self.persona_dir / f"{sanitized_name}.json"
         
         if not filepath.exists():
-            self._output(f"[bold red]Error:[/bold red] Persona '{name}' not found.")
+            self._output(f"[1;31mError:[0m Persona '{name}' not found.")
             return None
         
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
-            self._output(f"[bold red]Error:[/bold red] Failed to load persona: {e}")
+            self._output(f"[1;31mError:[0m Failed to load persona: {e}")
             return None
     
     def list_personas(self) -> List[str]:
@@ -105,15 +105,15 @@ class PersonaManager:
         filepath = self.persona_dir / f"{sanitized_name}.json"
         
         if not filepath.exists():
-            self._output(f"[bold red]Error:[/bold red] Persona '{name}' not found.")
+            self._output(f"[1;31mError:[0m Persona '{name}' not found.")
             return False
         
         try:
             filepath.unlink()
-            self._output(f"[bold green]Success:[/bold green] Persona '{name}' deleted!")
+            self._output(f"[1;32mSuccess:[0m Persona '{name}' deleted!")
             return True
         except Exception as e:
-            self._output(f"[bold red]Error:[/bold red] Failed to delete persona: {e}")
+            self._output(f"[1;31mError:[0m Failed to delete persona: {e}")
             return False
 
 
