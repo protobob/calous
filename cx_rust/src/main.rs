@@ -60,16 +60,7 @@ struct CxCommand {
     response: Option<String>,
 }
 
-#[derive(Deserialize)]
-struct CxResponse {
-    response: Option<String>,
-    result: Option<String>,
-    error: Option<String>,
-    r#type: Option<String>,
-    message: Option<String>,
-    default: Option<String>,
-    confirmation_id: Option<String>,
-}
+// CxResponse struct removed - using delimiter protocol instead of JSON
 
 fn get_config_path() -> PathBuf {
     let home = env::var("HOME").unwrap_or_else(|_| ".".to_string());
@@ -254,26 +245,12 @@ fn create_command(data: String, message_type: &str, chat: Option<u8>) -> CxComma
 }
 
 fn handle_server_response(response: &str, _debug: bool, no_color: bool) -> Result<(), String> {
-    let result: CxResponse = serde_json::from_str(response).unwrap_or(CxResponse {
-        response: None,
-        result: None,
-        error: Some("Invalid response".to_string()),
-        r#type: None,
-        message: None,
-        default: None,
-        confirmation_id: None,
-    });
-
-    if let Some(err) = result.error {
-        let output = if no_color { strip_ansi_codes(&err) } else { err };
-        eprintln!("Error: {}", output);
-    } else if let Some(res) = result.response {
-        let output = if no_color { strip_ansi_codes(&res) } else { res };
-        println!("{}", output);
-    } else if let Some(res) = result.result {
-        println!("{}", res);
-    } else {
+    // With delimiter protocol, response is just plain text
+    if response.is_empty() {
         println!("[No output]");
+    } else {
+        let output = if no_color { strip_ansi_codes(response) } else { response.to_string() };
+        println!("{}", output);
     }
     
     Ok(())
@@ -463,11 +440,8 @@ fn main() {
 
     let message_type = if prompt.starts_with("/") { "cmd" } else { "prompt" };
 
-    let data = if message_type == "cmd" {
-        serde_json::json!({"action": prompt}).to_string()
-    } else {
-        prompt
-    };
+    // With delimiter protocol, send raw command/prompt text
+    let data = prompt;
 
     let mut config_with_no_color = config.clone();
     config_with_no_color.no_color = no_color;
@@ -490,18 +464,20 @@ fn send_command(cmd: &CxCommand, debug: bool, _config: &CxConfig) -> Result<Stri
     let mut stream = UnixStream::connect(socket_path)
         .map_err(|e| format!("Failed to connect to socket: {}", e))?;
     
-    let request = serde_json::to_string(cmd)
-        .map_err(|e| format!("Failed to serialize request: {}", e))?;
+    // Create delimiter-based request instead of JSON
+    let request_type = if cmd.r#type == "cmd" { "CMD" } else { "PROMPT" };
+    let escaped_data = cmd.data.replace('\0', "\0\0"); // Escape null bytes
+    let request = format!("{}\0{}\0END\0", request_type, escaped_data);
     
     if debug {
-        eprintln!("[Debug] Sending request: {}", request);
-        eprintln!("[Debug] Request size: {} bytes", request.len());
+        eprintln!("[Debug] Sending request: {} (length: {} bytes)", 
+                  request.replace('\0', "\\0"), request.len());
     }
     
     stream.write_all(request.as_bytes())
         .map_err(|e| format!("Failed to write to socket: {}", e))?;
 
-    // Read response in chunks to handle potential confirmation flow
+    // Read response using delimiter protocol
     let mut response = String::new();
     let mut buffer = [0; 4096];
     
@@ -512,79 +488,94 @@ fn send_command(cmd: &CxCommand, debug: bool, _config: &CxConfig) -> Result<Stri
                 let chunk = String::from_utf8_lossy(&buffer[..n]);
                 response.push_str(&chunk);
                 
-                // Try to parse what we have so far - only if it looks like complete JSON
-                if response.trim().ends_with('}') {
-                    if let Ok(parsed) = serde_json::from_str::<CxResponse>(&response) {
-                        if let Some(msg_type) = &parsed.r#type {
-                        if msg_type == "confirmation_request" {
-                            if let (Some(message), Some(confirmation_id), Some(default)) = 
-                                (&parsed.message, &parsed.confirmation_id, &parsed.default) {
-                                
-                                if debug {
-                                    eprintln!("[Debug] Received confirmation request: {}", response);
-                                }
-                                
-                                // Prompt user for confirmation
-                                print!("{} [{}]: ", message, default);
-                                io::stdout().flush().unwrap();
-                                
-                                let mut user_input = String::new();
-                                io::stdin().read_line(&mut user_input).unwrap();
-                                let user_input = user_input.trim();
-                                
-                                // Use default if empty, otherwise use user input
-                                let response_value = if user_input.is_empty() {
-                                    default.clone()
-                                } else {
-                                    user_input.to_string()
-                                };
-                                
-                                // Send confirmation response back on the SAME socket connection
-                                let confirmation_cmd = CxCommand {
-                                    r#type: "confirmation_response".to_string(),
-                                    data: "".to_string(),
-                                    chat: None,
-                                    supports_confirmations: None,
-                                    confirmation_id: Some(confirmation_id.clone()),
-                                    response: Some(response_value),
-                                };
-                                
-                                let confirmation_request = serde_json::to_string(&confirmation_cmd)
-                                    .map_err(|e| format!("Failed to serialize confirmation: {}", e))?;
-                                
-                                if debug {
-                                    eprintln!("[Debug] Sending confirmation: {}", confirmation_request);
-                                }
-                                
-                                // Write confirmation response to the same stream
-                                stream.write_all(confirmation_request.as_bytes())
-                                    .map_err(|e| format!("Failed to write confirmation: {}", e))?;
-                                
-                                // Clear response buffer and continue reading final response
-                                response.clear();
-                                continue;
+                // Print content immediately for streaming (simple approach)
+                if !chunk.contains('\0') {
+                    // No delimiters, just print the content immediately
+                    print!("{}", chunk);
+                    io::stdout().flush().unwrap();
+                    continue; // Keep reading more
+                }
+                
+                // Check for end delimiter
+                if response.contains("\0END\0") {
+                    // We have a complete response
+                    if response.starts_with("\0ERROR\0") {
+                        // Error response: \0ERROR\0{message}\0END\0
+                        let error_start = 7; // Length of "\0ERROR\0"
+                        if let Some(end_pos) = response.find("\0END\0") {
+                            let error_msg = &response[error_start..end_pos];
+                            let unescaped_msg = error_msg.replace("\0\0", "\0");
+                            return Err(format!("Error: {}", unescaped_msg));
+                        }
+                    } else if response.starts_with("\0CONFIRM\0") {
+                        // Confirmation request: \0CONFIRM\0{message}\0{default}\0{id}\0END\0
+                        let parts: Vec<&str> = response.split('\0').collect();
+                        if parts.len() >= 6 && parts[1] == "CONFIRM" && parts[5] == "END" {
+                            let message = parts[2].replace("\0\0", "\0");
+                            let default = parts[3].replace("\0\0", "\0");
+                            let confirmation_id = parts[4];
+                            
+                            if debug {
+                                eprintln!("[Debug] Received confirmation request: {}", message);
                             }
-                        } else {
-                            // Got a complete non-confirmation response
-                            break;
+                            
+                            // Prompt user for confirmation
+                            print!("{} [{}]: ", message, default);
+                            io::stdout().flush().unwrap();
+                            
+                            let mut user_input = String::new();
+                            io::stdin().read_line(&mut user_input).unwrap();
+                            let user_input = user_input.trim();
+                            
+                            // Use default if empty, otherwise use user input
+                            let response_value = if user_input.is_empty() {
+                                default
+                            } else {
+                                user_input.to_string()
+                            };
+                            
+                            // Send confirmation response back on the same socket
+                            let confirmation_response = format!(
+                                "\0CONFIRM_RESPONSE\0{}\0{}\0END\0", 
+                                confirmation_id, response_value
+                            );
+                            
+                            if debug {
+                                eprintln!("[Debug] Sending confirmation: {}", 
+                                         confirmation_response.replace('\0', "\\0"));
+                            }
+                            
+                            stream.write_all(confirmation_response.as_bytes())
+                                .map_err(|e| format!("Failed to write confirmation: {}", e))?;
+                            
+                            // Clear response buffer and continue reading final response
+                            response.clear();
+                            continue;
                         }
                     } else {
-                        // Got a complete response without type
-                        break;
+                        // Normal response: {content}\0END\0
+                        if let Some(end_pos) = response.find("\0END\0") {
+                            let content = &response[..end_pos];
+                            let unescaped_content = content.replace("\0\0", "\0");
+                            return Ok(unescaped_content);
+                        }
                     }
-                    }
+                    break;
                 }
-                // Continue reading if we don't have a complete JSON yet
             }
             Err(e) => return Err(format!("Failed to read from socket: {}", e)),
         }
     }
     
-    if debug {
-        eprintln!("[Debug] Final response: {}", response);
+    // If we get here, we didn't receive a complete response
+    if response.is_empty() {
+        Err("No response from server".to_string())
+    } else {
+        if debug {
+            eprintln!("[Debug] Incomplete response: {}", response.replace('\0', "\\0"));
+        }
+        Err("Incomplete response from server".to_string())
     }
-
-    Ok(response)
 }
 
 fn interactive_mode(debug: bool, config: &CxConfig) {
@@ -698,11 +689,8 @@ fn interactive_mode_basic(debug: bool, config: &CxConfig) {
 fn send_to_server(input: &str, debug: bool, config: &CxConfig) {
     let message_type = if input.starts_with("/") { "cmd" } else { "prompt" };
 
-    let data = if message_type == "cmd" {
-        serde_json::json!({"action": input}).to_string()
-    } else {
-        input.to_string()
-    };
+    // With delimiter protocol, send raw command/prompt text
+    let data = input.to_string();
 
     let cmd = create_command(data, &message_type, None);
 

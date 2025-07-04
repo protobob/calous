@@ -307,21 +307,32 @@ class ChatSessionManager:
         # Always send ANSI codes directly - client handles color stripping if needed
         clean_message = message
         
-        # If we're in command processing mode, buffer the output UNLESS it's a confirmation request
+        # If we're in command processing mode, buffer output EXCEPT confirmations and when model is streaming
+        # Always allow confirmations and model streaming to pass through immediately
         if (hasattr(self, '_command_output_buffer') and 
-            message_type not in ["confirmation_request"]):
+            message_type not in ["confirmation_request", "end_response"] and
+            not getattr(self, '_model_streaming_active', False)):
             self._command_output_buffer.append(clean_message)
             return
         
         # Otherwise send immediately (for prompts and confirmation requests)
-        # Create response structure
-        if message_type == "error":
-            response = {"error": clean_message.strip()}
-        else:
-            response = {"response": clean_message.strip()}
-        
+        # Send raw content with delimiter protocol
         try:
-            target_conn.sendall(json.dumps(response).encode())
+            # Escape any \x00 bytes in the message to prevent delimiter collision
+            escaped_message = clean_message.replace('\x00', '\x00\x00')
+            
+            if message_type == "error":
+                # Send error with special delimiter
+                target_conn.sendall(b'\x00ERROR\x00')
+                target_conn.sendall(escaped_message.encode())
+                target_conn.sendall(b'\x00END\x00')
+            elif message_type == "end_response":
+                # Send end-of-response delimiter for streaming
+                target_conn.sendall(b'\x00END\x00')
+            else:
+                # Send normal response content (no delimiter for streaming chunks)
+                unified_logger.debug_socket(f"Sending chunk: {repr(escaped_message[:50])}")
+                target_conn.sendall(escaped_message.encode())
         except BrokenPipeError:
             # Client disconnected
             self.current_connection = None
@@ -343,17 +354,15 @@ class ChatSessionManager:
             "timestamp": time.time()
         }
         
-        # Send confirmation request DIRECTLY to client (bypass output buffering)
-        confirmation_request = {
-            "type": MessageTypes.CONFIRMATION_REQUEST,
-            "message": message,
-            "default": default,
-            "confirmation_id": confirmation_id
-        }
-        
+        # Send confirmation request DIRECTLY to client using delimiter protocol
         try:
-            # Send directly to socket, bypassing send_to_client buffering
-            self.current_connection.sendall(json.dumps(confirmation_request).encode())
+            # Escape any \x00 bytes in the message
+            escaped_message = message.replace('\x00', '\x00\x00')
+            escaped_default = default.replace('\x00', '\x00\x00')
+            
+            # Send confirmation with special delimiter format: \x00CONFIRM\x00{message}\x00{default}\x00{id}\x00END\x00
+            confirmation_message = f'\x00CONFIRM\x00{escaped_message}\x00{escaped_default}\x00{confirmation_id}\x00END\x00'
+            self.current_connection.sendall(confirmation_message.encode())
             
             # Wait for response (with timeout)
             return self._wait_for_confirmation_response(confirmation_id, timeout=30.0)
@@ -369,59 +378,18 @@ class ChatSessionManager:
         start_time = time.time()
         
         while time.time() - start_time < timeout:
-            try:
-                # Set socket to non-blocking for timeout support
-                if self.current_connection:
-                    self.current_connection.settimeout(1.0)
-                else:
-                    break
-                
-                # Read response data
-                data = b""
-                while True:
-                    try:
-                        if self.current_connection:
-                            chunk = self.current_connection.recv(1024)
-                        else:
-                            break
-                        if not chunk:
-                            break
-                        data += chunk
-                        
-                        # Try to parse complete JSON message
-                        try:
-                            decoded_data = data.decode('utf-8')
-                            response = json.loads(decoded_data)
-                            break
-                        except (json.JSONDecodeError, UnicodeDecodeError):
-                            continue
-                            
-                    except socket.timeout:
-                        continue
-                    except Exception:
-                        break
-                
-                if data:
-                    try:
-                        decoded_data = data.decode('utf-8')
-                        response = json.loads(decoded_data)
-                        
-                        # Check if this is our confirmation response
-                        if (response.get("type") == "confirmation_response" and 
-                            response.get("confirmation_id") == confirmation_id):
-                            
-                            self.pending_confirmation = None
-                            return response.get("response", "n").lower() == "y"
-                            
-                    except Exception:
-                        continue
-                        
-            except socket.timeout:
-                continue
-            except Exception:
-                break
+            # Check if the main socket handler has received and stored our response
+            if (hasattr(self, 'pending_confirmation') and 
+                self.pending_confirmation and 
+                'response' in self.pending_confirmation):
+                response_value = self.pending_confirmation['response']
+                self.pending_confirmation = None
+                return response_value.lower() == "y"
+            
+            # Sleep briefly to avoid busy waiting
+            time.sleep(0.1)
         
-        # Timeout or error - fall back to default
+        # Timeout - fall back to default
         self.pending_confirmation = None
         return False  # Default to "no" on timeout
                 
@@ -475,7 +443,7 @@ class ChatSessionManager:
             self.current_connection = conn
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             
-            # Read all data from the connection
+            # Read all data from the connection until we find the end delimiter
             data = b""
             while True:
                 chunk = conn.recv(8192)
@@ -483,18 +451,13 @@ class ChatSessionManager:
                     break
                 data += chunk
                 
-                # Try to decode and parse JSON to see if we have a complete message
-                try:
-                    decoded_data = data.decode('utf-8')
-                    json.loads(decoded_data)
-                    # If we get here, we have valid complete JSON
+                # Check if we have a complete message ending with \x00END\x00
+                if b'\x00END\x00' in data:
                     break
-                except (json.JSONDecodeError, UnicodeDecodeError):
-                    # If the connection is closed and we have partial data, break
-                    if len(chunk) == 0:
-                        break
-                    # Otherwise continue reading
-                    continue
+                    
+                # If the connection is closed and we have partial data, break
+                if len(chunk) == 0:
+                    break
             
             if not data:
                 conn.close()
@@ -507,16 +470,57 @@ class ChatSessionManager:
                     unified_logger.debug_socket(f"Raw data received: {decoded_data[:200]}{'...' if len(decoded_data) > 200 else ''} at {timestamp}")
                     unified_logger.debug_socket(f"Total data size: {len(data)} bytes")
                 
-                req = json.loads(decoded_data)
-                msg_type = req.get("type")
-                content = req.get("data", "")
-                target_chat = req.get("chat")  # Optional chat channel targeting
+                # Parse delimiter-based message format
+                # Expected formats:
+                # PROMPT\x00{content}\x00END\x00
+                # CMD\x00{content}\x00END\x00  
+                # CONFIRM_RESPONSE\x00{id}\x00{response}\x00END\x00
                 
-                # Note: Format field removed - always send ANSI codes
+                # Remove the trailing \x00END\x00  
+                if decoded_data.endswith('\x00END\x00'):
+                    message_content = decoded_data[:-5]  # Remove \0END\0 (5 bytes)
+                else:
+                    message_content = decoded_data
                 
-                # Check if client supports confirmations
-                if req.get("supports_confirmations", False):
-                    self.supports_confirmations = True
+                # Split by \x00 and unescape
+                parts = message_content.split('\x00')
+                if len(parts) < 2:
+                    raise ValueError("Invalid message format")
+                
+                # Check for confirmation response first (starts with empty + CONFIRM_RESPONSE)
+                if len(parts) >= 4 and parts[0] == "" and parts[1] == "CONFIRM_RESPONSE":
+                    # Handle confirmation response - store it for _wait_for_confirmation_response
+                    # Format: \0CONFIRM_RESPONSE\0{id}\0{response}\0END\0
+                    confirmation_id = parts[2]  # parts[1] is "CONFIRM_RESPONSE", parts[2] is id
+                    confirmation_response = parts[3]  # parts[3] is the actual response
+                    
+                    if debug:
+                        unified_logger.debug_socket(f"Received confirmation response: id={confirmation_id}, response={confirmation_response}")
+                    
+                    # Store the response for the waiting method to pick up
+                    if hasattr(self, 'pending_confirmation') and self.pending_confirmation:
+                        if self.pending_confirmation.get('id') == confirmation_id:
+                            self.pending_confirmation['response'] = confirmation_response
+                            if debug:
+                                unified_logger.debug_socket(f"Stored confirmation response for waiting method")
+                    continue
+                
+                # Regular message parsing
+                msg_type = parts[0]
+                content = parts[1].replace('\x00\x00', '\x00')  # Unescape null bytes
+                target_chat = None  # For now, no chat targeting in delimiter protocol
+                
+                if msg_type == "PROMPT":
+                    msg_type = "prompt"  # Convert to old format for compatibility
+                elif msg_type == "CMD":
+                    msg_type = "cmd"     # Convert to old format for compatibility
+                else:
+                    # Default to prompt for backwards compatibility
+                    msg_type = "prompt"
+                    content = message_content.replace('\x00\x00', '\x00')
+                
+                # Always assume client supports confirmations in new protocol
+                self.supports_confirmations = True
                 
                 if debug:
                     unified_logger.debug_socket(f"Parsed request: type={msg_type}, data length={len(content)} chars, target_chat={target_chat} at {timestamp}")
@@ -552,7 +556,15 @@ class ChatSessionManager:
                     active_chat.chat_history.add_message("user", content)
                     if debug:
                         unified_logger.debug("About to call talk_to_model", stream='model', chat_channel=active_chat.instance_index)
-                    model_response = active_chat.model.talk_to_model(content, stream=False)
+                    
+                    # Set flag to prevent buffering of model streaming responses
+                    self._model_streaming_active = True
+                    try:
+                        model_response = active_chat.model.talk_to_model(content, stream=True)
+                    finally:
+                        # Always clear the flag when done
+                        self._model_streaming_active = False
+                        
                     if debug:
                         unified_logger.debug(f"Model response received: {model_response}", stream='model', chat_channel=active_chat.instance_index)
                     # Send JSON response with the content for compatibility
@@ -563,7 +575,8 @@ class ChatSessionManager:
                     
                 elif msg_type == "cmd":
                     try:
-                        action = json.loads(content).get("action")
+                        # In delimiter protocol, content is the raw command
+                        action = content.strip()
                         if action:
                             
                             try:
@@ -598,19 +611,24 @@ class ChatSessionManager:
                                         unified_logger.error(f"Error in process_command_result: {e}", component='session_management')
                                     raise
                                 
-                                # Send buffered output as single JSON response
+                                # Send buffered output using delimiter protocol
                                 if self._command_output_buffer:
                                     combined_output = "\n".join(self._command_output_buffer)
-                                    response = {"response": combined_output}
+                                    # Ensure output ends with newline for proper terminal formatting
+                                    if combined_output and not combined_output.endswith('\n'):
+                                        combined_output += '\n'
                                     if debug:
                                         unified_logger.debug_socket(f"Sending buffered output: {len(self._command_output_buffer)} lines")
-                                else:
-                                    response = {"response": "Command completed"}
-                                    if debug:
-                                        unified_logger.debug_socket("No buffered output, sending completion message")
                                     
-                                # Send the buffered response immediately instead of letting the main handler do it
-                                conn.sendall(json.dumps(response).encode())
+                                    # Escape any \x00 bytes and send with delimiter
+                                    escaped_output = combined_output.replace('\x00', '\x00\x00')
+                                    conn.sendall(escaped_output.encode())
+                                    conn.sendall(b'\x00END\x00')
+                                else:
+                                    # No output to send, just send the end delimiter
+                                    if debug:
+                                        unified_logger.debug_socket("No buffered output, sending end delimiter only")
+                                    conn.sendall(b'\x00END\x00')
                                 response = None  # Prevent the main handler from sending another response
                                 
                                 # Clean up buffer
@@ -622,13 +640,37 @@ class ChatSessionManager:
                                 # Make sure to clean up buffer even on error
                                 if hasattr(self, '_command_output_buffer'):
                                     delattr(self, '_command_output_buffer')
-                                response = {"error": f"Command processing failed: {str(e)}"}
+                                # Send error with delimiter protocol  
+                                error_msg = f"Command processing failed: {str(e)}"
+                                escaped_error = error_msg.replace('\x00', '\x00\x00')
+                                conn.sendall(b'\x00ERROR\x00')
+                                conn.sendall(escaped_error.encode())
+                                conn.sendall(b'\x00END\x00')
+                                response = None
                         else:
-                            response = {"error": "Missing action in command."}
-                    except json.JSONDecodeError:
-                        response = {"error": "Invalid JSON in 'data' field for command."}
+                            # Send error with delimiter protocol
+                            error_msg = "Missing action in command."
+                            escaped_error = error_msg.replace('\x00', '\x00\x00')
+                            conn.sendall(b'\x00ERROR\x00')
+                            conn.sendall(escaped_error.encode()) 
+                            conn.sendall(b'\x00END\x00')
+                            response = None
+                    except ValueError as e:
+                        # Send error with delimiter protocol
+                        error_msg = f"Invalid command format: {str(e)}"
+                        escaped_error = error_msg.replace('\x00', '\x00\x00')
+                        conn.sendall(b'\x00ERROR\x00')
+                        conn.sendall(escaped_error.encode())
+                        conn.sendall(b'\x00END\x00')
+                        response = None
                 else:
-                    response = {"error": "Unknown message type."}
+                    # Send error with delimiter protocol
+                    error_msg = "Unknown message type."
+                    escaped_error = error_msg.replace('\x00', '\x00\x00')
+                    conn.sendall(b'\x00ERROR\x00')
+                    conn.sendall(escaped_error.encode())
+                    conn.sendall(b'\x00END\x00')
+                    response = None
                         
                 # Restore original active chat if we switched for targeting
                 if target_chat is not None and original_active_chat != self.active_chat_index:
@@ -636,35 +678,30 @@ class ChatSessionManager:
                     if debug:
                         unified_logger.debug_socket(f"Restored active chat to {original_active_chat + 1}")
                     
-            except json.JSONDecodeError as e:
-                if debug:
-                    try:
-                        decoded_data = data.decode('utf-8', errors='replace')
-                        unified_logger.error(f"JSON decode error: {e}", component='socket_parsing')
-                        unified_logger.debug_socket(f"Problematic data: {decoded_data[:500]}...")
-                    except (UnicodeDecodeError, AttributeError):
-                        unified_logger.error(f"JSON decode error: {e}", component='socket_parsing')
-                        unified_logger.debug_socket(f"Raw bytes: {data[:100]}...")
-                response = {"error": f"Invalid JSON in request: {str(e)}"}
             except UnicodeDecodeError as e:
                 if debug:
                     unified_logger.error(f"Unicode decode error: {e}", component='socket_parsing')
                     unified_logger.debug_socket(f"Raw bytes: {data[:100]}...")
-                response = {"error": f"Invalid UTF-8 in request: {str(e)}"}
+                # Send error with delimiter protocol
+                try:
+                    error_msg = f"Invalid UTF-8 in request: {str(e)}"
+                    escaped_error = error_msg.replace('\x00', '\x00\x00')
+                    conn.sendall(b'\x00ERROR\x00')
+                    conn.sendall(escaped_error.encode())
+                    conn.sendall(b'\x00END\x00')
+                except:
+                    pass
             except Exception as e:
                 if debug:
                     unified_logger.error(f"Unexpected error: {e}", component='socket_handler')
-                response = {"error": f"Server error: {str(e)}"}
-                
-            # Send response back to client (for errors and acknowledgments)
-            if response is not None:
+                # Send error with delimiter protocol
                 try:
-                    conn.sendall(json.dumps(response).encode())
-                except BrokenPipeError:
-                    # Client closed connection before response was sent
-                    pass
-                except Exception:
-                    # Log error but don't crash
+                    error_msg = f"Server error: {str(e)}"
+                    escaped_error = error_msg.replace('\x00', '\x00\x00')
+                    conn.sendall(b'\x00ERROR\x00')
+                    conn.sendall(escaped_error.encode())
+                    conn.sendall(b'\x00END\x00')
+                except:
                     pass
             
             # Clean up connection

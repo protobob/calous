@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Changelog
 
+## [1.8.0.dev] - 2025-07-04
+
+### Added
+- **Real-Time Streaming Protocol**: Complete overhaul of client-server communication for true streaming responses
+  - **Delimiter-Based Protocol**: Replaced JSON with `\x00END\x00` delimited messages to enable real-time streaming
+  - **Immediate Response Display**: Model responses now stream character-by-character in real-time instead of buffering
+  - **Protocol Migration**: Seamless transition from JSON to delimiter protocol while maintaining all CALOUS functionality
+  - **Enhanced Confirmation System**: Interactive confirmations now work properly in socket mode with delimiter protocol
+  - **Command Output Buffering**: Commands properly buffer output while allowing model responses to stream immediately
+
+### Enhanced  
+- **Socket Communication Architecture**: Major improvements to client-server protocol reliability
+  - Streaming responses no longer blocked by JSON parsing constraints
+  - Separate handling for command output (buffered) vs model responses (streaming)
+  - Proper end-of-response signaling with `\x00END\x00` delimiter
+  - Improved error handling and protocol validation
+- **Client Performance**: Rust client now displays content immediately as received instead of waiting for complete responses
+- **Session Management**: Enhanced buffering logic to properly handle mixed command/model response scenarios
+
+### Fixed
+- **Confirmation Race Condition**: Resolved issue where confirmation responses were being ignored by main socket handler
+- **Command Output Duplication**: Fixed commands sending output twice due to improper buffering logic
+- **Protocol Synchronization**: Eliminated timing issues between delimiter parsing and response handling
+
 ## [1.7.5.dev] - 2025-07-04
 
 ### Fixed

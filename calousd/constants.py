@@ -91,11 +91,14 @@ MAX_PREVIEW_LENGTH = 100
 HEADER_SEPARATOR = ": SUMMARY"
 
 # Application metadata
-APP_VERSION = "1.7.5.dev"
+APP_VERSION = "1.8.0.dev"
 
 # Chat session defaults
 TWIST_PREVIEW_LENGTH = 100
 SWITCH_PREVIEW_LENGTH = 50
+
+# Model interaction defaults
+ENABLE_STREAMING = True  # Enable real-time streaming responses
 
 # Added SOCKET_PATH for centralized configuration
 SOCKET_PATH = "/tmp/calous.sock"
