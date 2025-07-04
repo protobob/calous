@@ -29,6 +29,22 @@ class ModelInteraction:
             self.app.session_manager.send_to_client(message, message_type)
         # In daemon mode, no fallback to print - output should only go through socket
     
+    def _buffer_output(self, message: str):
+        """Buffer output for streaming responses to avoid multiple JSON messages."""
+        if not hasattr(self, '_output_buffer'):
+            self._output_buffer = []
+        self._output_buffer.append(message)
+    
+    def _flush_output_buffer(self):
+        """Send all buffered output as a single response."""
+        if hasattr(self, '_output_buffer') and self._output_buffer:
+            complete_response = ''.join(self._output_buffer)
+            self._output_buffer = []
+            self._output(complete_response)
+        elif not hasattr(self, '_output_buffer'):
+            # No buffer exists, send empty response
+            self._output("")
+    
     def __init__(self, app):
         self.app = app    
         self._context_cache = {}  # Cache context window info to avoid repeated API calls
@@ -460,16 +476,17 @@ class ModelInteraction:
                         content = getattr(chunk.message, 'content', '')
                         if content:
                             full_response += content
-                            self._output(content, end='', flush=True)
+                            self._buffer_output(content)
                         if hasattr(chunk.message, 'tool_calls') and chunk.message.tool_calls:
                             tool_calls.extend(chunk.message.tool_calls)
                         if self.app.thinking_enabled and hasattr(chunk.message, 'thinking'):
                             thinking = getattr(chunk.message, 'thinking', '')
                             if thinking:
                                 thinking_content += thinking
-                                self._output(f"[2;36m{thinking}[0m", end='', flush=True)
+                                self._buffer_output(f"[2;36m{thinking}[0m")
                     response_dict = chunk
-                self._output("")  # newline after stream
+                self._buffer_output("\n")  # newline after stream
+                self._flush_output_buffer()  # Send complete response
             else:
                 # Non-streaming path
                 # Debug output already handled by _log_debug_info()
@@ -477,16 +494,17 @@ class ModelInteraction:
                     content = getattr(response.message, 'content', '')
                     if content:
                         full_response += content
-                        self._output(content, end='', flush=True)
+                        self._buffer_output(content)
                     if hasattr(response.message, 'tool_calls') and response.message.tool_calls:
                         tool_calls.extend(response.message.tool_calls)
                     if self.app.thinking_enabled and hasattr(response.message, 'thinking'):
                         thinking = getattr(response.message, 'thinking', '')
                         if thinking:
                             thinking_content += thinking
-                            self._output(f"[2;36m{thinking}[0m", end='', flush=True)
+                            self._buffer_output(f"[2;36m{thinking}[0m")
                     response_dict = response
-                self._output("")  # newline after response
+                self._buffer_output("\n")  # newline after response
+                self._flush_output_buffer()  # Send complete response
             # Handle function calls if present
             if tool_calls:
                 tool_results = self._handle_function_calls(tool_calls)

@@ -53,6 +53,12 @@ All commands generate ANSI-formatted output by default:
 - Confirmation requests bypass output buffering for immediate user interaction
 - Default behavior is safe (usually "n" for cancel) when confirmations fail
 
+### 7. Debug and Logging System
+- Use `unified_logger.debug_*()` methods for debug information (routes to log files only)
+- **NEVER** use `_output()` methods for debug information (would leak to socket clients)
+- Debug information must stay in log files, never reach client responses
+- Available debug methods: `debug_socket()`, `debug_command()`, `debug_model()`, etc.
+
 ## File Modification Boundaries
 
 ### Do NOT Modify
@@ -62,7 +68,7 @@ All commands generate ANSI-formatted output by default:
 - `session_manager.py` (socket communication and ANSI stripping)
 - Any file not explicitly shown or referenced in your current session
 
-**Note**: Commands `/chat.add`, `/chat.remove`, and `/sys.quit` have been removed from the system as of v1.4.2. CALOUS now operates with a fixed count of 14 chat channels and daemon services do not have quit functionality.
+CALOUS operates with a fixed count of 14 chat channels and daemon services do not have quit functionality.
 
 ### You May Extend
 - `commands/` (add new commands using the established pattern)
@@ -82,6 +88,7 @@ All commands generate ANSI-formatted output by default:
 - Respect architectural constraints
 - Generate ANSI-formatted output (socket conversion is automatic)
 - Use constants from `constants.py` for all paths
+- Use `unified_logger.debug_*()` methods for debug information (never client output)
 - Act as the implementing agent (not the human)
 
 ### ❌ Never Do
@@ -90,6 +97,7 @@ All commands generate ANSI-formatted output by default:
 - Move logic between files
 - Generate speculative improvements
 - Suggest changes that increase fragmentation
+- Send debug information to socket clients (use unified_logger debug methods instead)
 
 ## Final Rule
 This file overrides all default behavior. Any agent that violates these constraints will be considered malfunctioning and ignored.

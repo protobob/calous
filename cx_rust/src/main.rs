@@ -269,9 +269,9 @@ fn handle_server_response(response: &str, _debug: bool, no_color: bool) -> Resul
         eprintln!("Error: {}", output);
     } else if let Some(res) = result.response {
         let output = if no_color { strip_ansi_codes(&res) } else { res };
-        print!("{}", output);
+        println!("{}", output);
     } else if let Some(res) = result.result {
-        print!("{}", res);
+        println!("{}", res);
     } else {
         println!("[No output]");
     }
@@ -512,9 +512,10 @@ fn send_command(cmd: &CxCommand, debug: bool, _config: &CxConfig) -> Result<Stri
                 let chunk = String::from_utf8_lossy(&buffer[..n]);
                 response.push_str(&chunk);
                 
-                // Try to parse what we have so far
-                if let Ok(parsed) = serde_json::from_str::<CxResponse>(&response) {
-                    if let Some(msg_type) = &parsed.r#type {
+                // Try to parse what we have so far - only if it looks like complete JSON
+                if response.trim().ends_with('}') {
+                    if let Ok(parsed) = serde_json::from_str::<CxResponse>(&response) {
+                        if let Some(msg_type) = &parsed.r#type {
                         if msg_type == "confirmation_request" {
                             if let (Some(message), Some(confirmation_id), Some(default)) = 
                                 (&parsed.message, &parsed.confirmation_id, &parsed.default) {
@@ -570,6 +571,7 @@ fn send_command(cmd: &CxCommand, debug: bool, _config: &CxConfig) -> Result<Stri
                     } else {
                         // Got a complete response without type
                         break;
+                    }
                     }
                 }
                 // Continue reading if we don't have a complete JSON yet

@@ -1,392 +1,358 @@
-## Architecture Overview
+# CALOUS Architecture
 
+CALOUS (Context Abstraction Layer Over Unix Sockets) is a daemon-based multi-channel chat system for local LLM interaction.
 
+## System Overview
 
-### Daemon Mode Architecture
+CALOUS operates as a background daemon service that provides a socket-based API for interacting with locally hosted LLMs through Ollama. The system supports 14 independent chat channels, each maintaining isolated conversation contexts and personas.
+
+### Core Architecture
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                   DAEMON MODE FLOW                              │
-│  __main__.py → Chat.listen_for_socket() → Unix Socket           │
+│                         CALOUS DAEMON                           │
+│  Unix Socket Server (/tmp/calous.sock)                         │
 └─────────────────────────────────────────────────────────────────┘
                                     │
                 ┌───────────────────┼───────────────────┐
                 │                   │                   │
         ┌───────▼────────┐ ┌────────▼────────┐ ┌───────▼────────┐
-        │  Core Services │ │  Output Capture │ │ Command System │
+        │ Session Manager│ │  Core Services  │ │ Command System │
         │                │ │                 │ │                │
-        │ • ModelInter-  │ │ • Stdout Redir  │ │ • Handler      │
-        │   action       │ │ • ANSI Stripper │ │ • Registry     │
-        │ • ChatHistory  │ │ • Buffer Mgmt   │ │ • Services     │
-        │ • ConfigManager│ │ • Format Clean  │ │ • 56 Commands  │
-        │ • Persona      │ │ • JSON Response │ │  (9 categories)│
-        │ • UnifiedLogger│ │ • Error Capture │ │ • /twist pipe  │
-        │ • Utils        │ │ • Non-interact  │ │ • Auto-confirm │
+        │ • Multi-Chat   │ │ • ModelInter-   │ │ • Registry     │
+        │ • Socket Comm  │ │   action        │ │ • Handler      │
+        │ • ANSI Output  │ │ • ChatHistory   │ │ • Services     │
+        │ • Confirmation │ │ • ConfigManager │ │ • Formatters   │
+        │ • Client State │ │ • Persona       │ │ • 54 Commands  │
+        │                │ │ • UnifiedLogger │ │ • 9 Categories │
         └────────────────┘ └─────────────────┘ └────────────────┘
                 │                   │                   │
         ┌───────▼────────┐ ┌────────▼────────┐ ┌───────▼────────┐
-        │   Data Layer   │ │ Socket Interface│ │   Extensions   │
+        │   UI Manager   │ │   Data Layer    │ │  Plugin System │
         │                │ │                 │ │                │
-        │ • Chat configs │ │ • Unix Socket   │ │ • Plugin Mgr   │
-        │ • Global cfg   │ │ • JSON Protocol │ │ • User plugins │
-        │ • Log files    │ │ • Plain Text    │ │ • Built-ins    │
-        │ • Personas     │ │ • Error Msgs    │ │ • External APIs│
-        │ • File I/O     │ │ • No ANSI Tags │ │ • Client Apps  │
+        │ • ANSI Output  │ │ • Config Files  │ │ • Plugin Mgr   │
+        │ • Help System  │ │ • Chat History  │ │ • Base Classes │
+        │ • Formatting   │ │ • Log Files     │ │ • Built-ins    │
+        │ • Display      │ │ • Personas      │ │ • Function Call│
         └────────────────┘ └─────────────────┘ └────────────────┘
 ```
 
-## Component Responsibilities
+## Entry Points
 
+### Main Entry (`__main__.py`)
+- **Purpose**: Daemon startup and configuration
+- **Responsibilities**:
+  - Command-line argument parsing
+  - Debug flag configuration
+  - Fixed 14-chat initialization
+  - Session manager creation and socket listening
+- **Operation**: Always runs in daemon mode with Unix socket interface
 
-### Core Application (`app.py`)
-- **Chat Class**: Main application logic, handles socket-based user input routing
-- **Socket Server**: Implements Unix socket interface for external clients (cx-rust tool)
-- **Dual Output System**: Captures ANSI output, strips ANSI for socket clients
-- **Single Responsibility**: Coordinate between UI, Model, Commands, and History
-- **Size**: ~258 lines - includes socket handling and output capture
-- **Status**: ✅ Well-structured, do not refactor
+## Core Components
 
-### Socket Interface Architecture
-- **Unix Socket**: `/tmp/calous.sock` enables external client communication
-- **ANSI Output**: Daemon always sends ANSI-formatted output to clients
-- **Client-Side Color Control**: Clients use `--no-color` flag to strip ANSI codes locally
-- **Single Output Path**: Commands always generate ANSI formatting; client handles color preferences
-- **Protocol**: JSON-based message protocol for universal client compatibility
-- **External Integration**: Any application can connect and interact with CALOUS
+### Session Manager (`session_manager.py`)
+**Central coordination hub for multi-chat management and client communication.**
 
-### Output Formatting System
-- **ANSI by Default**: All commands and formatters generate ANSI-formatted output with colors and styling using direct escape sequences
-- **Client-Side Color Control**: Socket clients use `--no-color` flag to strip ANSI codes locally
-- **Consistent Server Output**: Daemon always sends ANSI codes; color preferences handled by client
-- **Single Codebase**: No dual formatter patterns needed - color control is entirely client-side
-- **Backward Compatible**: All output uses ANSI codes; clients control their display preferences
+**Key Responsibilities**:
+- **Multi-Chat Coordination**: Manages 14 independent chat instances
+- **Socket Communication**: Unix socket server for external clients
+- **ANSI Output Handling**: Strips ANSI codes for client compatibility
+- **Client State Management**: Tracks connection state and capabilities
+- **Interactive Confirmations**: Handles y/n confirmations over socket
+- **Active Chat Persistence**: Saves/restores active chat across restarts
 
+**Socket Protocol**:
+- **Endpoint**: `/tmp/calous.sock`
+- **Format**: JSON message protocol
+- **Message Types**: `prompt`, `cmd`, `confirmation_request`, `confirmation_response`
+- **Output**: Always sends ANSI-formatted content (client handles color stripping)
 
-### UI Management (`ui.py`)
-- **UIManager Class**: Centralized display logic and console management
-- **ANSI Output Focus**: Methods generate ANSI-formatted content with direct escape sequences
-- **Responsibilities**: User prompts, help menus, variable displays, context views
-- **Size**: ~950+ lines - comprehensive UI management
-- **Status**: ✅ Well-organized, represents good centralization
-- **Rule**: All new display logic should be added here, with ANSI formatting as primary output
+### Chat Application (`app.py`)
+**Individual chat instance representing one conversation channel.**
+
+**Core Features**:
+- **Isolated Context**: Each chat maintains independent conversation state
+- **Configuration Management**: Per-chat settings (persona, temperature, etc.)
+- **Component Integration**: Coordinates UI, Model, Commands, and History
+- **Output Routing**: Delegates output to session manager for socket delivery
+
+**Key Attributes**:
+- `instance_index`: Chat channel number (0-13)
+- `selected_model`: Current Ollama model
+- `persona`: Multi-slot persona system
+- `chat_history`: Conversation memory
+- `model`: Model interaction handler
+- `commands`: Command processing system
 
 ### Model Interaction (`model_interaction.py`)
-- **ModelInteraction Class**: All Ollama model communication
-- **Size**: 586 lines - large but logically cohesive
-- **Responsibilities**:
-  - Model metadata and context analysis (~150 lines)
-  - Core model communication (~200 lines)
-  - Function/tool calling (~80 lines)
-  - Response processing & error handling (~100 lines)
-  - Model selection UI (~50 lines)
-- **Status**: ✅ Large but cohesive - **DO NOT FRAGMENT**
-- **Rationale**: This file represents a complete, working model interaction system. Splitting it would create artificial boundaries and complicate the logic flow.
+**Handles all communication with Ollama models.**
 
+**Core Functions**:
+- **Model Communication**: Direct integration with Ollama API
+- **Context Analysis**: Dynamic context window detection and management
+- **Function Calling**: Tool/function calling support for compatible models
+- **Thinking Mode**: Support for models with thinking capabilities
+- **Error Handling**: Comprehensive error management with user feedback
+- **Streaming**: Real-time response streaming with ANSI formatting
 
-### Command System (`commands/`)
-- **Current Architecture**: Registry → Handler → Service → Formatter pattern
-- **Directory Structure**: Commands organized by category (chat/, file/, history/, etc.)
-- **Status**: ✅ Feature-complete and stable
-- **Commands**: 56 commands across 9 categories
-- **Formatter Distribution**: 
-  - Central base formatter (`commands/formatters.py`) with CommandFormatter base class
-  - Specialized formatters in each category directory (`chat/formatters.py`, `file/formatters.py`, etc.)
-- **Output Responsibility**: Formatters handle ANSI formatting, clients handle color preferences via flags
-- **Rule**: Focus on bug fixes and minor enhancements only
-- **NO MAJOR RESTRUCTURING**: The current system works and is familiar to users
+**Key Features**:
+- Context window validation and warnings
+- Model metadata caching
+- Debug logging with structured information
+- Proper dependency injection for output routing
 
-### Session Management (`session_manager.py`)
-- **ChatSessionManager**: Manages multiple chat instances, global state
-- **Responsibilities**: Chat switching, global config updates, startup/shutdown
-- **Status**: ✅ Well-designed for multi-chat coordination
+## Command System
 
-### External Rust Client (`cx_rust/`)
-- **Rust Client**: Lightweight command-line tool (`cx`) for external interaction
-- **Socket Communication**: Connects to CALOUS via Unix socket interface
-- **Features**: 
-  - Command mode (`-c`): Send commands directly
-  - Interactive mode (`-i`): REPL-like interface
-  - Stdin support: Pipe data from shell commands
-  - Debug output: Enhanced logging with `-d` flag
-  - Color control: `--no-color` flag strips ANSI codes client-side
-- **Status**: ✅ Fully functional, provides seamless external integration
-- **Architecture Role**: Reference implementation and primary external client
+### Command Architecture
+**Registry-based command system with decorators for registration.**
 
-### Socket API for External Integration
-- **Universal Interface**: Any application can connect to `/tmp/calous.sock`
-- **JSON Protocol**: Standardized message format for interoperability
-- **Consistent ANSI Output**: Daemon always sends ANSI-formatted responses
-- **Client-Side Color Control**: Clients handle color preferences locally (e.g., `--no-color` flag)
-- **Potential Clients**: 
-  - IDE extensions (VS Code, Neovim, Emacs)
-  - Browser extensions for web development
-  - Desktop applications and GUI frontends
-  - Shell scripts and automation tools
-  - Other programming language bindings
-- **Future Expansion**: Socket interface designed for broad ecosystem integration
+**Pattern**: `Registry → Handler → Service → Formatter`
 
+#### Command Registry (`commands/registry.py`)
+- **Decorator-based Registration**: `@registry.register()` for command definition
+- **Argument Parsing**: Integrated argparse for type-safe command arguments
+- **Alias Management**: System and user-defined command aliases
+- **Category Organization**: Commands grouped by functional area
 
-## Multi-Channel Architecture
+#### Command Handler (`commands/handler.py`)
+- **Request Processing**: Parses user input and routes to appropriate commands
+- **Argument Validation**: Type checking and argument parsing
+- **Execution Coordination**: Delegates to service layer for business logic
 
-### Channel Isolation
-- **Independent Context**: Each chat channel (1-14) maintains its own isolated conversation context
-- **No Shared Memory**: Channels do not run concurrently or share memory between sessions
-- **Context Updates**: Channel context is updated only on invocation, preserving isolation
-- **Persona Management**: Each channel can have its own distinct persona configuration
+#### Command Categories (9 total, 54 commands)
+```
+├── chat/         # Chat management (7 commands)
+├── model/        # Model operations (7 commands)  
+├── persona/      # Persona management (11 commands)
+├── history/      # History operations (9 commands)
+├── log/          # Logging operations (5 commands)
+├── prompt/       # Prompt management (4 commands)
+├── file/         # File operations (1 command)
+├── sys/          # System commands (2 commands)
+├── alias/        # Alias management (4 commands)
+└── plugin/       # Plugin system (4 commands)
+```
 
-### The /twist Command
-- **Purpose**: The only mechanism for piping output from one channel to another
-- **Cross-Channel Communication**: Enables controlled data flow between isolated chat instances  
-- **Architecture Role**: Serves as the single bridge in an otherwise completely isolated multi-channel system
-- **Implementation**: Captures output from source channel and feeds it as input to target channel
+#### Service Layer Pattern
+Each command category follows a consistent pattern:
+- **`commands.py`**: Command registration and argument handling
+- **`services.py`**: Business logic and data manipulation
+- **`formatters.py`**: ANSI-formatted output generation
 
-### Session Management
-- **ChatSessionManager**: Coordinates multiple chat instances and global state
-- **Channel Switching**: Allows seamless switching between chat sessions (via API or socket commands)
-- **State Preservation**: Each channel retains its own history, configuration, and persona
-- **Global Configuration**: Some settings (like logging) apply across all channels
+### Command Flow Example
+```python
+@registry.register("chat.switch", "Switch between chat sessions")
+def cmd_chat_switch(handler, chat_number: Optional[int] = None) -> CommandResult:
+    service = ChatService(handler.app)
+    result = service.validate_switch(chat_number)
+    
+    if not result.success:
+        ChatFormatter.format_switch_error(result.error_message)
+        return CommandResult(ActionType.CONTINUE)
+    
+    return CommandResult(ActionType.SWITCH, {"target_chat": result.target_index})
+```
 
-## File Size Guidelines
+## User Interface System
 
+### UI Manager (`ui.py`)
+**Centralized display logic and console management.**
 
-### Acceptable Large Files
-The following files are **intentionally large** and should not be fragmented:
+**Core Responsibilities**:
+- **Help System**: Hierarchical help menus (overview → category → command)
+- **Display Formatting**: ANSI-formatted output with consistent styling
+- **Status Display**: Chat headers, model information, configuration views
+- **Error Presentation**: User-friendly error messages and warnings
 
-1. **`model_interaction.py` (586 lines)**: Complete model interaction system
-2. **`ui.py` (950+ lines)**: Comprehensive UI management
-3. **`app.py` (~258 lines)**: Application coordination logic with socket handling
+**Output Philosophy**:
+- All UI components generate ANSI-formatted content
+- Socket clients receive ANSI codes directly
+- Color control handled client-side via `--no-color` flags
 
-### When to Consider Splitting
-Only split files if they meet **ALL** of these criteria:
-- File exceeds 800+ lines
-- Contains completely unrelated functionality
-- Has clear, natural separation boundaries
-- Splitting would improve, not complicate, the codebase
+## Data Management
 
-## Decision Framework
+### Configuration System (`config.py`)
+**Hierarchical configuration with global and per-chat settings.**
 
-### Before Making Changes
-Ask these questions:
+**Configuration Layers**:
+```
+Global Config (affects all chats)
+├── selected_model: Current Ollama model
+├── num_ctx: Context window size  
+├── temperature: Model creativity setting
+├── active_chat_index: Persisted active chat
+└── keep_alive: Model memory management
 
-1. **Is this fixing a bug or adding a feature?** ✅ Proceed
-2. **Is this "cleaning up" or "organizing" code?** ⚠️ Proceed with extreme caution
-3. **Will this make the code easier to understand?** Must be objectively yes
-4. **Will this require changes to multiple files?** ⚠️ High risk of regression
-5. **Is the current code actually broken?** If no, consider leaving it alone
+Per-Chat Config (chat-specific)
+├── persona: Multi-slot persona system
+├── prompts: Saved prompt slots (1-9)
+├── verbosity: Output level
+├── logging_enabled: Chat-specific logging
+└── thinking_enabled: Thinking mode preference
+```
 
-### Refactoring Red Flags
-**STOP** if someone suggests:
-- "Separating concerns" when concerns are already logically separated
-- Moving UI logic to command formatters (wrong direction)
-- Breaking up `model_interaction.py` (it's cohesive as-is)
-- Major command system restructuring
-- Abstract base classes without clear benefit
-- Service layers that just proxy to existing methods
+**Persistence**:
+- **Global**: `~/.calous/config.json`
+- **Per-Chat**: Individual configuration files
+- **Active Chat**: Persists across daemon restarts
 
-## Architectural Evolution Guidelines
+### Chat History (`chat_history.py`)
+**Conversation memory management with persistence.**
 
-### What Should Change
-- **Bug fixes**: Always welcome
-- **New features**: Add thoughtfully without breaking existing patterns
-- **Performance improvements**: Data shows actual performance issues
-- **UI enhancements**: Add to `UIManager`, not formatters
+**Features**:
+- Per-chat conversation storage
+- Message truncation and management
+- History export and import
+- Search and filtering capabilities
 
-### What Should Not Change
-- **Working core systems**: Model interaction, command handling, session management
-- **File organization**: Current structure is logical and familiar
-- **Established patterns**: Unless they're demonstrably broken
+### Persona System (`persona.py`)
+**Multi-slot persona management for AI personality customization.**
+
+**Structure**:
+- **10 Persona Slots** (0-9): Composable personality components
+- **Combined Prompts**: Automatic merging of active persona slots
+- **Naming System**: Custom AI assistant names
+- **Persistence**: Saved as part of chat configuration
+
+## Logging Architecture
+
+### Unified Logger (`unified_logger.py`)
+**Multi-stream logging system with debug routing separation.**
+
+**Log Streams**:
+```
+~/.calous/logs/
+├── app.log          # Application events
+├── debug.log        # Debug info (NEVER sent to clients!)
+├── model.log        # Model interactions  
+├── audit.log        # Command execution tracking
+├── error.log        # Errors and exceptions
+└── 2025-MM-DD.txt   # Legacy daily log (compatibility)
+```
+
+**Critical Feature**: Debug methods (`debug_socket()`, `debug_command()`, `debug_model()`) route ONLY to log files, preventing debug information leakage to socket clients.
+
+**Capabilities**:
+- Structured logging with JSON support
+- Context management for grouped operations
+- Level-based filtering (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+- Performance optimization (debug generation skipped when disabled)
 
 ## Plugin System
 
-### Current State
-- Plugin manager with builtin and user plugin support
-- Extensible command system
-- **Status**: ✅ Functional, allows for extensions without core changes
+### Plugin Manager (`plugins/manager.py`)
+**Extensible plugin system for custom functionality.**
 
-### Guidelines
-- New functionality should consider plugins first
-- Core system should remain stable
-- Plugins allow experimentation without affecting base system
+**Plugin Types**:
+- **Function Calling**: Custom tools/functions for model use
+- **Command Plugins**: New command registration
+- **Hook Plugins**: Event-based system extensions
 
-## Testing Strategy
+**Architecture**:
+- **Base Classes**: `PluginBase`, `FunctionCallingPlugin`, `CommandPlugin`, `HookPlugin`
+- **Discovery**: Automatic plugin loading from plugin directories
+- **Integration**: Seamless integration with command system and model interaction
 
-### Current Coverage
-- Integration tests for startup and basic functionality
-- Command testing framework
-- Manual testing documentation
+## External Client Integration
 
-### Principles
-- Tests should verify behavior, not implementation details
-- Focus on user-facing functionality
-- Avoid brittle tests that break on refactoring
+### Rust Client (`cx_rust/`)
+**Reference implementation for external CALOUS interaction.**
 
-## Command Implementation Pattern
+**Features**:
+- **Command Mode** (`-c`): Direct command execution
+- **Interactive Mode** (`-i`): REPL-style interface with readline support
+- **Stdin Support**: Pipe data from shell commands
+- **Tab Completion**: Auto-completion for all commands and aliases
+- **Color Control**: `--no-color` flag for ANSI stripping
+- **History**: Persistent command history
+- **Configuration**: User preferences and defaults
 
-**IMPORTANT NOTE**: The AI_README.md guidelines state "Formatting logic lives ONLY in UIManager" and output should be routed through UIManager only. However, the current implementation uses specialized formatters within command modules, with socket compatibility achieved through ANSI stripping in `session_manager.send_to_client()`.
+**Socket Communication**:
+- JSON protocol over Unix socket
+- Confirmation support for interactive operations
+- Error handling and connection management
+- Proper ANSI code handling and stripping
 
-To keep the codebase maintainable and consistent, commands are structured using three main components:
+## Data Flow Patterns
 
-- **Command Functions** (`commands/*/commands.py`): Register the command, handle argument parsing, and coordinate the operation. Command functions should be concise and delegate logic and formatting.
-- **Service Classes** (`commands/*/services.py`): Contain the business logic and data manipulation for the command. Service methods operate on the application state and perform actions like modifying history, saving files, etc.
-- **Formatter Classes** (`commands/*/formatters.py`): Handle all user-facing output, prompts, and confirmation dialogs using ANSI escape sequences. This keeps UI logic separate from business logic.
-
-**Current Reality vs. AI Guidelines**:
-- **Current Pattern**: Commands → Formatters (ANSI output) → Client-side color control (via --no-color flag)
-- **Socket Compatibility**: Achieved through client-side ANSI stripping when desired
-
-**Example Pattern:**
-
-```python
-@registry.register("history.purge", "Purge the most recent N entries from current chat history", category=CommandCategory.HISTORY)
-def cmd_history_purge(handler, num_entries: int) -> CommandResult:
-    service = HistoryService(handler.app)
-    chat_info = service.get_chat_info()
-    n = min(num_entries, len(handler.app.chat_history.history))
-    if n == 0:
-        HistoryFormatter.format_no_messages_to_purge()
-        return CommandResult(ActionType.CONTINUE)
-    HistoryFormatter.format_purge_warning(chat_info, n)
-    if not HistoryFormatter.confirm_purge():
-        return CommandResult(ActionType.CONTINUE)
-    purged = service.purge_history(n)
-    HistoryFormatter.format_purge_success(purged)
-    return CommandResult(ActionType.CONTINUE)
+### Client Request Flow
 ```
-
-**Why this pattern?**
-- Keeps command files readable and focused on intent
-- Makes it easy to update UI or logic independently
-- Encourages code reuse and easier testing
-
-**When in doubt:** Follow this pattern for new commands, and document any intentional deviations.
-
-
-### Operational Mode
-
-The CALOUS daemon runs as a background service, accepting commands and input exclusively via Unix socket. All user interaction, multi-chat management, and output is handled through socket-based clients or API integrations. CLI/terminal mode is no longer supported.
-
-## Data Flow Diagrams
-
-
-### Daemon Mode: Client → Server Flow
-```
-External Client → Unix Socket → JSON Parser → CommandHandler.process()
+External Client → Unix Socket → JSON Parser → Session Manager
     ↓
-Service.execute() → Formatter.format() (ANSI Output) → JSON Response → Socket → External Client
-    ↓                                                          ↓
-UnifiedLogger.log() → Daily Log File              Client handles color stripping (--no-color)
-```
-
-### Multi-Channel Communication via /twist
-```
-Source Channel → /twist command → ModelInteraction.generate() 
+Command Handler → Registry Lookup → Service Execution
     ↓
-Capture Response → Target Channel Input → Continue Processing
+Formatter (ANSI) → Session Manager → JSON Response → Socket → Client
+```
+
+### Multi-Channel Communication
+```
+Source Chat → /twist command → ModelInteraction.generate()
     ↓
-Both channels maintain separate histories
+Response Capture → Target Chat Input → Independent Processing
+    ↓
+Both chats maintain separate histories and contexts
 ```
 
-## Configuration & State Management
-
-### Configuration Hierarchy
+### Debug Information Flow
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     CONFIGURATION LAYERS                        │
-└─────────────────────────────────────────────────────────────────┘
-    Global Config (affects all chats)
-    ├── selected_model: Current Ollama model
-    ├── num_ctx: Context window size  
-    ├── temperature: Model creativity setting
-    └── logging_enabled: Unified logging state
-    
-    Per-Chat Config (chat-specific)
-    ├── system_prompt: Custom system instructions
-    ├── saved_prompts: Quick-access prompt slots (1-9)
-    ├── persona_slots: Persona components (0-9)
-    └── chat_history: Conversation memory
+Application Components → unified_logger.debug_*() → Log Files ONLY
+    ↓
+Socket clients receive CLEAN output (no debug contamination)
 ```
 
-### State Persistence
-- **Global Settings**: Saved to `~/.calous/config.json`
-- **Chat Configurations**: Saved per chat instance 
-- **Unified Logs**: Daily files in `~/.calous/logs/YYYY-MM-DD.txt`
-- **Model Context**: Maintained in-memory per chat session
-- **Plugin State**: Managed by PluginManager, loaded at startup
+## Security Model
 
-## Development Guidelines & Common Patterns
-
-### Adding a New Command
-1. **Create command structure**: `commands/category/commands.py`
-2. **Add service logic**: `commands/category/services.py`
-3. **Create formatter**: `commands/category/formatters.py`
-4. **Register command**: Use `@registry.register()` decorator
-5. **Test both modes**: Ensure CLI and socket compatibility
-
-### Common Pitfalls to Avoid
-- **ANSI formatting in services**: Keep business logic separate from display
-- **Blocking socket operations**: Socket mode should be non-interactive
-- **Cross-chat state sharing**: Maintain channel isolation
-- **Direct print() calls**: Use formatters for consistent output
-- **Hardcoded paths**: Use constants from `constants.py`
-
-### Error Handling Patterns
-- **Service Layer**: Return result objects with success/error states
-- **Formatter Layer**: Display user-friendly error messages
-- **Socket Mode**: Convert errors to JSON responses
-- **Logging**: All errors logged to unified log system
-
-### Performance Considerations
-- **Model Loading**: Lazy loading, shared across chats
-- **History Management**: Efficient in-memory storage with persistence
-- **Socket Connections**: Single-threaded, one client at a time
-- **Plugin System**: Loaded once at startup, cached function schemas
-
-## Key Architectural Decisions & Rationale
-
-### Why Unix Sockets vs HTTP API?
-- **Performance**: Lower overhead for local communication
-- **Security**: File system permissions control access
-- **Simplicity**: No need for authentication, CORS, or web server complexity
-- **Local-First**: Designed for same-machine integration, not web services
-
-### Why Single ANSI Output with Client-Side Color Control?
-- **Simplicity**: Daemon always sends consistent ANSI-formatted output
-- **Client Flexibility**: Each client controls its own color preferences
-- **Maintainability**: Single formatter codebase, no server-side format negotiation
-- **Performance**: No server-side format processing overhead
-- **Development Speed**: No need to maintain separate output paths
-- **Better Separation**: Color control is entirely a client-side concern
-
-### Why Multi-Chat Support in Socket Mode?
-- **Feature Parity**: Socket mode provides the same multi-chat capabilities as CLI mode
-- **Session Management**: The `ChatSessionManager` handles multiple chat sessions seamlessly
-- **Command Support**: All chat management commands (`/chat.switch`, `/chat.reset`, `/chat.twist`) work in socket mode
-- **State Synchronization**: Commands are processed through the same session manager as CLI mode
-- **Consistent API**: External clients can manage multiple chats using the same command structure
-
-**Implementation**: Socket server processes commands through `session_manager.process_command_result()` which handles `ActionType.SWITCH` and other chat actions identically to CLI mode.
-
-### Why Registry Pattern for Commands?
-- **Discoverability**: Automatic command enumeration for help systems
-- **Extensibility**: Plugins can register new commands seamlessly
-- **Type Safety**: Centralized argument parsing and validation
-- **Debugging**: Clear command execution tracing
-
-## Security & Access Control
-
-### Socket Security Model
-- **File Permissions**: Unix socket inherits filesystem permissions
+### Access Control
+- **Unix Socket Permissions**: OS-level user permissions control access
 - **Local Only**: No network exposure, local machine access only
-- **Process Isolation**: Each socket connection runs in application context
-- **No Authentication**: Relies on OS-level user permissions
-
-### Input Validation
-- **Command Parsing**: Strict argument validation via registry
-- **File Operations**: Path traversal protection, size limits
-- **Model Inputs**: Content filtering through Ollama's safety measures
-- **JSON Protocol**: Schema validation for socket messages
+- **Process Isolation**: Socket connections run in application context
+- **Input Validation**: Command parsing and argument validation
 
 ### Data Privacy
 - **Local Storage**: All data remains on user's machine
 - **No Telemetry**: No external data transmission
 - **Optional Logging**: User-controlled conversation logging
-- **Model Communication**: Direct to local Ollama instance only
+- **Direct Model Communication**: Direct to local Ollama instance only
+
+## Key Design Decisions
+
+### Why Unix Sockets?
+- **Performance**: Lower overhead than HTTP for local communication
+- **Security**: File system permissions provide access control
+- **Simplicity**: No authentication, CORS, or web server complexity
+- **Local-First**: Designed for same-machine integration
+
+### Why Single ANSI Output?
+- **Consistency**: Daemon always sends ANSI-formatted output
+- **Client Control**: Each client controls color preferences independently
+- **Simplicity**: Single formatter codebase, no server-side format negotiation
+- **Performance**: No server-side format processing overhead
+
+### Why 14 Fixed Channels?
+- **Predictability**: Consistent interface across all deployments
+- **Resource Management**: Bounded memory and state complexity
+- **UI Design**: Manageable number for user interfaces
+- **Simplicity**: No dynamic management complexity
+
+## Development Guidelines
+
+### Adding New Commands
+1. **Choose Category**: Place in appropriate `commands/category/` directory
+2. **Define Service**: Implement business logic in `services.py`
+3. **Create Formatter**: Handle ANSI output in `formatters.py`
+4. **Register Command**: Use `@registry.register()` decorator
+5. **Update Help**: Ensure help system integration
+
+### Common Patterns
+- **Service Methods**: Return result objects with success/error states
+- **Formatters**: Generate ANSI-formatted output, handle all display logic
+- **Error Handling**: User-friendly error messages via formatters
+- **Debug Info**: Use `unified_logger.debug_*()` methods (never client output)
+- **Constants**: Use values from `constants.py` for all configuration
+
+### Integration Points
+- **Socket Communication**: All client interaction via session manager
+- **Multi-Chat**: Respect channel isolation, use `/twist` for cross-channel data
+- **Plugin Integration**: Leverage plugin system for extensibility
+- **Configuration**: Use ConfigManager for all persistent settings
+- **Logging**: Route appropriate information to correct log streams

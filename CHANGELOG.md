@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Changelog
 
+## [1.7.5.dev] - 2025-07-04
+
+### Fixed
+- **Intermittent "Invalid response" Error**: Resolved race condition in Rust client JSON parsing
+  - **Root cause**: Client attempted to parse JSON before receiving complete response from daemon
+  - **Solution**: Added check for complete JSON (`response.trim().ends_with('}')`) before parsing
+  - **Impact**: Eliminates occasional "Invalid response" errors when using `cx` client for model prompts
+- **Missing Newline After Model Response**: Fixed terminal prompt appearing on same line as model output
+  - **Root cause**: Rust client used `print!()` instead of `println!()` for response output
+  - **Solution**: Changed to `println!()` for proper line termination
+  - **Impact**: Terminal prompt now appears on new line after model responses
+- **Multiple JSON Message Issue**: Fixed streaming model responses sending multiple separate JSON messages
+  - **Root cause**: Each model response chunk (`_output()` call) sent individual JSON message over socket
+  - **Solution**: Added response buffering system (`_buffer_output()`, `_flush_output_buffer()`) to collect complete response
+  - **Impact**: Single JSON response per request, preventing client confusion and parsing errors
+  - **Technical details**: Modified both streaming and non-streaming paths in `model_interaction.py`
+
+### Enhanced
+- **Socket Communication Reliability**: Improved client-server protocol stability
+  - Streaming model responses now buffered and sent as single complete JSON message
+  - Eliminated race conditions between model content chunks and client JSON parsing
+  - Better separation between command responses (immediate) and model responses (buffered)
+
 ## [1.7.4.dev] - 2025-07-04
 
 ### Improved
