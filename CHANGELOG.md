@@ -218,7 +218,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Maintainable**: Centralized logging configuration and consistent debug routing patterns
 - **Scalable**: Foundation for advanced logging features like log aggregation and analysis tools
 
-  ## [1.6.0.dev] - 2025-01-04
+  ## [1.6.0.dev] - 2025-07-04
 
   ### Removed
   - **Protocol format field** - Removed protocol-level "format" field handling from both calousd daemon and cx_rust client
@@ -236,7 +236,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Simplified output routing** - Removed complex format-based output routing logic in favor of consistent ANSI output
   - **Better separation of concerns** - Color formatting is now handled entirely by client rather than being negotiated at protocol level
 
-  ## [1.5.1.dev] - 2025-01-04
+  ## [1.5.1.dev] - 2025-07-04
 
   ### Fixed
   - **Argparse error suppression** - Prevented argparse error messages from leaking to terminal stderr during command parsing
@@ -247,7 +247,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Stderr capture during argument parsing** - Added temporary stderr redirection in `CommandParsingService.parse_command_arguments()` to suppress argparse output
   - **Improved command error handling** - Error messages now properly routed through command formatters instead of direct terminal output
 
-  ## [1.5.0.dev] - 2025-01-04
+  ## [1.5.0.dev] - 2025-07-04
 
   ### Breaking Changes
   - **Replaced Rich markup with ANSI codes** - Migrated from Rich library markup to direct ANSI escape sequences for color formatting
@@ -270,7 +270,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Better performance** - Direct ANSI code output without intermediate markup processing
   - **Maintained protocol compatibility** - Kept socket protocol interface intact for backward compatibility
 
-  ## [1.4.4.dev] - 2025-01-02
+  ## [1.4.4.dev] - 2025-07-02
 
   ### Fixed
   - **Container configuration issues** - Updated Dockerfile to use correct ~/.calous directory structure instead of legacy /root/calous
@@ -283,7 +283,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Enhanced Rich text parsing** - Added support for bold color combinations like `[bold white]` and `[bold grey50]`
   - **Container deployment fixes** - Fixed volume mount mappings and directory creation in containerized deployments
 
-  ## [1.4.3-dev] - 2025-01-02
+  ## [1.4.3-dev] - 2025-07-02
 
   ### Added
   - **Rich text support in cx_rust client** - Added ANSI color parsing with crossterm for enhanced terminal output
