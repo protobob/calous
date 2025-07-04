@@ -84,7 +84,7 @@ dependencies = [
 
 [[package]]
 name = "cx"
-version = "1.5.0"
+version = "1.5.1"
 dependencies = [
  "atty",
  "crossterm",

@@ -1,5 +1,7 @@
 """Command parsing and execution services."""
 import shlex
+import sys
+import io
 from typing import List, Dict, Any, Optional, Tuple
 from ..types import CommandResult, ActionType
 from .types import CommandDefinition
@@ -59,6 +61,10 @@ class CommandParsingService:
             Parsed arguments as dict, or None if parsing fails
         """
         try:
+            # Capture stderr to prevent argparse from printing error messages to terminal
+            original_stderr = sys.stderr
+            sys.stderr = io.StringIO()
+            
             parsed_args = cmd_def.parser.parse_args(args)
             return vars(parsed_args)
         except SystemExit:
@@ -68,6 +74,9 @@ class CommandParsingService:
         except Exception as e:
             HandlerFormatter.argument_parse_error(str(e), cmd_def.parser.format_usage())
             return None
+        finally:
+            # Always restore stderr
+            sys.stderr = original_stderr
     
     @staticmethod
     def apply_special_command_handling(cmd_def: CommandDefinition, kwargs: Dict[str, Any]) -> Dict[str, Any]:

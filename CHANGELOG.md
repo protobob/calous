@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Changelog
 
+  ## [1.5.1.dev] - 2025-01-04
+
+  ### Fixed
+  - **Argparse error suppression** - Prevented argparse error messages from leaking to terminal stderr during command parsing
+  - **Clean daemon output** - Eliminated spurious command usage messages when running calousd in daemon mode
+  - **Fixed errors from rich to ansi conversion** - Fixed errors in history and chat formatters that were not updated correctly during rich to ansi conversion.
+
+  ### Technical Improvements
+  - **Stderr capture during argument parsing** - Added temporary stderr redirection in `CommandParsingService.parse_command_arguments()` to suppress argparse output
+  - **Improved command error handling** - Error messages now properly routed through command formatters instead of direct terminal output
+
   ## [1.5.0.dev] - 2025-01-04
 
   ### Breaking Changes

@@ -10,13 +10,13 @@ class HistoryFormatter(CommandFormatter):
     @staticmethod
     def format_clear_warning(chat_info):
         """Print history clear warning with colored chat identification."""
-        HistoryFormatter._output(f"\n[1;33mWarning:[0m This will [1;31mCLEAR[0m \033[1m{chat_color}CHAT {chat_info.number}\033[0m history.")
+        HistoryFormatter._output(f"\n[1;33mWarning:[0m This will [1;31mCLEAR[0m \033[1m{chat_info.color}CHAT {chat_info.number}\033[0m history.")
         HistoryFormatter._output("All conversation history will be permanently deleted.")
     
     @staticmethod
     def format_clear_success(chat_info):
         """Print history clear success message."""
-        HistoryFormatter._output(f"\033[1m{chat_color}CHAT {chat_info.number}\033[0m history cleared successfully!")
+        HistoryFormatter._output(f"\033[1m{chat_info.color}CHAT {chat_info.number}\033[0m history cleared successfully!")
     
     @staticmethod
     def confirm_clear() -> bool:
@@ -35,26 +35,26 @@ class HistoryFormatter(CommandFormatter):
     @staticmethod
     def format_history_enabled(chat_info):
         """Print history enabled message."""
-        HistoryFormatter._output(f"\033[1m{chat_color}CHAT {chat_info.number}\033[0m history recording [1;32mENABLED[0m")
+        HistoryFormatter._output(f"\033[1m{chat_info.color}CHAT {chat_info.number}\033[0m history recording [1;32mENABLED[0m")
     
     @staticmethod
     def format_history_disabled(chat_info):
         """Print history disabled message."""
-        HistoryFormatter._output(f"\033[1m{chat_color}CHAT {chat_info.number}\033[0m history recording [1;31mDISABLED[0m")
+        HistoryFormatter._output(f"\033[1m{chat_info.color}CHAT {chat_info.number}\033[0m history recording [1;31mDISABLED[0m")
     
     @staticmethod
     def format_history_already_enabled(chat_info):
         """Print history already enabled message."""
-        HistoryFormatter._output(f"\033[1m{chat_color}CHAT {chat_info.number}\033[0m history recording is already [1;32mENABLED[0m")
+        HistoryFormatter._output(f"\033[1m{chat_info.color}CHAT {chat_info.number}\033[0m history recording is already [1;32mENABLED[0m")
     
     @staticmethod
     def format_history_already_disabled(chat_info):
         """Print history already disabled message."""
-        HistoryFormatter._output(f"\033[1m{chat_color}CHAT {chat_info.number}\033[0m history recording is already [1;31mDISABLED[0m")
+        HistoryFormatter._output(f"\033[1m{chat_info.color}CHAT {chat_info.number}\033[0m history recording is already [1;31mDISABLED[0m")
     
     @staticmethod
     def format_purge_warning(chat_info, n):
-        HistoryFormatter._output(f"\n[1;33mWarning:[0m This will [1;31mDELETE[0m the [1m{n}[0m most recent message(s) from \033[1m{chat_color}CHAT {chat_info.number}\033[0m history.")
+        HistoryFormatter._output(f"\n[1;33mWarning:[0m This will [1;31mDELETE[0m the [1m{n}[0m most recent message(s) from \033[1m{chat_info.color}CHAT {chat_info.number}\033[0m history.")
         HistoryFormatter._output("This cannot be undone.")
 
     @staticmethod
@@ -149,7 +149,7 @@ class HistoryFormatter(CommandFormatter):
         """Print history variables information."""
         status_text = "[1;32mENABLED[0m" if history_enabled else "[1;31mDISABLED[0m"
         
-        HistoryFormatter._output(f"\n\033[1m{chat_color}|\033[0m \033[1m{chat_color}CHAT {chat_info.number} HISTORY VARIABLES\033[0m\n")
-        HistoryFormatter._output(f"\033[1m{chat_color}|\033[0m {'Recording Status:':<20} {status_text}")
-        HistoryFormatter._output(f"\033[1m{chat_color}|\033[0m {'Message Count:':<20} [37m{message_count}[0m")
+        HistoryFormatter._output(f"\n\033[1m{chat_info.color}|\033[0m \033[1m{chat_info.color}CHAT {chat_info.number} HISTORY VARIABLES\033[0m\n")
+        HistoryFormatter._output(f"\033[1m{chat_info.color}|\033[0m {'Recording Status:':<20} {status_text}")
+        HistoryFormatter._output(f"\033[1m{chat_info.color}|\033[0m {'Message Count:':<20} [37m{message_count}[0m")
         HistoryFormatter._output("")
