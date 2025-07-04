@@ -28,18 +28,18 @@ Do NOT propose or perform any of the following unless explicitly requested:
 ### 3. Command System is Locked
 The command pattern is finalized:
 ```
-User Input → Registry (routing) → Service (logic) → Formatter (Rich output) → Socket ANSI stripping
+User Input → Registry (routing) → Service (logic) → Formatter (ANSI output) → Socket ANSI stripping
 ```
 All new commands must:
 - Register via the command registry
 - Isolate logic in service classes
-- Use formatters for Rich output (socket clients get automatic ANSI stripping)
+- Use formatters for ANSI output (socket clients get automatic ANSI stripping)
 
 ### 4. Output Format System
-All commands generate Rich-formatted output by default:
-- Rich formatting (colors, styles) for all output
+All commands generate ANSI-formatted output by default:
+- Direct ANSI escape sequences for colors and styles
 - Socket clients specify `format: "plain"` or `format: "rich"` in JSON requests
-- `session_manager.send_to_client()` automatically strips ANSI/Rich markup for plain clients
+- `format: "rich"` sends ANSI codes directly, `format: "plain"` strips ANSI codes
 - Single codebase - no dual formatters needed
 
 ### 5. Model Context Isolation
@@ -62,14 +62,16 @@ All commands generate Rich-formatted output by default:
 - `session_manager.py` (socket communication and ANSI stripping)
 - Any file not explicitly shown or referenced in your current session
 
+**Note**: Commands `/chat.add`, `/chat.remove`, and `/sys.quit` have been removed from the system as of v1.4.2. CALOUS now operates with a fixed count of 14 chat channels and daemon services do not have quit functionality.
+
 ### You May Extend
 - `commands/` (add new commands using the established pattern)
 - `services/` (add logic for new command functionality)
-- `formatters/` (handle Rich output formatting - socket conversion happens automatically)
+- `formatters/` (handle ANSI output formatting - socket conversion happens automatically)
 
 ## Architecture Clarification
 
-**Important**: While this document mentions UIManager, the actual command output flows through specialized formatters in each command category. The UIManager handles specific UI interactions, but command output uses the formatter pattern with automatic socket compatibility via `session_manager.send_to_client()` ANSI stripping.
+**Important**: CALOUS uses direct ANSI escape sequences for all color formatting. Commands generate ANSI-formatted output, and socket compatibility is achieved through automatic ANSI stripping in `session_manager.send_to_client()` when clients request `format: "plain"`.
 
 **Operational Mode**: CALOUS runs as a daemon service accepting connections via Unix socket (`/tmp/calous.sock`). External clients (like the `cx` Rust tool) connect to this socket to interact with the system. There is no direct terminal/CLI mode - all interaction happens through socket-based clients.
 
@@ -78,7 +80,7 @@ All commands generate Rich-formatted output by default:
 ### ✅ Always Do
 - Ask for files before operating on them
 - Respect architectural constraints
-- Generate Rich-formatted output (socket conversion is automatic)
+- Generate ANSI-formatted output (socket conversion is automatic)
 - Use constants from `constants.py` for all paths
 - Act as the implementing agent (not the human)
 

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Changelog
 
+  ## [1.6.0.dev] - 2025-01-04
+
+  ### Removed
+  - **Protocol format field** - Removed protocol-level "format" field handling from both calousd daemon and cx_rust client
+  - **Client format flags** - Removed `--rich` and `--plain` command-line flags from cx_rust client
+
+  ### Added
+  - **Client-side color control** - Added `--no-color` flag to cx_rust client for stripping ANSI color codes from output
+
+  ### Changed
+  - **Output format handling** - Simplified protocol by always sending ANSI codes from daemon; color stripping is now client-side only
+  - **Protocol compatibility** - Maintained backward compatibility while removing unused format negotiation
+
+  ### Technical Improvements
+  - **Cleaner protocol** - Eliminated format field from CxCommand struct and session management
+  - **Simplified output routing** - Removed complex format-based output routing logic in favor of consistent ANSI output
+  - **Better separation of concerns** - Color formatting is now handled entirely by client rather than being negotiated at protocol level
+
   ## [1.5.1.dev] - 2025-01-04
 
   ### Fixed
@@ -1377,31 +1395,6 @@ This represents a foundational architectural improvement that enhances code main
 - Added argparse integration with nargs='+' for multi-word arguments
 - Maintained backward compatibility with existing command functionality
 
-## [0.4.0.dev] - 2025-05-29
-
-### Added
-- **New Command System**: Complete rewrite of command handling with argparse integration
-- **Decorator-Based Registration**: Commands now use `@registry.register()` for clean registration
-- **Advanced Argument Parsing**: Full argparse support with type checking and validation
-- **Improved /load Command**: No quotes needed for prompts (`/load file.py review this code`)
-- **Type Safety**: Created `types.py` with shared `ActionType` and `CommandResult` classes
-- **Command Categories**: Organized commands into logical categories (General, Navigation, Model, etc.)
-
-### Changed
-- **Command Architecture**: Moved from manual parsing to argparse-based system
-- **Import Structure**: Eliminated unnecessary `commands.py` wrapper, direct imports from `command_system.py`
-- **Help System**: Preserved existing beautiful help menu while integrating with new command registry
-
-### Fixed
-- **Circular Import Issues**: Resolved circular dependencies between app, command_system, and session_manager
-- **Duplicate Config Saving**: Fixed multiple config save messages on `/quit` command
-- **Command Validation**: Proper error handling and usage display for invalid command syntax
-
-### Technical
-- **Removed**: `commands.py` file (redundant wrapper)
-- **Enhanced**: Command handler with robust argument parsing and error handling
-- **Improved**: Type annotations and error messages throughout command system
-
 ## [0.3.1.dev] - 2025-05-29
 
 ### Fixed
@@ -1469,6 +1462,7 @@ This represents a foundational architectural improvement that enhances code main
 
 - **Improved Ollama Error Handling**: Enhanced error handling specifically for Ollama library interactions.
 - Better error messages for model-not-found scenarios with suggested available models.
+
 - Improved connection error handling with specific guidance for Ollama server issues.
 - Enhanced model selection validation with better user feedback and cancellation support.
 

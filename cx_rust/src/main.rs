@@ -5,6 +5,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
+use regex::Regex;
 use rustyline::error::ReadlineError;
 use rustyline::{Result as RustylineResult};
 use rustyline::completion::{Completer, Pair};
@@ -23,8 +24,8 @@ struct CxConfig {
     pub auto_truncate: bool,
     #[serde(default = "default_truncate_length")]
     pub truncate_length: usize,
-    #[serde(default = "default_rich_output")]
-    pub rich_output: bool,
+    #[serde(default = "default_no_color")]
+    pub no_color: bool,
 }
 
 impl Default for CxConfig {
@@ -34,7 +35,7 @@ impl Default for CxConfig {
             default_chat: None,
             auto_truncate: true,
             truncate_length: 8192, // 8KB default
-            rich_output: false, // Use ANSI codes directly
+            no_color: false, // Show colors by default
         }
     }
 }
@@ -43,7 +44,7 @@ fn default_debug() -> bool { false }
 fn default_chat() -> Option<u8> { None }
 fn default_auto_truncate() -> bool { true }
 fn default_truncate_length() -> usize { 8192 }
-fn default_rich_output() -> bool { false }
+fn default_no_color() -> bool { false }
 
 #[derive(Serialize)]
 struct CxCommand {
@@ -51,8 +52,6 @@ struct CxCommand {
     data: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     chat: Option<u8>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    format: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     supports_confirmations: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -238,21 +237,23 @@ impl Validator for CommandCompleter {}
 impl rustyline::Helper for CommandCompleter {}
 
 
-fn create_command(data: String, message_type: &str, chat: Option<u8>, rich_output: bool) -> CxCommand {
-    let format_type = if rich_output { "rich" } else { "plain" };
-    
+fn strip_ansi_codes(text: &str) -> String {
+    let ansi_regex = Regex::new(r"\x1B\[[0-?]*[ -/]*[@-~]").unwrap();
+    ansi_regex.replace_all(text, "").to_string()
+}
+
+fn create_command(data: String, message_type: &str, chat: Option<u8>) -> CxCommand {
     CxCommand {
         r#type: message_type.to_string(),
         data,
         chat,
-        format: Some(format_type.to_string()),
         supports_confirmations: Some(true),
         confirmation_id: None,
         response: None,
     }
 }
 
-fn handle_server_response(response: &str, _debug: bool, _rich_output: bool) -> Result<(), String> {
+fn handle_server_response(response: &str, _debug: bool, no_color: bool) -> Result<(), String> {
     let result: CxResponse = serde_json::from_str(response).unwrap_or(CxResponse {
         response: None,
         result: None,
@@ -264,9 +265,11 @@ fn handle_server_response(response: &str, _debug: bool, _rich_output: bool) -> R
     });
 
     if let Some(err) = result.error {
-        eprintln!("Error: {}", err);
+        let output = if no_color { strip_ansi_codes(&err) } else { err };
+        eprintln!("Error: {}", output);
     } else if let Some(res) = result.response {
-        print!("{}", res);
+        let output = if no_color { strip_ansi_codes(&res) } else { res };
+        print!("{}", output);
     } else if let Some(res) = result.result {
         print!("{}", res);
     } else {
@@ -286,7 +289,7 @@ fn main() {
     let mut debug = config.debug;
     let mut chat_channel: Option<u8> = config.default_chat;
     let mut no_truncate = false;  // Temporary override for this command only
-    let mut rich_output = config.rich_output;  // Rich output override
+    let mut no_color = config.no_color;  // Color output override
     let mut arg_start = 1;
     
     // Handle flags and special commands
@@ -307,8 +310,7 @@ fn main() {
                 println!("    -h, --help         Show this help message");
                 println!("    -i, --interactive  Start interactive mode");
                 println!("    -n, --chat <NUM>   Switch to chat channel (1-14)");
-                println!("    -r, --rich         Enable rich text output");
-                println!("    -p, --plain        Disable rich text output (plain text only)");
+                println!("    --no-color         Strip ANSI color codes from output");
                 println!("    -t, --no-truncate  Disable truncation for this command");
                 println!("    -v, --version      Show version");
                 println!();
@@ -334,18 +336,14 @@ fn main() {
                 no_truncate = true;
                 i += 1;
             }
-            "-r" | "--rich" => {
-                rich_output = true;
-                i += 1;
-            }
-            "-p" | "--plain" => {
-                rich_output = false;
+            "--no-color" => {
+                no_color = true;
                 i += 1;
             }
             "-i" | "--interactive" => {
-                let mut config_with_rich = config.clone();
-                config_with_rich.rich_output = rich_output;
-                interactive_mode(debug, &config_with_rich);
+                let mut config_with_no_color = config.clone();
+                config_with_no_color.no_color = no_color;
+                interactive_mode(debug, &config_with_no_color);
                 std::process::exit(0);
             }
             "-n" | "--chat" => {
@@ -471,14 +469,14 @@ fn main() {
         prompt
     };
 
-    let mut config_with_rich = config.clone();
-    config_with_rich.rich_output = rich_output;
+    let mut config_with_no_color = config.clone();
+    config_with_no_color.no_color = no_color;
     
-    let cmd = create_command(data, &message_type, chat_channel, rich_output);
+    let cmd = create_command(data, &message_type, chat_channel);
 
-    match send_command(&cmd, debug, &config_with_rich) {
+    match send_command(&cmd, debug, &config_with_no_color) {
         Ok(response) => {
-            let _ = handle_server_response(&response, debug, rich_output);
+            let _ = handle_server_response(&response, debug, no_color);
         }
         Err(e) => {
             eprintln!("Error: {}", e);
@@ -545,7 +543,6 @@ fn send_command(cmd: &CxCommand, debug: bool, _config: &CxConfig) -> Result<Stri
                                     r#type: "confirmation_response".to_string(),
                                     data: "".to_string(),
                                     chat: None,
-                                    format: None,
                                     supports_confirmations: None,
                                     confirmation_id: Some(confirmation_id.clone()),
                                     response: Some(response_value),
@@ -705,11 +702,11 @@ fn send_to_server(input: &str, debug: bool, config: &CxConfig) {
         input.to_string()
     };
 
-    let cmd = create_command(data, &message_type, None, config.rich_output);
+    let cmd = create_command(data, &message_type, None);
 
     match send_command(&cmd, debug, &config) {
         Ok(response) => {
-            let _ = handle_server_response(&response, debug, config.rich_output);
+            let _ = handle_server_response(&response, debug, config.no_color);
         }
         Err(e) => {
             eprintln!("Error: {}", e);

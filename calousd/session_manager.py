@@ -33,8 +33,7 @@ class ChatSessionManager:
         self.supports_confirmations = False
         self.pending_confirmation = None
         
-        # Client format preference for socket mode
-        self.client_format = "plain"  # Default to plain for backward compatibility
+        # Note: Client format preference removed - always send ANSI codes
         
         # Initialize plugin manager at session level
         self._initialize_plugin_manager()
@@ -273,26 +272,19 @@ class ChatSessionManager:
         For command mode, buffer the output instead of sending immediately.
         """
         import json
-        import re
         
         # Use provided connection or current connection
         target_conn = conn or self.current_connection
         if not target_conn:
             return  # No client connected
             
-        # Handle message formatting based on client preference
-        if hasattr(self, 'client_format') and self.client_format == "rich":
-            # Legacy rich format - strip ANSI codes (no longer used, but kept for compatibility)
-            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-            processed_message = ansi_escape.sub('', message)
-        else:
-            # Plain format - send ANSI codes directly (no processing needed)
-            processed_message = message
+        # Always send ANSI codes directly - client handles color stripping if needed
+        clean_message = message
         
-        clean_message = processed_message
-        
-        # If we're in command processing mode, buffer the output UNLESS it's a confirmation request
-        if hasattr(self, '_command_output_buffer') and message_type != "confirmation_request":
+        # If we're in command processing mode, buffer the output UNLESS it's a confirmation request or debug message
+        if (hasattr(self, '_command_output_buffer') and 
+            message_type not in ["confirmation_request", "debug"] and 
+            not message.startswith("[Debug]")):
             self._command_output_buffer.append(clean_message)
             return
         
@@ -507,17 +499,15 @@ class ChatSessionManager:
                 msg_type = req.get("type")
                 content = req.get("data", "")
                 target_chat = req.get("chat")  # Optional chat channel targeting
-                output_format = req.get("format", "plain")  # Default to plain for backward compatibility
                 
-                # Store client's format preference
-                self.client_format = output_format
+                # Note: Format field removed - always send ANSI codes
                 
                 # Check if client supports confirmations
                 if req.get("supports_confirmations", False):
                     self.supports_confirmations = True
                 
                 if debug:
-                    self._output(f"[Debug] Parsed request: type={msg_type}, data length={len(content)} chars, target_chat={target_chat}, format={output_format} at {timestamp}")
+                    self._output(f"[Debug] Parsed request: type={msg_type}, data length={len(content)} chars, target_chat={target_chat} at {timestamp}")
                 
                 # Handle chat targeting
                 original_active_chat = self.active_chat_index
@@ -575,20 +565,37 @@ class ChatSessionManager:
                                 # Process command using active chat
                                 if debug:
                                     self._output(f"[Debug] Processing command: {action}")
-                                cmd_result = active_chat.process_input(f"{action}")
-                                if debug:
-                                    self._output(f"[Debug] Command result: {cmd_result}")
+                                
+                                try:
+                                    cmd_result = active_chat.process_input(f"{action}")
+                                    if debug:
+                                        self._output(f"[Debug] Command result: {cmd_result}")
+                                except Exception as e:
+                                    if debug:
+                                        self._output(f"[Debug] Error in process_input: {e}")
+                                    raise
                                 
                                 # Process the command result through session manager
                                 # This enables chat switching and other session-level operations
-                                self.process_command_result(cmd_result)
+                                try:
+                                    self.process_command_result(cmd_result)
+                                    if debug:
+                                        self._output(f"[Debug] Command result processed successfully")
+                                except Exception as e:
+                                    if debug:
+                                        self._output(f"[Debug] Error in process_command_result: {e}")
+                                    raise
                                 
                                 # Send buffered output as single JSON response
                                 if self._command_output_buffer:
                                     combined_output = "\n".join(self._command_output_buffer)
                                     response = {"response": combined_output}
+                                    if debug:
+                                        self._output(f"[Debug] Sending buffered output: {len(self._command_output_buffer)} lines")
                                 else:
                                     response = {"response": "Command completed"}
+                                    if debug:
+                                        self._output(f"[Debug] No buffered output, sending completion message")
                                     
                                 # Send the buffered response immediately instead of letting the main handler do it
                                 import json
@@ -598,8 +605,13 @@ class ChatSessionManager:
                                 # Clean up buffer
                                 delattr(self, '_command_output_buffer')
                                     
-                            finally:
-                                pass
+                            except Exception as e:
+                                if debug:
+                                    self._output(f"[Debug] Exception in command processing: {e}")
+                                # Make sure to clean up buffer even on error
+                                if hasattr(self, '_command_output_buffer'):
+                                    delattr(self, '_command_output_buffer')
+                                response = {"error": f"Command processing failed: {str(e)}"}
                         else:
                             response = {"error": "Missing action in command."}
                     except json.JSONDecodeError:
