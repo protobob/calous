@@ -1,27 +1,29 @@
 """Chat session management for Hi, Ollama!"""
 from typing import List, Optional, Dict, Any, TYPE_CHECKING
 import os
-from .types import ActionType, CommandResult  # Import from types instead
+import json
+import socket
+import signal
+import sys
+import time
+import uuid
+from datetime import datetime
+from pathlib import Path
+
+from .types import ActionType, CommandResult
 from .utils import get_chat_color, print_rainbow_header, format_message_preview
 from .config import ConfigManager
-from .constants import SERVER_DEFAULT_NUM_CHATS, TWIST_PREVIEW_LENGTH, SWITCH_PREVIEW_LENGTH, SOCKET_PATH
+from .constants import SERVER_DEFAULT_NUM_CHATS, TWIST_PREVIEW_LENGTH, SWITCH_PREVIEW_LENGTH, SOCKET_PATH, MessageTypes
 from .unified_logger import unified_logger
 
 # Use TYPE_CHECKING to avoid circular import
 if TYPE_CHECKING:
     from .app import Chat
 
-class ChatSessionManager:    
-    def _output(self, message: str, message_type: str = "response"):
-        """Send output to client (daemon mode only)."""
-        if self.socket_mode and self.current_connection:
-            self.send_to_client(message, message_type)
-        # In daemon mode, no fallback to print - output should only go through socket
-    
-    def __init__(self, num_chats: Optional[int] = None, debug: bool = False):  # Remove hardcoded default
+class ChatSessionManager:
+    def __init__(self, num_chats: Optional[int] = None, debug: bool = False):
         self.chats: List['Chat'] = []
         # Load saved active chat index from config
-        from .config import ConfigManager
         self.active_chat_index: int = ConfigManager.get_active_chat_index()
         # Use constant for default
         self.num_chats = num_chats if num_chats is not None else SERVER_DEFAULT_NUM_CHATS
@@ -46,6 +48,12 @@ class ChatSessionManager:
         # Log session start
         model = ConfigManager.get_global_config().get("selected_model", "unknown")        
         unified_logger.log_session_start(self.num_chats, model)
+    
+    def _output(self, message: str, message_type: str = "response"):
+        """Send output to client (daemon mode only)."""
+        if self.socket_mode and self.current_connection:
+            self.send_to_client(message, message_type)
+        # In daemon mode, no fallback to print - output should only go through socket
           
     def _initialize_plugin_manager(self):
         """Initialize the plugin manager for all chat instances."""
@@ -63,7 +71,8 @@ class ChatSessionManager:
         self.plugin_manager.discover_and_load_plugins(plugin_dir)
     
     def _initialize_chats(self):
-        """Initialize all chat instances."""        # Import here to avoid circular import
+        """Initialize all chat instances."""
+        # Import here to avoid circular import
         from .app import Chat
         self.chats = [Chat(i) for i in range(self.num_chats)]  # Use parameter
         
@@ -80,6 +89,19 @@ class ChatSessionManager:
     def get_all_chats(self) -> List['Chat']:
         """Get all chat instances - for use by other components."""
         return self.chats
+    
+    def _validate_chat_index(self, chat_index: int) -> bool:
+        """Validate chat index is within bounds."""
+        return 0 <= chat_index < self.num_chats
+    
+    def _create_error_response(self, message: str) -> Dict[str, str]:
+        """Create standardized error response."""
+        return {"error": message}
+    
+    def _create_success_response(self, message: str) -> Dict[str, str]:
+        """Create standardized success response."""
+        return {"response": message}
+    
     def switch_to_chat(self, target_index: Optional[int] = None) -> bool:
         """Switch to specified chat or next chat if no index provided."""
         previous_chat_index = self.active_chat_index
@@ -88,13 +110,12 @@ class ChatSessionManager:
             # Default behavior: switch to next chat (cycling)
             target_index = (self.active_chat_index + 1) % self.num_chats
         
-        if 0 <= target_index < self.num_chats:
+        if self._validate_chat_index(target_index):
             if target_index != previous_chat_index:
                 # Log the channel switch
                 unified_logger.log_channel_switch(previous_chat_index, target_index, "manual")
             self.active_chat_index = target_index
             # Save the new active chat index to config
-            from .config import ConfigManager
             ConfigManager.set_active_chat_index(target_index)
             return True
         
@@ -108,7 +129,7 @@ class ChatSessionManager:
             # Default behavior: twist to next chat
             target_index = (self.active_chat_index + 1) % self.num_chats
 
-        if not (0 <= target_index < self.num_chats):
+        if not self._validate_chat_index(target_index):
             self.send_to_client(f"\n[1;31mError:[0m Invalid chat number. Available chats: 1-{self.num_chats}", "error")
             return False
 
@@ -126,7 +147,6 @@ class ChatSessionManager:
         # Switch to target chat FIRST
         self.active_chat_index = target_index
         # Save the new active chat index to config
-        from .config import ConfigManager
         ConfigManager.set_active_chat_index(target_index)
 
         # Clear screen and show FULL context for the target chat (including chat summary)
@@ -227,7 +247,7 @@ class ChatSessionManager:
         if self.socket_mode and self.current_connection:
             try:
                 self._output("\n[1mExiting and saving configurations.[0m")
-            except:
+            except (BrokenPipeError, ConnectionError):
                 pass  # Don't let output issues prevent saving
         
         # Log session end
@@ -271,7 +291,6 @@ class ChatSessionManager:
         # Skip clear screen in daemon mode as it would affect stdout
         if not self.socket_mode:
             os.system('cls' if os.name == 'nt' else 'clear')
-        from .utils import print_rainbow_header
         print_rainbow_header(self._output)
 
     def send_to_client(self, message: str, message_type: str = "response", conn=None):
@@ -279,7 +298,6 @@ class ChatSessionManager:
         Send a message directly to the connected client.
         For command mode, buffer the output instead of sending immediately.
         """
-        import json
         
         # Use provided connection or current connection
         target_conn = conn or self.current_connection
@@ -313,9 +331,6 @@ class ChatSessionManager:
     
     def request_confirmation(self, message: str, default: str = "n") -> bool:
         """Request confirmation from socket client."""
-        import json
-        import uuid
-        import time
         
         if not self.current_connection or not self.supports_confirmations:
             # Fall back to auto-confirm with default
@@ -329,7 +344,6 @@ class ChatSessionManager:
         }
         
         # Send confirmation request DIRECTLY to client (bypass output buffering)
-        from .constants import MessageTypes
         confirmation_request = {
             "type": MessageTypes.CONFIRMATION_REQUEST,
             "message": message,
@@ -351,9 +365,6 @@ class ChatSessionManager:
     
     def _wait_for_confirmation_response(self, confirmation_id: str, timeout: float = 30.0) -> bool:
         """Wait for confirmation response from client."""
-        import socket
-        import json
-        import time
         
         start_time = time.time()
         
@@ -416,12 +427,6 @@ class ChatSessionManager:
                 
     def listen_for_socket(self, debug=False):
         """Listen for socket connections and handle multi-chat commands."""
-        import socket
-        import json
-        import signal
-        import sys
-        import os
-        from datetime import datetime
         
         # Set daemon mode
         self.socket_mode = True
@@ -452,13 +457,13 @@ class ChatSessionManager:
                 # Always clean up socket
                 try:
                     server.close()
-                except:
+                except (OSError, AttributeError):
                     pass
                 # Remove socket file
                 try:
                     if os.path.exists(SOCKET_PATH):
                         os.remove(SOCKET_PATH)
-                except:
+                except (OSError, FileNotFoundError):
                     pass
                 exit(0)
 
@@ -521,7 +526,7 @@ class ChatSessionManager:
                 if target_chat is not None:
                     # Convert to 0-based index and validate
                     target_index = target_chat - 1
-                    if 0 <= target_index < self.num_chats:
+                    if self._validate_chat_index(target_index):
                         self.active_chat_index = target_index
                         if debug:
                             unified_logger.debug_socket(f"Switched to chat {target_chat} for this command", connection_id=str(id(conn)))
@@ -605,7 +610,6 @@ class ChatSessionManager:
                                         unified_logger.debug_socket("No buffered output, sending completion message")
                                     
                                 # Send the buffered response immediately instead of letting the main handler do it
-                                import json
                                 conn.sendall(json.dumps(response).encode())
                                 response = None  # Prevent the main handler from sending another response
                                 
@@ -638,7 +642,7 @@ class ChatSessionManager:
                         decoded_data = data.decode('utf-8', errors='replace')
                         unified_logger.error(f"JSON decode error: {e}", component='socket_parsing')
                         unified_logger.debug_socket(f"Problematic data: {decoded_data[:500]}...")
-                    except:
+                    except (UnicodeDecodeError, AttributeError):
                         unified_logger.error(f"JSON decode error: {e}", component='socket_parsing')
                         unified_logger.debug_socket(f"Raw bytes: {data[:100]}...")
                 response = {"error": f"Invalid JSON in request: {str(e)}"}
