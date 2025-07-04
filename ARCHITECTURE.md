@@ -55,17 +55,20 @@ CALOUS operates as a background daemon service that provides a socket-based API 
 
 **Key Responsibilities**:
 - **Multi-Chat Coordination**: Manages 14 independent chat instances
-- **Socket Communication**: Unix socket server for external clients
-- **ANSI Output Handling**: Strips ANSI codes for client compatibility
-- **Client State Management**: Tracks connection state and capabilities
-- **Interactive Confirmations**: Handles y/n confirmations over socket
+- **Socket Communication**: Unix socket server with delimiter-based streaming protocol
+- **Real-time Streaming**: Efficient model response streaming to clients
+- **Threading Coordination**: Separate threads for confirmation-requiring commands
+- **Client State Management**: Tracks connection capabilities and confirmation support
+- **Interactive Confirmations**: Thread-safe y/n confirmations with event coordination
 - **Active Chat Persistence**: Saves/restores active chat across restarts
 
 **Socket Protocol**:
 - **Endpoint**: `/tmp/calous.sock`
-- **Format**: JSON message protocol
-- **Message Types**: `prompt`, `cmd`, `confirmation_request`, `confirmation_response`
-- **Output**: Always sends ANSI-formatted content (client handles color stripping)
+- **Format**: Delimiter-based protocol using `\0END\0` markers
+- **Message Types**: `PROMPT\0{content}\0END\0`, `CMD\0{content}\0END\0`
+- **Confirmations**: `\0CONFIRM\0{message}\0{default}\0{id}\0END\0`
+- **Streaming**: Content streams immediately without delimiters, terminated by `\0END\0`
+- **Output**: Always sends raw content for streaming, client handles color control
 
 ### Chat Application (`app.py`)
 **Individual chat instance representing one conversation channel.**
@@ -96,10 +99,14 @@ CALOUS operates as a background daemon service that provides a socket-based API 
 - **Streaming**: Real-time response streaming with ANSI formatting
 
 **Key Features**:
-- Context window validation and warnings
-- Model metadata caching
-- Debug logging with structured information
-- Proper dependency injection for output routing
+- **Streaming Support**: Real-time model response streaming with delimiter protocol
+- **Ollama Integration**: Direct API communication with local Ollama instances
+- **Context Management**: Dynamic context window detection and adaptive handling
+- **Cumulative Content Handling**: Intelligent duplicate detection for streaming chunks
+- **Function Calling**: Tool/function calling support for compatible models
+- **Thinking Mode**: Support for models with thinking capabilities
+- **Error Handling**: Comprehensive error management with user feedback
+- **Debug Logging**: Structured debug information (never sent to clients)
 
 ## Command System
 
@@ -256,32 +263,44 @@ Per-Chat Config (chat-specific)
 ## External Client Integration
 
 ### Rust Client (`cx_rust/`)
-**Reference implementation for external CALOUS interaction.**
+**Reference implementation for external CALOUS interaction with streaming support.**
 
 **Features**:
-- **Command Mode** (`-c`): Direct command execution
+- **Real-time Streaming**: Immediate display of model responses as they arrive
+- **Duplicate Prevention**: Client-side logic prevents double-printing of streamed content
+- **Command Mode** (`-c`): Direct command execution with streaming support
 - **Interactive Mode** (`-i`): REPL-style interface with readline support
-- **Stdin Support**: Pipe data from shell commands
+- **Confirmation Support**: Interactive y/n prompts for destructive operations
+- **Stdin Support**: Pipe data from shell commands with truncation controls
 - **Tab Completion**: Auto-completion for all commands and aliases
 - **Color Control**: `--no-color` flag for ANSI stripping
-- **History**: Persistent command history
-- **Configuration**: User preferences and defaults
+- **History**: Persistent command history and configuration
 
 **Socket Communication**:
-- JSON protocol over Unix socket
-- Confirmation support for interactive operations
-- Error handling and connection management
-- Proper ANSI code handling and stripping
+- **Delimiter Protocol**: Efficient streaming using `\0END\0` markers
+- **Streaming Logic**: Immediate content display with end-marker detection  
+- **Confirmation Handling**: Interactive prompts with response coordination
+- **Error Handling**: Proper connection management and error display
+- **Content Processing**: Escape sequence handling and output optimization
 
 ## Data Flow Patterns
 
 ### Client Request Flow
 ```
-External Client → Unix Socket → JSON Parser → Session Manager
+External Client → Unix Socket → Delimiter Parser → Session Manager
     ↓
-Command Handler → Registry Lookup → Service Execution
+Command Handler → Registry Lookup → Service Execution (threaded if confirmations needed)
     ↓
-Formatter (ANSI) → Session Manager → JSON Response → Socket → Client
+Model Streaming → Real-time Content → Delimiter Protocol → Socket → Client
+```
+
+### Streaming Response Flow
+```
+ModelInteraction → Ollama API → Stream Chunks → Content Processing
+    ↓
+Duplicate Detection → Session Manager → Socket Protocol → Real-time Client Display
+    ↓
+End Marker → Client Processing Complete → Ready for Next Request
 ```
 
 ### Multi-Channel Communication
@@ -316,17 +335,32 @@ Socket clients receive CLEAN output (no debug contamination)
 
 ## Key Design Decisions
 
+## Key Design Decisions
+
+### Why Delimiter-Based Protocol?
+- **Streaming Efficiency**: Immediate content delivery without JSON parsing overhead
+- **Real-time Response**: Content appears as model generates it, not after completion
+- **Simple Implementation**: Clear message boundaries with `\0END\0` markers
+- **Client Flexibility**: Each client can optimize display and processing independently
+
+### Why Threading for Confirmations?
+- **Deadlock Prevention**: Socket handler remains free to receive confirmation responses
+- **Interactive Experience**: Immediate confirmation prompts without blocking
+- **Event Coordination**: Thread-safe synchronization between command execution and user input
+- **Scalable Pattern**: Extensible to any command requiring user interaction
+
 ### Why Unix Sockets?
 - **Performance**: Lower overhead than HTTP for local communication
 - **Security**: File system permissions provide access control
 - **Simplicity**: No authentication, CORS, or web server complexity
 - **Local-First**: Designed for same-machine integration
+- **Streaming Support**: Efficient real-time data transmission
 
 ### Why Single ANSI Output?
-- **Consistency**: Daemon always sends ANSI-formatted output
+- **Consistency**: Daemon generates raw content, client controls formatting
+- **Streaming Compatibility**: No server-side processing delays during streaming
 - **Client Control**: Each client controls color preferences independently
-- **Simplicity**: Single formatter codebase, no server-side format negotiation
-- **Performance**: No server-side format processing overhead
+- **Performance**: Zero server-side format negotiation or processing overhead
 
 ### Why 14 Fixed Channels?
 - **Predictability**: Consistent interface across all deployments

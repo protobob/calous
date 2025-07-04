@@ -246,8 +246,10 @@ fn create_command(data: String, message_type: &str, chat: Option<u8>) -> CxComma
 
 fn handle_server_response(response: &str, _debug: bool, no_color: bool) -> Result<(), String> {
     // With delimiter protocol, response is just plain text
+    // If response is empty, it means content was already printed during streaming
     if response.is_empty() {
-        println!("[No output]");
+        // Content was already printed during streaming, don't print anything else
+        return Ok(());
     } else {
         let output = if no_color { strip_ansi_codes(response) } else { response.to_string() };
         println!("{}", output);
@@ -480,6 +482,7 @@ fn send_command(cmd: &CxCommand, debug: bool, _config: &CxConfig) -> Result<Stri
     // Read response using delimiter protocol
     let mut response = String::new();
     let mut buffer = [0; 4096];
+    let mut has_printed_streaming = false;
     
     loop {
         match stream.read(&mut buffer) {
@@ -493,6 +496,7 @@ fn send_command(cmd: &CxCommand, debug: bool, _config: &CxConfig) -> Result<Stri
                     // No delimiters, just print the content immediately
                     print!("{}", chunk);
                     io::stdout().flush().unwrap();
+                    has_printed_streaming = true;
                     continue; // Keep reading more
                 }
                 
@@ -557,7 +561,14 @@ fn send_command(cmd: &CxCommand, debug: bool, _config: &CxConfig) -> Result<Stri
                         if let Some(end_pos) = response.find("\0END\0") {
                             let content = &response[..end_pos];
                             let unescaped_content = content.replace("\0\0", "\0");
-                            return Ok(unescaped_content);
+                            
+                            // If we already printed the content during streaming, return empty string
+                            // to avoid duplicate output
+                            if has_printed_streaming {
+                                return Ok(String::new());
+                            } else {
+                                return Ok(unescaped_content);
+                            }
                         }
                     }
                     break;

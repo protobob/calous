@@ -463,8 +463,18 @@ class ModelInteraction:
                     if hasattr(chunk, 'message'):
                         content = getattr(chunk.message, 'content', '')
                         if content:
-                            full_response += content
-                            self._output(content)
+                            # Handle potential cumulative content from ollama
+                            # If this chunk contains the full response so far plus new content,
+                            # only send the new part to avoid duplication
+                            if content != full_response and content.startswith(full_response):
+                                # Send only the new content that wasn't sent before
+                                new_content = content[len(full_response):]
+                                self._output(new_content)
+                            elif content != full_response:
+                                # If content is completely different, send it all
+                                self._output(content)
+                            # Update full_response to the latest complete content
+                            full_response = content
                         if hasattr(chunk.message, 'tool_calls') and chunk.message.tool_calls:
                             tool_calls.extend(chunk.message.tool_calls)
                         if self.app.thinking_enabled and hasattr(chunk.message, 'thinking'):

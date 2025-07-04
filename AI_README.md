@@ -47,13 +47,20 @@ All commands generate ANSI-formatted output by default:
 - Each channel has an isolated context prompt, updated only on invocation
 - The `/twist` command is the only way to pipe output from one channel to another
 
-### 6. Interactive Confirmations
-- Destructive commands support y/n confirmations over socket connections
-- Clients send `supports_confirmations: true` to enable interactive prompts
-- Confirmation requests bypass output buffering for immediate user interaction
-- Default behavior is safe (usually "n" for cancel) when confirmations fail
+### 6. Socket Communication and Streaming
+- CALOUS uses a delimiter-based protocol over Unix sockets for efficient streaming
+- Model responses stream in real-time to clients for immediate user feedback
+- The protocol uses `\0END\0` delimiters to mark message boundaries
+- Confirmation requests use special delimiter formats for interactive operations
+- Streaming is handled automatically - commands don't need special streaming logic
 
-### 7. Debug and Logging System
+### 7. Interactive Confirmations
+- Commands with confirmations (like `history.clear`, `context.load`) execute in separate threads
+- This prevents socket handler deadlocks when waiting for user responses  
+- Confirmation system supports y/n prompts with configurable defaults
+- Threading coordination uses events to synchronize command execution with user responses
+
+### 8. Debug and Logging System
 - Use `unified_logger.debug_*()` methods for debug information (routes to log files only)
 - **NEVER** use `_output()` methods for debug information (would leak to socket clients)
 - Debug information must stay in log files, never reach client responses
@@ -79,7 +86,7 @@ CALOUS operates with a fixed count of 14 chat channels and daemon services do no
 
 **Important**: CALOUS uses direct ANSI escape sequences for all color formatting. Commands generate ANSI-formatted output, and color control is handled client-side via the `--no-color` flag on the `cx` Rust client.
 
-**Operational Mode**: CALOUS runs as a daemon service accepting connections via Unix socket (`/tmp/calous.sock`). External clients (like the `cx` Rust tool) connect to this socket to interact with the system. There is no direct terminal/CLI mode - all interaction happens through socket-based clients.
+**Operational Mode**: CALOUS runs as a daemon service accepting connections via Unix socket (`/tmp/calous.sock`). External clients (like the `cx` Rust tool) connect to this socket to interact with the system. The system uses a delimiter-based protocol for efficient real-time streaming of model responses. There is no direct terminal/CLI mode - all interaction happens through socket-based clients.
 
 ## Behavioral Expectations
 

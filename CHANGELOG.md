@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Changelog
 
+## [1.9.0.dev] - 2025-07-04
+
+### Added
+- **Thread-Safe Confirmation System**: Complete redesign of confirmation handling to prevent deadlocks
+  - **Threading Architecture**: Commands requiring confirmation now execute in separate threads
+  - **Event Coordination**: Thread-safe synchronization between command execution and user responses
+  - **Expanded Command Coverage**: All commands with confirmations now use threaded execution
+  - **Deadlock Prevention**: Socket handler remains free to receive confirmation responses
+- **Enhanced Model Streaming**: Improved duplicate detection and content handling
+  - **Cumulative Content Processing**: Intelligent handling of overlapping content in streaming chunks
+  - **Duplicate Prevention**: Client-side logic prevents double-printing of model responses
+  - **Ollama Compatibility**: Robust handling of various Ollama streaming response patterns
+
+### Enhanced
+- **Session Manager Threading**: Sophisticated thread management for interactive operations
+  - **Command Detection**: Automatic identification of commands requiring confirmation
+  - **Thread Lifecycle**: Proper cleanup and coordination of command execution threads
+  - **Connection Management**: Improved handling of client connections during threaded operations
+- **Rust Client Streaming**: Optimized client-side response processing
+  - **Stream Detection**: Intelligent detection of streamed vs buffered content
+  - **Output Coordination**: Prevents duplicate output while maintaining real-time display
+  - **Response State Tracking**: Tracks whether content was already displayed during streaming
+
+### Fixed
+- **Confirmation Deadlock**: Resolved hanging after y/n prompts in socket mode
+  - **Root Cause**: Commands like `/context.load` blocked socket handler while waiting for confirmation
+  - **Solution**: Threaded execution allows socket handler to remain responsive
+  - **Affected Commands**: `history.*`, `context.*`, `chat.reset` operations now work properly
+- **Model Response Duplication**: Fixed duplicate model output in client display
+  - **Root Cause**: Client printed both streaming chunks and final response content
+  - **Solution**: Client returns empty string when content already streamed, preventing double-print
+  - **Impact**: Clean, single-display of model responses without duplication
+
 ## [1.8.0.dev] - 2025-07-04
 
 ### Added
