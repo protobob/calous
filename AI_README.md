@@ -1,5 +1,7 @@
 # AI Agent Guidelines for CALOUS
 
+**NEVER USE PRINT IN CALOUSD**
+
 CALOUS stands for Context Abstraction Layer Over Unix Sockets
 
 ## Purpose
@@ -9,6 +11,7 @@ This document defines the strict rules for all AI agents working with the CALOUS
 CALOUS (Context Abstraction Layer Over Unix Sockets) is a private, local-first system for interacting with locally hosted LLMs. It features:
 - Multiple independent chat channels (each with its own persona)
 - Socket-based daemon interface for external clients
+- Provider plugin system supporting multiple LLM backends (Ollama, Groq, etc.)
 - Shared backend model execution
 
 This is a live production system, not a public API or framework. All boundaries must be respected.
@@ -81,6 +84,7 @@ CALOUS operates with a fixed count of 14 chat channels and daemon services do no
 - `commands/` (add new commands using the established pattern)
 - `services/` (add logic for new command functionality)
 - `formatters/` (handle ANSI output formatting - socket conversion happens automatically)
+- `providers/` (add new provider plugins following the ProviderPlugin base class)
 
 ## Architecture Clarification
 

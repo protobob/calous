@@ -20,6 +20,7 @@ class CommandCategory:
     GENERAL = "General Commands"
     NAVIGATION = "Chat Navigation" 
     MODEL = "Model Management"
+    PROVIDER = "Provider Management"
     PROMPT = "Prompt Management"
     PERSONA = "Persona Management"
     HISTORY = "Chat History"

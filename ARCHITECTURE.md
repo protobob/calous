@@ -4,7 +4,7 @@ CALOUS (Context Abstraction Layer Over Unix Sockets) is a daemon-based multi-cha
 
 ## System Overview
 
-CALOUS operates as a background daemon service that provides a socket-based API for interacting with locally hosted LLMs through Ollama. The system supports 14 independent chat channels, each maintaining isolated conversation contexts and personas.
+CALOUS operates as a background daemon service that provides a socket-based API for interacting with LLMs through multiple providers. The system supports 14 independent chat channels, each maintaining isolated conversation contexts and personas.
 
 ### Core Architecture
 
@@ -23,8 +23,8 @@ CALOUS operates as a background daemon service that provides a socket-based API 
         │ • Socket Comm  │ │   action        │ │ • Handler      │
         │ • ANSI Output  │ │ • ChatHistory   │ │ • Services     │
         │ • Confirmation │ │ • ConfigManager │ │ • Formatters   │
-        │ • Client State │ │ • Persona       │ │ • 54 Commands  │
-        │                │ │ • UnifiedLogger │ │ • 9 Categories │
+        │ • Client State │ │ • Persona       │ │ • 58 Commands  │
+        │                │ │ • UnifiedLogger │ │ • 10 Categories│
         └────────────────┘ └─────────────────┘ └────────────────┘
                 │                   │                   │
         ┌───────▼────────┐ ┌────────▼────────┐ ┌───────▼────────┐
@@ -34,6 +34,7 @@ CALOUS operates as a background daemon service that provides a socket-based API 
         │ • Help System  │ │ • Chat History  │ │ • Base Classes │
         │ • Formatting   │ │ • Log Files     │ │ • Built-ins    │
         │ • Display      │ │ • Personas      │ │ • Function Call│
+        │                │ │                 │ │ • Providers    │
         └────────────────┘ └─────────────────┘ └────────────────┘
 ```
 
@@ -81,17 +82,19 @@ CALOUS operates as a background daemon service that provides a socket-based API 
 
 **Key Attributes**:
 - `instance_index`: Chat channel number (0-13)
-- `selected_model`: Current Ollama model
+- `selected_model`: Current model name
+- `selected_provider`: Current provider (ollama, groq, etc.)
 - `persona`: Multi-slot persona system
 - `chat_history`: Conversation memory
 - `model`: Model interaction handler
 - `commands`: Command processing system
 
 ### Model Interaction (`model_interaction.py`)
-**Handles all communication with Ollama models.**
+**Handles all communication with LLM providers through a unified interface.**
 
 **Core Functions**:
-- **Model Communication**: Direct integration with Ollama API
+- **Provider Abstraction**: Unified interface for multiple LLM backends
+- **Model Communication**: Direct integration with Ollama API and provider plugins
 - **Context Analysis**: Dynamic context window detection and management
 - **Function Calling**: Tool/function calling support for compatible models
 - **Thinking Mode**: Support for models with thinking capabilities
@@ -99,9 +102,9 @@ CALOUS operates as a background daemon service that provides a socket-based API 
 - **Streaming**: Real-time response streaming with ANSI formatting
 
 **Key Features**:
+- **Provider Support**: Ollama (local), Groq (cloud), and extensible plugin system
 - **Streaming Support**: Real-time model response streaming with delimiter protocol
-- **Ollama Integration**: Direct API communication with local Ollama instances
-- **Context Management**: Dynamic context window detection and adaptive handling
+- **Context Management**: Provider-aware context window detection and adaptive handling
 - **Cumulative Content Handling**: Intelligent duplicate detection for streaming chunks
 - **Function Calling**: Tool/function calling support for compatible models
 - **Thinking Mode**: Support for models with thinking capabilities
@@ -126,10 +129,11 @@ CALOUS operates as a background daemon service that provides a socket-based API 
 - **Argument Validation**: Type checking and argument parsing
 - **Execution Coordination**: Delegates to service layer for business logic
 
-#### Command Categories (9 total, 54 commands)
+#### Command Categories (10 total, 58 commands)
 ```
 ├── chat/         # Chat management (7 commands)
 ├── model/        # Model operations (7 commands)  
+├── provider/     # Provider management (4 commands)
 ├── persona/      # Persona management (11 commands)
 ├── history/      # History operations (9 commands)
 ├── log/          # Logging operations (5 commands)
@@ -184,7 +188,8 @@ def cmd_chat_switch(handler, chat_number: Optional[int] = None) -> CommandResult
 **Configuration Layers**:
 ```
 Global Config (affects all chats)
-├── selected_model: Current Ollama model
+├── selected_model: Current model name
+├── selected_provider: Current provider (ollama, groq, etc.)
 ├── num_ctx: Context window size  
 ├── temperature: Model creativity setting
 ├── active_chat_index: Persisted active chat
@@ -234,7 +239,6 @@ Per-Chat Config (chat-specific)
 ├── model.log        # Model interactions  
 ├── audit.log        # Command execution tracking
 ├── error.log        # Errors and exceptions
-└── 2025-MM-DD.txt   # Legacy daily log (compatibility)
 ```
 
 **Critical Feature**: Debug methods (`debug_socket()`, `debug_command()`, `debug_model()`) route ONLY to log files, preventing debug information leakage to socket clients.
@@ -251,13 +255,15 @@ Per-Chat Config (chat-specific)
 **Extensible plugin system for custom functionality.**
 
 **Plugin Types**:
+- **Provider Plugins**: LLM backend integrations (Groq, etc.)
 - **Function Calling**: Custom tools/functions for model use
 - **Command Plugins**: New command registration
 - **Hook Plugins**: Event-based system extensions
 
 **Architecture**:
-- **Base Classes**: `PluginBase`, `FunctionCallingPlugin`, `CommandPlugin`, `HookPlugin`
+- **Base Classes**: `PluginBase`, `ProviderPlugin`, `FunctionCallingPlugin`, `CommandPlugin`, `HookPlugin`
 - **Discovery**: Automatic plugin loading from plugin directories
+- **Provider System**: Unified interface for multiple LLM backends
 - **Integration**: Seamless integration with command system and model interaction
 
 ## External Client Integration
@@ -331,7 +337,7 @@ Socket clients receive CLEAN output (no debug contamination)
 - **Local Storage**: All data remains on user's machine
 - **No Telemetry**: No external data transmission
 - **Optional Logging**: User-controlled conversation logging
-- **Direct Model Communication**: Direct to local Ollama instance only
+- **Provider Choice**: Direct local communication (Ollama) or user-configured cloud providers (Groq with API keys)
 
 ## Key Design Decisions
 
@@ -361,6 +367,8 @@ Socket clients receive CLEAN output (no debug contamination)
 - **Streaming Compatibility**: No server-side processing delays during streaming
 - **Client Control**: Each client controls color preferences independently
 - **Performance**: Zero server-side format negotiation or processing overhead
+
+**ANSI Code Standards**: Use `[1;37m` format for headers and `[37m` for text, not `\033[1;37m` format. Commands use `\033[1m\033[90m` for highlighting. Follow existing patterns in the codebase.
 
 ### Why 14 Fixed Channels?
 - **Predictability**: Consistent interface across all deployments

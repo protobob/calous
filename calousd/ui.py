@@ -412,6 +412,7 @@ class UIManager:
         category_mapping = {
             'chat': CommandCategory.NAVIGATION,
             'model': CommandCategory.MODEL,
+            'provider': CommandCategory.PROVIDER,
             'prompt': CommandCategory.PROMPT,
             'persona': CommandCategory.PERSONA,  # persona commands now have their own category
             'history': CommandCategory.HISTORY,
@@ -442,6 +443,11 @@ class UIManager:
           # Special handling for model category to match HELP.md format
         if category.lower() == 'model':
             self._show_model_help()
+            return
+        
+        # Special handling for provider category to match HELP.md format
+        if category.lower() == 'provider':
+            self._show_provider_help()
             return
         
         # Special handling for prompt category to match HELP.md format
@@ -912,13 +918,61 @@ class UIManager:
         self._output(f"[90mUse /sys.help <command> for detailed help on specific commands[0m")
         self._output(f"[90mExample: /sys.help prompt.set[0m")
     
+    def _show_provider_help(self):
+        """Display provider help in the custom format."""
+        self._output(f"\n\033[1;37mPROVIDER COMMANDS HELP\033[0m\n")
+        
+        self._output(f"\033[37mProviders are LLM backends that CALOUS can connect to for model inference. The default provider is Ollama, which runs models locally on your machine. Provider plugins enable connections to cloud-based services like Groq. Provider plugins must be activated and require API key environment variables to be configured (e.g., GROQ_API_KEY).\033[0m\n")
+        
+        self._output(f"\033[37mPROVIDER MANAGEMENT\033[0m\n")
+        
+        self._output(f" \033[1m\033[90m/provider.list\033[0m    \033[37mList available LLM providers\033[0m")
+        self._output(f" \033[1m\033[90m/provider.set\033[0m     \033[37mSwitch to a different LLM provider\033[0m")
+        self._output(f" \033[1m\033[90m/provider.vars\033[0m    \033[37mShow provider-related variables\033[0m")
+        self._output(f" \033[1m\033[90m/provider.help\033[0m    \033[37mShow help for provider commands\033[0m")
+        self._output("")
+        
+        self._output(f"\033[37mMORE HELP\033[0m\n")
+        
+        self._output(f" \033[1m\033[90m/provider.help\033[0m    \033[37mshows this help screen\033[0m")
+        self._output("")
+        
+        self._output(f"\033[90mUse /sys.help <command> for detailed help on specific commands\033[0m")
+        self._output(f"\033[90mExample: /sys.help provider.set\033[0m")
+    
     def display_shell_output(self, output: str):
         """Display shell command output in a system-style message."""
         self._output(f"\033[1m\033[35m[SHELL]\033[0m {output}")
     
+    def _get_available_models_for_current_provider(self) -> list:
+        """Get available models for the current provider."""
+        # Always read provider from config to ensure consistency
+        from .config import ConfigManager
+        global_config = ConfigManager.get_global_config()
+        current_provider = global_config.get('selected_provider', 'ollama')
+        
+        if current_provider == 'ollama':
+            return self.app.model.list_ollama_models()
+        else:
+            # Get models from provider plugin
+            if hasattr(self.app, 'plugin_manager') and self.app.plugin_manager:
+                provider_plugin = self.app.plugin_manager.get_provider_plugin(current_provider)
+                if provider_plugin and provider_plugin.loaded:
+                    try:
+                        return provider_plugin.get_available_models()
+                    except Exception:
+                        pass
+            
+            # Fallback to Ollama if provider fails
+            return self.app.model.list_ollama_models()
+
     def show_available_models(self) -> str:
         """Display available models with dual output format."""
-        models = self.app.model.list_ollama_models()
+        models = self._get_available_models_for_current_provider()
+        # Read provider from config to match the model list source
+        from .config import ConfigManager
+        global_config = ConfigManager.get_global_config()
+        current_provider = global_config.get('selected_provider', 'ollama')
         
         if not models:
             # Rich output
@@ -929,23 +983,26 @@ class UIManager:
             return "No models available. Install models with: ollama pull model-name"
         
         # Rich output
-        self._output("\n[1mAvailable Ollama Models:[0m\n")
+        provider_name = current_provider.title()
+        self._output(f"\n\033[1mAvailable {provider_name} Models:\033[0m\n")
         
         plain_text_lines = ["Available Models:"]
         
         for i, model in enumerate(models, 1):
-            # Get context window info for display
-            context_info = self.app.model.get_context_window_info(model)
+            # Only get context window info for Ollama models
+            context_info = None
+            if current_provider == 'ollama':
+                context_info = self.app.model.get_context_window_info(model)
             if context_info:
-                context_display = f"[36m{context_info.actual_context//1000}k[0m ctx"
+                context_display = f"\033[36m{context_info.actual_context//1000}k\033[0m ctx"
                 self._output(f"{i:2}. {model} [{context_display}]")
                 plain_text_lines.append(f"{i}. {model} ({context_info.actual_context//1000}k ctx)")
             else:
                 self._output(f"{i:2}. {model}")
                 plain_text_lines.append(f"{i}. {model}")
         
-        self._output(f"\n[90mUsage:[0m [1m/model.switch NUMBER[0m or [1m/model.switch MODEL_NAME[0m")
-        self._output(f"[90mExample:[0m [1m/model.switch 1[0m or [1m/model.switch llama3[0m")
+        self._output(f"\n\033[90mUsage:\033[0m \033[1m/model.switch NUMBER\033[0m or \033[1m/model.switch MODEL_NAME\033[0m")
+        self._output(f"\033[90mExample:\033[0m \033[1m/model.switch 1\033[0m or \033[1m/model.switch llama3\033[0m")
         
         plain_text_lines.append("")
         plain_text_lines.append("Usage: /model.switch NUMBER or /model.switch MODEL_NAME")

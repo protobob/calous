@@ -3,7 +3,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Install only the non-standard dependencies
-RUN pip install --no-cache-dir ollama>=0.5.2
+RUN pip install --no-cache-dir ollama>=0.5.2 groq
 # Create the calous directory for data persistence
 RUN mkdir -p /root/.calous
 

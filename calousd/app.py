@@ -13,7 +13,7 @@ from .ui import UIManager
 from .chat_history import ChatHistory
 from .model_interaction import ModelInteraction
 from .persona import Persona
-from .constants import DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS, DEFAULT_NUM_CTX, DEFAULT_TEMPERATURE
+from .constants import DEFAULT_MODEL, DEFAULT_PROVIDER, DEFAULT_SYSTEM_PROMPT, MAX_PROMPTS, DEFAULT_NUM_CTX, DEFAULT_TEMPERATURE
 from .types import CommandResult, ActionType
 from typing import Dict, Any, Optional, TYPE_CHECKING
 
@@ -37,6 +37,7 @@ class Chat:
         self.config = ConfigManager.get_chat_config(instance_index)
         global_config = ConfigManager.get_global_config()
         self.selected_model = global_config.get("selected_model", DEFAULT_MODEL)
+        self.selected_provider = global_config.get("selected_provider", DEFAULT_PROVIDER)
         self.verbosity = self.config.get("verbosity", True)
 
         # Initialize persona system

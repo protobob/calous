@@ -585,7 +585,7 @@ class ChatSessionManager:
                                 needs_confirmation = any(cmd in action.lower() for cmd in [
                                     'history.clear', 'history.delete', 'history.save', 'history.load', 'history.purge',
                                     'context.save', 'context.load', 'context.delete',
-                                    'chat.reset', 'config.reset', 'plugin.uninstall', 'file.delete'
+                                    'chat.reset', 'config.reset', 'plugin.reload', 'file.delete'
                                 ])
                                 
                                 if needs_confirmation:

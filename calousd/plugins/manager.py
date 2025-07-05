@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Callable
 
 from ..unified_logger import unified_logger
-from .base import PluginBase, PluginCapability, FunctionCallingPlugin, CommandPlugin, HookPlugin
+from .base import PluginBase, PluginCapability, FunctionCallingPlugin, CommandPlugin, HookPlugin, ProviderPlugin
 
 
 class PluginManager:
@@ -37,6 +37,7 @@ class PluginManager:
         self.function_plugins: Dict[str, FunctionCallingPlugin] = {}
         self.command_plugins: Dict[str, CommandPlugin] = {}
         self.hook_plugins: List[HookPlugin] = []
+        self.provider_plugins: Dict[str, ProviderPlugin] = {}
         self.plugin_commands: Dict[str, Callable] = {}
         self.plugin_functions: Dict[str, Callable] = {}
         self.debug = debug
@@ -133,11 +134,11 @@ class PluginManager:
         
         # Determine appropriate module name based on plugin location
         if "builtin" in str(plugin_file):
-            module_name = f"calous.plugins.builtin.{plugin_file.stem}"
+            module_name = f"calousd.plugins.builtin.{plugin_file.stem}"
         elif "user" in str(plugin_file):
-            module_name = f"calous.plugins.user.{plugin_file.stem}"
+            module_name = f"calousd.plugins.user.{plugin_file.stem}"
         else:
-            module_name = f"calous.plugins.{plugin_file.stem}"
+            module_name = f"calousd.plugins.{plugin_file.stem}"
         
         # Import the module
         spec = importlib.util.spec_from_file_location(module_name, plugin_file)
@@ -153,7 +154,7 @@ class PluginManager:
             if (isinstance(attr, type) and 
                 issubclass(attr, PluginBase) and 
                 attr != PluginBase and
-                not attr.__name__ in ['FunctionCallingPlugin', 'CommandPlugin', 'HookPlugin']):  # Skip base classes only
+                not attr.__name__ in ['FunctionCallingPlugin', 'CommandPlugin', 'HookPlugin', 'ProviderPlugin']):  # Skip base classes only
                 
                 # Instantiate and register the plugin
                 try:
@@ -196,6 +197,11 @@ class PluginManager:
             if PluginCapability.HOOKS in capabilities:
                 if isinstance(plugin, HookPlugin):
                     self.hook_plugins.append(plugin)
+            
+            if PluginCapability.PROVIDER in capabilities:
+                if isinstance(plugin, ProviderPlugin):
+                    provider_name = plugin.get_provider_name()
+                    self.provider_plugins[provider_name] = plugin
             
             # Print success message for all loaded plugins
             self._output(f"[32m✓[0m Loaded plugin: {plugin.name} v{plugin.version}")
@@ -341,6 +347,7 @@ class PluginManager:
         self.function_plugins.clear()
         self.command_plugins.clear()
         self.hook_plugins.clear()
+        self.provider_plugins.clear()
         self.plugin_commands.clear()
         self.plugin_functions.clear()
         
@@ -366,3 +373,15 @@ class PluginManager:
     def get_hook_plugins(self) -> List[HookPlugin]:
         """Get all hook plugins."""
         return self.hook_plugins.copy()
+    
+    def get_provider_plugins(self) -> Dict[str, ProviderPlugin]:
+        """Get all provider plugins."""
+        return self.provider_plugins.copy()
+    
+    def get_provider_plugin(self, provider_name: str) -> Optional[ProviderPlugin]:
+        """Get a specific provider plugin by name."""
+        return self.provider_plugins.get(provider_name)
+    
+    def get_available_providers(self) -> List[str]:
+        """Get names of all available provider plugins."""
+        return list(self.provider_plugins.keys())

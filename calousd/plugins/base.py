@@ -11,6 +11,7 @@ class PluginCapability(Enum):
     COMMANDS = "commands"  # User commands
     HOOKS = "hooks"  # Message processing hooks
     UI = "ui"  # Custom display/formatting
+    PROVIDER = "provider"  # LLM provider (e.g., Groq, Claude)
 
 
 class PluginBase(ABC):
@@ -105,3 +106,50 @@ class HookPlugin(PluginBase):
     def post_message_hook(self, response: str, context: Dict[str, Any]) -> str:
         """Process LLM response before displaying. Return modified response."""
         return response
+
+
+class ProviderPlugin(PluginBase):
+    """Base class for plugins that provide LLM provider capabilities."""
+    
+    def __init__(self, name: str, version: str = "1.0.0", description: str = ""):
+        super().__init__(name, version, description)
+        self.capabilities.append(PluginCapability.PROVIDER)
+    
+    @abstractmethod
+    def get_provider_name(self) -> str:
+        """Return the name of this provider (e.g., 'groq', 'claude')."""
+        pass
+    
+    @abstractmethod
+    def get_available_models(self) -> List[str]:
+        """Return list of available models for this provider."""
+        pass
+    
+    @abstractmethod
+    def generate_response(self, messages: List[Dict[str, Any]], model: str, 
+                         stream: bool = True, **kwargs) -> Any:
+        """Generate a response using this provider's API."""
+        pass
+    
+    @abstractmethod
+    def supports_streaming(self) -> bool:
+        """Return True if this provider supports streaming responses."""
+        pass
+    
+    @abstractmethod
+    def supports_function_calling(self) -> bool:
+        """Return True if this provider supports function calling."""
+        pass
+    
+    def validate_model(self, model: str) -> bool:
+        """Check if the given model is valid for this provider."""
+        return model in self.get_available_models()
+    
+    def get_provider_info(self) -> Dict[str, Any]:
+        """Return information about this provider."""
+        return {
+            "name": self.get_provider_name(),
+            "models": self.get_available_models(),
+            "streaming": self.supports_streaming(),
+            "function_calling": self.supports_function_calling()
+        }

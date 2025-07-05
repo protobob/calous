@@ -33,6 +33,36 @@ class ModelInteraction:
     def __init__(self, app):
         self.app = app    
         self._context_cache = {}  # Cache context window info to avoid repeated API calls
+        self._current_provider = None  # Cache current provider plugin
+    
+    def get_current_provider(self):
+        """Get the current provider plugin."""
+        # Get selected provider from config
+        selected_provider = getattr(self.app, 'selected_provider', 'ollama')
+        
+        # Return cached provider if it matches
+        if self._current_provider and self._current_provider.get_provider_name() == selected_provider:
+            return self._current_provider
+        
+        # Special case for ollama - use built-in functionality
+        if selected_provider == 'ollama':
+            self._current_provider = None
+            return None
+        
+        # Get provider plugin from plugin manager
+        if hasattr(self.app, 'plugin_manager') and self.app.plugin_manager:
+            provider_plugin = self.app.plugin_manager.get_provider_plugin(selected_provider)
+            if provider_plugin and provider_plugin.loaded:
+                self._current_provider = provider_plugin
+                return provider_plugin
+        
+        # Fallback to ollama if provider not found
+        self._current_provider = None
+        return None
+    
+    def is_using_provider_plugin(self) -> bool:
+        """Check if we're currently using a provider plugin (not ollama)."""
+        return self.get_current_provider() is not None
     
     def _build_chat_options(self, messages: List[Dict], stream: bool = True, tools: Optional[List] = None) -> Dict[str, Any]:
         """Build chat options dictionary for ollama requests."""
@@ -135,8 +165,26 @@ class ModelInteraction:
         if model_name in self._context_cache:
             return self._context_cache[model_name]
         
+        # Check if we're using a provider plugin
+        current_provider = self.get_current_provider()
+        if current_provider:
+            # For provider plugins, create a simple context info with defaults
+            context_info = ContextWindowInfo(
+                max_context=8192,  # Default for most providers
+                runtime_context=self.app.num_ctx,
+                actual_context=self.app.num_ctx,
+                tokenizer_type='unknown',
+                architecture='unknown',
+                parameter_count='unknown',
+                quantization='unknown'
+            )
+            
+            # Cache the result
+            self._context_cache[model_name] = context_info
+            return context_info
+        
         try:
-            # Get model metadata from Ollama
+            # Get model metadata from Ollama (only for ollama provider)
             response = ollama.show(model_name)
             model_dict = response.model_dump()
             
@@ -351,8 +399,14 @@ class ModelInteraction:
         """Send a prompt to the selected model and return the model response (streaming or non-streaming)."""
         # Check if model is selected before making API call
         if not self.app.selected_model or self.app.selected_model.strip() == "":
-            self._output(f"\n[1;31mNo Model Selected:[0m Please select a model first.")
-            self._output(f"[90mUse /model to choose an available model[0m")
+            self._output(f"\n\033[1;31mNo Model Selected:\033[0m Please select a model first.")
+            self._output(f"\033[90mUse /model.switch to choose an available model\033[0m")
+            # Send end-of-response marker for delimiter protocol
+            if (hasattr(self.app, 'session_manager') and 
+                self.app.session_manager and 
+                self.app.session_manager.socket_mode):
+                self.app.session_manager.send_to_client("", "end_response")
+            
             return {"message": {"content": "[Error: No model selected. Use /model to choose a model.]"}}
         
         messages = []
@@ -380,7 +434,96 @@ class ModelInteraction:
         # Get available function tools from plugin system
         tools = self._get_function_tools()
         
-        return self._handle_model_response(messages, user_prompt, tools, stream=stream)
+        # Check if we're using a provider plugin
+        provider = self.get_current_provider()
+        if provider:
+            return self._handle_provider_response(provider, messages, user_prompt, tools, stream=stream)
+        else:
+            # Use original Ollama implementation
+            return self._handle_model_response(messages, user_prompt, tools, stream=stream)
+
+    def _handle_provider_response(self, provider, messages, user_prompt, tools=None, stream=True):
+        """Handle response from a provider plugin."""
+        full_response = ""
+        tool_calls = []
+        
+        try:
+            # Prepare request parameters
+            request_kwargs = {
+                'temperature': self.app.temperature,
+                'max_tokens': getattr(self.app, 'num_ctx', 8192),
+                'tools': tools if tools else None
+            }
+            
+            # Generate response using provider
+            response = provider.generate_response(
+                messages=messages,
+                model=self.app.selected_model,
+                stream=stream,
+                **request_kwargs
+            )
+            
+            if stream and provider.supports_streaming():
+                # Handle streaming response
+                for chunk in response:
+                    if hasattr(chunk, 'choices') and chunk.choices:
+                        choice = chunk.choices[0]
+                        if choice.delta and choice.delta.content:
+                            content = choice.delta.content
+                            self._output(content)
+                            full_response += content
+                        
+                        # Handle tool calls in streaming
+                        if choice.delta and hasattr(choice.delta, 'tool_calls') and choice.delta.tool_calls:
+                            tool_calls.extend(choice.delta.tool_calls)
+                
+                self._output("\n")  # newline after stream
+                
+                # Send end-of-response marker for delimiter protocol
+                if (hasattr(self.app, 'session_manager') and 
+                    self.app.session_manager and 
+                    self.app.session_manager.socket_mode):
+                    self.app.session_manager.send_to_client("", "end_response")
+            else:
+                # Handle non-streaming response
+                if hasattr(response, 'choices') and response.choices:
+                    choice = response.choices[0]
+                    if choice.message and choice.message.content:
+                        full_response = choice.message.content
+                        self._output(full_response)
+                    
+                    # Handle tool calls
+                    if choice.message and hasattr(choice.message, 'tool_calls') and choice.message.tool_calls:
+                        tool_calls.extend(choice.message.tool_calls)
+                
+                self._output("\n")  # newline after response
+                
+                # Send end-of-response marker for delimiter protocol
+                if (hasattr(self.app, 'session_manager') and 
+                    self.app.session_manager and 
+                    self.app.session_manager.socket_mode):
+                    self.app.session_manager.send_to_client("", "end_response")
+            
+            # Handle function calls if present
+            if tool_calls:
+                tool_results = self._handle_function_calls(tool_calls)
+                if tool_results:
+                    messages.append({"role": "assistant", "content": full_response, "tool_calls": tool_calls})
+                    messages.extend(tool_results)
+                    self._output(f"[2;32m🔄 Processing function results...[0m")
+                    # Make follow-up call without tools to get final response
+                    return self._handle_provider_response(provider, messages, user_prompt, tools=None, stream=stream)
+            
+            clean_response = full_response if full_response else "[No valid response received from the model.]"
+            final_response = {"message": {"content": clean_response}}
+            
+            self._process_response(user_prompt, final_response, full_response)
+            return final_response
+            
+        except Exception as e:
+            error_msg = f"Provider error ({provider.get_provider_name()}): {e}"
+            self._output(f"\n[1;31m{error_msg}[0m")
+            return {"message": {"content": f"[Error: {error_msg}]"}}
 
     def _handle_model_response(self, messages, user_prompt, tools=None, stream=True):
         """Handle model response with unified streaming/non-streaming logic."""

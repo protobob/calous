@@ -19,7 +19,8 @@ Examples:
 # Set of plugin file names (without .py extension) that should be enabled
 # Set to None to enable all plugins
 # Set to empty set() to disable all plugins
-#ENABLED_PLUGINS = None  # {"dice_roller"}
-ENABLED_PLUGINS = set()
-#NABLED_PLUGINS = {"calculator_plugin", "shell_command_plugin", "mcp_client_plugin"}
+#ENABLED_PLUGINS = None  # Enable all
+#ENABLED_PLUGINS = set() # Disable All
+#ENABLED_PLUGINS = {"calculator_plugin", "mcp_client_plugin"}
+ENABLED_PLUGINS = None  # Enable all plugins
 

@@ -6,6 +6,7 @@ from .handler import AdvancedCommandHandler
 from .alias import commands as alias_commands
 from .sys import commands as sys_commands
 from .model import commands as model_commands
+from .provider import commands as provider_commands
 from .chat import commands as chat_commands
 from .history import commands as history_commands
 from .log import commands as log_commands

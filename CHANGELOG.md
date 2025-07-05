@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Changelog
 
+## [1.10.0.dev] - 2025-07-05
+
+### Added
+- **Provider Plugin System**: Extensible LLM backend support beyond Ollama
+  - **Provider Abstraction Layer**: Unified interface for multiple LLM backends in `model_interaction.py`
+  - **Groq Provider Plugin**: Complete Groq AI integration with streaming support and model caching
+  - **Provider Commands**: New `/provider.*` command category for provider management
+    - `/provider.list` - List all available providers with status and capabilities
+    - `/provider.set` - Switch between providers (clears model selection for safety)
+    - `/provider.vars` - Display current provider information and models
+    - `/provider.help` - Provider system help with explanatory overview
+  - **Plugin Base Classes**: `ProviderPlugin` base class for creating new provider integrations
+  - **Configuration Integration**: Provider selection persisted in global config
+  - **Model List Consistency**: Unified model listing across UI and service layers
+
+### Enhanced
+- **Model Context Window Handling**: Provider-aware context window detection
+  - **Provider-Specific Logic**: Different context handling for Ollama vs provider plugins
+  - **Groq Model Defaults**: Sensible 8192 token context window defaults for cloud providers
+  - **Error Prevention**: No more Ollama API calls for non-Ollama models in `/model.vars`
+- **Command System Expansion**: Added PROVIDER command category and updated help system
+  - **Category Mapping**: Provider commands properly categorized and accessible via help
+  - **Help System Integration**: Custom provider help with explanatory content about local vs cloud providers
+- **Session Manager**: Added `plugin.reload` to confirmation command list to prevent system hangs
+
+### Fixed
+- **Provider State Synchronization**: Consistent provider/model state across all chat instances
+- **Model Selection Validation**: Provider-aware model validation prevents "invalid model" errors
+- **ANSI Code Formatting**: Proper escape sequence formatting in provider help output
+- **System Stability**: Eliminated hanging conditions in provider switching and model selection
+
 ## [1.9.0.dev] - 2025-07-04
 
 ### Added

@@ -45,6 +45,29 @@ class ModelService:
         """Update the context window globally across all chats."""
         return self.app.update_global_num_ctx(context_size)
     
+    def get_available_models(self) -> list:
+        """Get available models for the current provider."""
+        # Always read provider from config to ensure consistency
+        from ...config import ConfigManager
+        global_config = ConfigManager.get_global_config()
+        current_provider = global_config.get('selected_provider', 'ollama')
+        
+        if current_provider == 'ollama':
+            # Use Ollama directly
+            return self.app.model.list_ollama_models()
+        else:
+            # Get models from provider plugin
+            if hasattr(self.app, 'plugin_manager') and self.app.plugin_manager:
+                provider_plugin = self.app.plugin_manager.get_provider_plugin(current_provider)
+                if provider_plugin and provider_plugin.loaded:
+                    try:
+                        return provider_plugin.get_available_models()
+                    except Exception:
+                        pass
+            
+            # Fallback to Ollama if provider fails
+            return self.app.model.list_ollama_models()
+    
     def get_current_context(self) -> int:
         """Get the current context window size."""
         return self.app.num_ctx
@@ -156,7 +179,7 @@ class ModelService:
     
     def select_model_by_input(self, model_input: str) -> Optional[str]:
         """Select a model by name or number input."""
-        models = self.app.model.list_ollama_models()
+        models = self.get_available_models()
         if not models:
             return None
         
@@ -182,6 +205,3 @@ class ModelService:
         
         return None
 
-    def get_available_models(self) -> list:
-        """Get list of available models."""
-        return self.app.model.list_ollama_models()
