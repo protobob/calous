@@ -1,7 +1,7 @@
 """Model command formatters."""
 from typing import Optional
-from ...constants import MIN_NUM_CTX, MAX_NUM_CTX, MIN_TEMPERATURE, MAX_TEMPERATURE, DEFAULT_TEMPERATURE
-from .services import ContextResult, TemperatureResult, EvaluationResult, ThinkingResult
+from ...constants import MIN_NUM_CTX, MAX_NUM_CTX, MIN_TEMPERATURE, MAX_TEMPERATURE, DEFAULT_TEMPERATURE, Colors
+from .services import ContextResult, TemperatureResult, EvaluationResult, ThinkingResult, ToolUseResult
 from ..formatters import CommandFormatter
 
 
@@ -166,3 +166,16 @@ class ModelFormatter(CommandFormatter):
             ModelFormatter._output("[90mModel reasoning will be shown during responses but filtered from history and twist operations[0m")
         else:
             ModelFormatter._output("[90mModel reasoning will be hidden for clean output[0m")
+    
+    @staticmethod
+    def format_tooluse_state(result: ToolUseResult):
+        """Format tool use mode state change."""
+        if result.changed:
+            status = "enabled" if result.enabled else "disabled"
+            ModelFormatter._output(f"\nTool use is now: {status}")
+            if result.enabled:
+                ModelFormatter._output(f"{Colors.HINT}Model can now call function plugins when appropriate{Colors.RESET}")
+            else:
+                ModelFormatter._output(f"{Colors.HINT}Model will not use function plugins{Colors.RESET}")
+        else:
+            ModelFormatter._output(f"\nTool use is already {'enabled' if result.enabled else 'disabled'}")

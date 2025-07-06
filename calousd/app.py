@@ -56,6 +56,7 @@ class Chat:
         }
         self.logging_enabled = self.config.get("logging_enabled", True)
         self.thinking_enabled = self.config.get("thinking_enabled", False)
+        self.tooluse_enabled = self.config.get("tooluse_enabled", False)
         self.history_enabled = self.config.get("history_enabled", True)
         self.num_ctx = ConfigManager.get_global_num_ctx()
         self.temperature = self.config.get("temperature", DEFAULT_TEMPERATURE)
@@ -94,6 +95,7 @@ class Chat:
             "persona": self.persona.to_dict(),
             "logging_enabled": self.logging_enabled,
             "thinking_enabled": self.thinking_enabled,
+            "tooluse_enabled": self.tooluse_enabled,
             "history_enabled": self.history_enabled,
             "temperature": self.temperature,
             "prompts": self.prompts

@@ -98,6 +98,20 @@ def cmd_model_help(handler) -> CommandResult:
     return CommandResult(ActionType.CONTINUE)
 
 
+@registry.register("model.tooluse", "Toggle tool use", category=CommandCategory.MODEL)
+def cmd_model_tooluse(handler, state: str) -> CommandResult:
+    """Enable or disable tool use for function calling."""
+    if state.lower() not in ["on", "off"]:
+        ModelFormatter.format_invalid_state_error("tooluse")
+        return CommandResult(ActionType.CONTINUE)
+    
+    service = ModelService(handler.app)
+    target_state = state.lower() == "on"
+    result = service.set_tooluse_mode(target_state)
+    ModelFormatter.format_tooluse_state(result)
+    return CommandResult(ActionType.CONTINUE)
+
+
 @registry.register("model.vars", "Show model-related variables", category=CommandCategory.MODEL)
 def cmd_model_vars(handler) -> CommandResult:
     """Display model-related variables and settings."""

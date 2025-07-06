@@ -27,6 +27,11 @@ class ThinkingResult(NamedTuple):
     changed: bool
 
 
+class ToolUseResult(NamedTuple):
+    enabled: bool
+    changed: bool
+
+
 class ModelService:
     """Service for managing model settings and operations."""
     
@@ -170,6 +175,17 @@ class ModelService:
         changed = current != enabled
         self.app.thinking_enabled = enabled
         return ThinkingResult(enabled=enabled, changed=changed)
+    
+    def get_tooluse_mode(self) -> bool:
+        """Get the current tool use mode setting."""
+        return self.app.tooluse_enabled
+    
+    def set_tooluse_mode(self, enabled: bool) -> ToolUseResult:
+        """Set the tool use mode setting."""
+        current = self.app.tooluse_enabled
+        changed = current != enabled
+        self.app.tooluse_enabled = enabled
+        return ToolUseResult(enabled=enabled, changed=changed)
     
     @staticmethod
     def show_model_variables(handler):

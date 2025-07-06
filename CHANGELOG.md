@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Changelog
 
+## [1.10.1.dev] - 2025-07-06
+
+### Added
+- **Tool Use Control**: New `/model.tooluse on/off` command for per-chat function calling control
+  - **Per-Chat Setting**: Each chat can independently enable/disable tool use
+  - **Configuration Persistence**: Tool use preference saved in chat configuration
+  - **Model Integration**: Function tools only available when tool use is enabled
+  - **Provider Compatibility**: Works with all providers that support function calling
+
+### Enhanced  
+- **Groq Provider**: Improved function calling support with proper message formatting
+  - **Tool Call Conversion**: Enhanced tool call object serialization for streaming
+  - **Message Format Compliance**: Proper Groq API conversation structure for tool use -- but it doesnt work, not sure why
+  - **Error Handling**: Better error reporting for function calling issues
+
+### Fixed
+- **Function Plugin Integration**: Tool availability now properly controlled by tooluse setting
+- **ANSI Formatting**: Consistent color formatting using Colors constants in model formatters
+
 ## [1.10.0.dev] - 2025-07-05
 
 ### Added

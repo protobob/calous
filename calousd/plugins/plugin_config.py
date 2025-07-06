@@ -22,5 +22,5 @@ Examples:
 #ENABLED_PLUGINS = None  # Enable all
 #ENABLED_PLUGINS = set() # Disable All
 #ENABLED_PLUGINS = {"calculator_plugin", "mcp_client_plugin"}
-ENABLED_PLUGINS = None  # Enable all plugins
+ENABLED_PLUGINS = {"groq_provider", "dice_roller"}
 

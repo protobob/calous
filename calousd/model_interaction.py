@@ -442,7 +442,7 @@ class ModelInteraction:
             # Use original Ollama implementation
             return self._handle_model_response(messages, user_prompt, tools, stream=stream)
 
-    def _handle_provider_response(self, provider, messages, user_prompt, tools=None, stream=True):
+    def _handle_provider_response(self, provider, messages, user_prompt, tools=None, stream=True, _recursion_depth=0):
         """Handle response from a provider plugin."""
         full_response = ""
         tool_calls = []
@@ -506,13 +506,24 @@ class ModelInteraction:
             
             # Handle function calls if present
             if tool_calls:
+                unified_logger.debug_command(f"Processing {len(tool_calls)} tool calls")
                 tool_results = self._handle_function_calls(tool_calls)
+                unified_logger.debug_command(f"Got {len(tool_results) if tool_results else 0} tool results")
                 if tool_results:
+                    unified_logger.debug_command("About to append assistant message to conversation")
+                    unified_logger.debug_command(f"tool_calls type: {type(tool_calls)}, content: {str(tool_calls)[:200]}")
                     messages.append({"role": "assistant", "content": full_response, "tool_calls": tool_calls})
+                    unified_logger.debug_command("Assistant message appended successfully")
                     messages.extend(tool_results)
+                    unified_logger.debug_command("Tool results extended successfully")
                     self._output(f"[2;32m🔄 Processing function results...[0m")
+                    unified_logger.debug_command("About to make follow-up call to provider")
+                    # Prevent infinite recursion
+                    if _recursion_depth >= 2:
+                        unified_logger.debug_command("Max recursion depth reached, stopping")
+                        return {"message": {"content": f"Tool executed: {tool_results[0].get('content', 'Unknown result')}"}}
                     # Make follow-up call without tools to get final response
-                    return self._handle_provider_response(provider, messages, user_prompt, tools=None, stream=stream)
+                    return self._handle_provider_response(provider, messages, user_prompt, tools=None, stream=stream, _recursion_depth=_recursion_depth+1)
             
             clean_response = full_response if full_response else "[No valid response received from the model.]"
             final_response = {"message": {"content": clean_response}}
@@ -677,6 +688,10 @@ class ModelInteraction:
 
     def _get_function_tools(self) -> List[Dict[str, Any]]:
         """Get function tools from the plugin system."""
+        # Check if tool use is enabled for this chat
+        if not getattr(self.app, 'tooluse_enabled', False):
+            return []
+        
         # Access plugin manager through the app if available
         if hasattr(self.app, 'plugin_manager') and self.app.plugin_manager:
             tools = []            
@@ -723,7 +738,9 @@ class ModelInteraction:
                     for schema in schemas:
                         if schema.get('function', {}).get('name') == function_name:
                             plugin_name = plugin.name
+                            unified_logger.debug_command(f"Calling function {function_name} with args: {function_args}")
                             result = plugin.call_function(function_name, function_args)
+                            unified_logger.debug_command(f"Function {function_name} returned: {result}")
                             break
                     if result is not None:
                         break
@@ -762,12 +779,14 @@ class ModelInteraction:
             
             # Format result for model
             tool_result = {
-                "role": "tool",
+                "role": "tool", 
                 "content": json.dumps(result, ensure_ascii=False),
                 "tool_call_id": tool_call.get('id', '')
             }
+            unified_logger.debug_command(f"Formatted tool result for {function_name}")
             results.append(tool_result)
         
+        unified_logger.debug_command(f"Returning {len(results)} tool results")
         return results    
 
     def _process_response(self, user_input, response, full_response_for_logging=None):
