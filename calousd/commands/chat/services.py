@@ -53,7 +53,7 @@ class ChatService:
         if not last_response:
             return ChatOperationResult(
                 success=False,
-                error_message="No previous response to twist."
+                error_message="No previous response to twist. Generate an AI response first."
             )
         
         # Extract content
@@ -61,7 +61,7 @@ class ChatService:
         if not twist_content:
             return ChatOperationResult(
                 success=False,
-                error_message="Previous response is empty."
+                error_message="Previous response is empty or invalid format."
             )
         
         # With native Ollama API, last_response already contains clean content (no thinking)

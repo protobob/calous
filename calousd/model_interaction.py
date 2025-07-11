@@ -526,6 +526,8 @@ class ModelInteraction:
                     return self._handle_provider_response(provider, messages, user_prompt, tools=None, stream=stream, _recursion_depth=_recursion_depth+1)
             
             clean_response = full_response if full_response else "[No valid response received from the model.]"
+            
+            
             final_response = {"message": {"content": clean_response}}
             
             self._process_response(user_prompt, final_response, full_response)
@@ -624,11 +626,13 @@ class ModelInteraction:
                                 # Send only the new content that wasn't sent before
                                 new_content = content[len(full_response):]
                                 self._output(new_content)
+                                # Update full_response to the latest complete content
+                                full_response = content
                             elif content != full_response:
                                 # If content is completely different, send it all
                                 self._output(content)
-                            # Update full_response to the latest complete content
-                            full_response = content
+                                # Accumulate the content for incremental streaming
+                                full_response += content
                         if hasattr(chunk.message, 'tool_calls') and chunk.message.tool_calls:
                             tool_calls.extend(chunk.message.tool_calls)
                         if self.app.thinking_enabled and hasattr(chunk.message, 'thinking'):

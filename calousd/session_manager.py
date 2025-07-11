@@ -144,6 +144,12 @@ class ChatSessionManager:
         target_color = get_chat_color(target_index)
 
         preview = format_message_preview(content, 50)
+        
+        # Temporarily disable buffering for twist output
+        old_buffer = getattr(self, '_command_output_buffer', None)
+        if hasattr(self, '_command_output_buffer'):
+            delattr(self, '_command_output_buffer')
+        
         self.send_to_client(f"\033[1m{source_color}↪ Twisting to Chat {target_index + 1}: "
               f"\033[0m\033[3m{target_color}\"{preview}\"\033[0m")
 
@@ -152,9 +158,8 @@ class ChatSessionManager:
         # Save the new active chat index to config
         ConfigManager.set_active_chat_index(target_index)
 
-        # Clear screen and show FULL context for the target chat (including chat summary)
+        # Show FULL context for the target chat (including chat summary)
         target_chat = self.chats[target_index]
-        target_chat.ui.clear_screen()
         
         # Use module-level imported get_chat_color
         target_chat_color = get_chat_color(target_index)
@@ -170,6 +175,17 @@ class ChatSessionManager:
         self.send_to_client(f"\n\033[1m{source_color}|\033[0m \033[1m{source_color}TWIST CONTENT:\033[0m")
         self.send_to_client(f"\033[1m{source_color}|\033[0m [37m{twist_preview}[0m\n")
 
+
+        # Restore buffering if it was enabled
+        if old_buffer is not None:
+            self._command_output_buffer = old_buffer
+
+        # Ensure target chat has proper session manager reference for output routing
+        target_chat.session_manager = self
+
+        # Enable model streaming for the response
+        self._model_streaming_active = True
+        
         # Send the content as a prompt (which will trigger AI response)
         target_chat.handle_regular_input(content)
 

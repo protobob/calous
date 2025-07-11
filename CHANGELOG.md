@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Changelog
 
+## [1.10.2.dev] - 2025-07-11
+
+### Fixed
+- **Chat Twist Command**: Fixed `/chat.twist` command functionality for Ollama provider
+  - **Ollama Streaming**: Improved streaming chunk accumulation to capture full AI responses
+  - **Socket Communication**: Fixed command output buffering to allow twist messages to display
+  - **Cross-Provider Support**: Twist command now works with both Ollama and Groq providers
+  - **Session Management**: Enhanced target chat session manager reference for proper output routing
+
+### Known Issues
+- **Newline Processing**: Minor formatting issue with newline handling after twist operations (functionality preserved)
+
 ## [1.10.1.dev] - 2025-07-06
 
 ### Added
