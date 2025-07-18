@@ -93,6 +93,16 @@ class ChatSessionManager:
         """Get all chat instances - for use by other components."""
         return self.chats
     
+    def get_status_info(self) -> Dict[str, Any]:
+        """Get current status information for REPL display."""
+        active_chat = self.get_active_chat()
+        return {
+            "provider": getattr(active_chat, 'selected_provider', 'ollama'),
+            "model": getattr(active_chat, 'selected_model', 'none'),
+            "chat": self.active_chat_index + 1,  # 1-based for display
+            "history": getattr(active_chat, 'history_enabled', True)
+        }
+    
     def _validate_chat_index(self, chat_index: int) -> bool:
         """Validate chat index is within bounds."""
         return 0 <= chat_index < self.num_chats
@@ -347,7 +357,20 @@ class ChatSessionManager:
                 target_conn.sendall(b'\x00END\x00')
             elif message_type == "end_response":
                 # Send end-of-response delimiter for streaming
-                target_conn.sendall(b'\x00END\x00')
+                # Test status generation with debug logging
+                try:
+                    import json
+                    status_info = self.get_status_info()
+                    unified_logger.debug_socket(f"Status info collected: {status_info}")
+                    status_json = json.dumps(status_info)
+                    unified_logger.debug_socket(f"Status JSON: {status_json}")
+                    escaped_status = status_json.replace('\x00', '\x00\x00')
+                    unified_logger.debug_socket(f"Escaped status: {escaped_status}")
+                    target_conn.sendall(f'\x00STATUS\x00{escaped_status}\x00END\x00'.encode())
+                    unified_logger.debug_socket("Status sent successfully")
+                except Exception as e:
+                    unified_logger.debug_socket(f"Error in status generation: {e}")
+                    target_conn.sendall(b'\x00END\x00')
             else:
                 # Send normal response content (no delimiter for streaming chunks)
                 unified_logger.debug_socket(f"Sending chunk: {repr(escaped_message[:50])}")
@@ -530,6 +553,8 @@ class ChatSessionManager:
                     msg_type = parts[0]
                     content = parts[1].replace('\x00\x00', '\x00')  # Unescape null bytes
                     target_chat = None  # For now, no chat targeting in delimiter protocol
+                    
+                    
                     
                     if msg_type == "PROMPT":
                         msg_type = "prompt"  # Convert to old format for compatibility

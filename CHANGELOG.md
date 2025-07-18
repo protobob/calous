@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Changelog
 
+## [1.11.0] - 2025-07-18
+
+### Added
+- **REPL Status Display**: Added status line showing provider, model, chat number, and history status before each prompt in interactive mode
+  - Format: `[provider | model | chat:X | hist:on/off]` displayed in light blue
+  - Status appears before each prompt in `cx -i` interactive mode
+  - Server always sends status information with responses; client decides whether to display it
+  - Implemented via delimiter protocol extension with `\0STATUS\0{json}\0END\0` format
+
+### Enhanced
+- **Client-Server Protocol**: Extended delimiter protocol to include STATUS information
+  - Status data sent with every response from server to client
+  - Client stores last received status and displays it before interactive prompts
+  - Thread-safe status storage using Mutex for concurrent access
+  - Status parsing and display logic integrated into interactive mode
+
+### Fixed
+- **Newline Handling**: Fixed missing newline after streaming AI responses
+  - Added `println!()` after streaming content completion
+  - Proper line termination for clean terminal display
+
+### Technical
+- **Rust Client**: Added global status storage and display functionality
+  - `LAST_STATUS` static variable for thread-safe status caching
+  - `show_status_before_prompt()` function for status display before prompts
+  - Status extraction and storage from server responses
+  - Light blue ANSI color formatting for status display
+
 ## [1.10.2.dev] - 2025-07-11
 
 ### Fixed

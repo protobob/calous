@@ -477,7 +477,6 @@ class ModelInteraction:
                         if choice.delta and hasattr(choice.delta, 'tool_calls') and choice.delta.tool_calls:
                             tool_calls.extend(choice.delta.tool_calls)
                 
-                self._output("\n")  # newline after stream
                 
                 # Send end-of-response marker for delimiter protocol
                 if (hasattr(self.app, 'session_manager') and 
@@ -496,7 +495,6 @@ class ModelInteraction:
                     if choice.message and hasattr(choice.message, 'tool_calls') and choice.message.tool_calls:
                         tool_calls.extend(choice.message.tool_calls)
                 
-                self._output("\n")  # newline after response
                 
                 # Send end-of-response marker for delimiter protocol
                 if (hasattr(self.app, 'session_manager') and 
@@ -641,7 +639,6 @@ class ModelInteraction:
                                 thinking_content += thinking
                                 self._output(f"[2;36m{thinking}[0m")
                     response_dict = chunk
-                self._output("\n")  # newline after stream
                 # Send end-of-response marker for delimiter protocol
                 if (hasattr(self.app, 'session_manager') and 
                     self.app.session_manager and 
@@ -662,7 +659,6 @@ class ModelInteraction:
                             thinking_content += thinking
                             self._output(f"[2;36m{thinking}[0m")
                     response_dict = response
-                self._output("\n")  # newline after response
                 # Send end-of-response marker for delimiter protocol
                 if (hasattr(self.app, 'session_manager') and 
                     self.app.session_manager and 

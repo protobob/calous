@@ -3,6 +3,7 @@ use std::io::{self, Read, Write};
 use std::os::unix::net::UnixStream;
 use std::fs;
 use std::path::PathBuf;
+use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 use regex::Regex;
@@ -13,6 +14,9 @@ use rustyline::highlight::Highlighter;
 use rustyline::hint::Hinter;
 use rustyline::validate::Validator;
 use rustyline::Editor;
+
+// Global status storage for REPL mode
+static LAST_STATUS: Mutex<Option<serde_json::Value>> = Mutex::new(None);
 
 #[derive(Serialize, Deserialize, Clone)]
 struct CxConfig {
@@ -58,6 +62,8 @@ struct CxCommand {
     confirmation_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     response: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    repl_mode: Option<bool>,
 }
 
 // CxResponse struct removed - using delimiter protocol instead of JSON
@@ -233,7 +239,29 @@ fn strip_ansi_codes(text: &str) -> String {
     ansi_regex.replace_all(text, "").to_string()
 }
 
-fn create_command(data: String, message_type: &str, chat: Option<u8>) -> CxCommand {
+fn display_status(status: &serde_json::Value) {
+    // Extract status fields with defaults
+    let provider = status.get("provider").and_then(|v| v.as_str()).unwrap_or("unknown");
+    let model = status.get("model").and_then(|v| v.as_str()).unwrap_or("none");
+    let chat = status.get("chat").and_then(|v| v.as_u64()).unwrap_or(1);
+    let history = status.get("history").and_then(|v| v.as_bool()).unwrap_or(true);
+    
+    let history_str = if history { "on" } else { "off" };
+    
+    // Use light blue color (96) for the status line
+    print!("\x1b[96m[{} | {} | chat:{} | hist:{}]\x1b[0m\n", provider, model, chat, history_str);
+}
+
+fn show_status_before_prompt(_debug: bool, _config: &CxConfig) {
+    // Display the last received status if we have one
+    if let Ok(status_guard) = LAST_STATUS.lock() {
+        if let Some(status) = status_guard.as_ref() {
+            display_status(status);
+        }
+    }
+}
+
+fn create_command(data: String, message_type: &str, chat: Option<u8>, repl_mode: Option<bool>) -> CxCommand {
     CxCommand {
         r#type: message_type.to_string(),
         data,
@@ -241,6 +269,7 @@ fn create_command(data: String, message_type: &str, chat: Option<u8>) -> CxComma
         supports_confirmations: Some(true),
         confirmation_id: None,
         response: None,
+        repl_mode,
     }
 }
 
@@ -289,6 +318,7 @@ fn main() {
                 println!("    -h, --help         Show this help message");
                 println!("    -i, --interactive  Start interactive mode");
                 println!("    -n, --chat <NUM>   Switch to chat channel (1-14)");
+                println!("    --test-repl        Test REPL mode status display");
                 println!("    --no-color         Strip ANSI color codes from output");
                 println!("    -t, --no-truncate  Disable truncation for this command");
                 println!("    -v, --version      Show version");
@@ -310,14 +340,22 @@ fn main() {
             "-d" | "--debug" => {
                 debug = true;
                 i += 1;
+                arg_start = i;
             }
             "-t" | "--no-truncate" => {
                 no_truncate = true;
                 i += 1;
+                arg_start = i;
             }
             "--no-color" => {
                 no_color = true;
                 i += 1;
+                arg_start = i;
+            }
+            "--test-repl" => {
+                // Set flag for test REPL mode but continue processing
+                i += 1;
+                arg_start = i;  // Update arg_start to skip this flag
             }
             "-i" | "--interactive" => {
                 let mut config_with_no_color = config.clone();
@@ -448,7 +486,9 @@ fn main() {
     let mut config_with_no_color = config.clone();
     config_with_no_color.no_color = no_color;
     
-    let cmd = create_command(data, &message_type, chat_channel);
+    // Add a test flag to simulate REPL mode
+    let is_repl_test = args.contains(&"--test-repl".to_string());
+    let cmd = create_command(data, &message_type, chat_channel, if is_repl_test { Some(true) } else { None });
 
     match send_command(&cmd, debug, &config_with_no_color) {
         Ok(response) => {
@@ -462,6 +502,7 @@ fn main() {
 }
 
 fn send_command(cmd: &CxCommand, debug: bool, _config: &CxConfig) -> Result<String, String> {
+    let is_repl_mode = cmd.repl_mode.unwrap_or(false);
     let socket_path = "/tmp/calous.sock";
     let mut stream = UnixStream::connect(socket_path)
         .map_err(|e| format!("Failed to connect to socket: {}", e))?;
@@ -469,7 +510,13 @@ fn send_command(cmd: &CxCommand, debug: bool, _config: &CxConfig) -> Result<Stri
     // Create delimiter-based request instead of JSON
     let request_type = if cmd.r#type == "cmd" { "CMD" } else { "PROMPT" };
     let escaped_data = cmd.data.replace('\0', "\0\0"); // Escape null bytes
-    let request = format!("{}\0{}\0END\0", request_type, escaped_data);
+    
+    // Add REPL mode flag to request format if present
+    let request = if cmd.repl_mode.unwrap_or(false) {
+        format!("{}\0{}\0REPL\0END\0", request_type, escaped_data)
+    } else {
+        format!("{}\0{}\0END\0", request_type, escaped_data)
+    };
     
     if debug {
         eprintln!("[Debug] Sending request: {} (length: {} bytes)", 
@@ -494,6 +541,9 @@ fn send_command(cmd: &CxCommand, debug: bool, _config: &CxConfig) -> Result<Stri
                 // Print content immediately for streaming (simple approach)
                 if !chunk.contains('\0') {
                     // No delimiters, just print the content immediately
+                    if debug {
+                        eprintln!("[Debug] Streaming chunk: {:?}", chunk);
+                    }
                     print!("{}", chunk);
                     io::stdout().flush().unwrap();
                     has_printed_streaming = true;
@@ -503,7 +553,65 @@ fn send_command(cmd: &CxCommand, debug: bool, _config: &CxConfig) -> Result<Stri
                 // Check for end delimiter
                 if response.contains("\0END\0") {
                     // We have a complete response
-                    if response.starts_with("\0ERROR\0") {
+                    if debug {
+                        eprintln!("[Debug] Full response received: {:?}", response);
+                    }
+                    // Check if response contains status information
+                    if response.contains("\0STATUS\0") {
+                        // Status response: content\0STATUS\0{json}\0END\0
+                        if debug {
+                            eprintln!("[Debug] Received STATUS response");
+                        }
+                        if let Some(status_start) = response.find("\0STATUS\0") {
+                            let status_json_start = status_start + 8; // Length of "\0STATUS\0"
+                            if let Some(end_pos) = response.find("\0END\0") {
+                                let status_json = &response[status_json_start..end_pos];
+                                let unescaped_status = status_json.replace("\0\0", "\0");
+                                
+                                if debug {
+                                    eprintln!("[Debug] Status JSON: {}", unescaped_status);
+                                }
+                                
+                                // Parse and store status for display before next prompt
+                                if let Ok(status) = serde_json::from_str::<serde_json::Value>(&unescaped_status) {
+                                    // Store status for display before next prompt
+                                    if let Ok(mut status_guard) = LAST_STATUS.lock() {
+                                        *status_guard = Some(status);
+                                    }
+                                } else if debug {
+                                    eprintln!("[Debug] Failed to parse status JSON");
+                                }
+                                
+                                // If we already printed the content during streaming, return empty string
+                                if has_printed_streaming {
+                                    // Ensure a newline is printed after streaming content
+                                    println!();
+                                    return Ok(String::new());
+                                } else {
+                                    return Ok(String::new());
+                                }
+                            }
+                        }
+                    } else if response.starts_with("\0STATUS\0") {
+                        // Pure status response: \0STATUS\0{json}\0END\0 (fallback)
+                        if debug {
+                            eprintln!("[Debug] Received pure STATUS response");
+                        }
+                        let status_start = 8; // Length of "\0STATUS\0"
+                        if let Some(end_pos) = response.find("\0END\0") {
+                            let status_json = &response[status_start..end_pos];
+                            let unescaped_status = status_json.replace("\0\0", "\0");
+                            
+                            // Parse and store status for display before next prompt
+                            if let Ok(status) = serde_json::from_str::<serde_json::Value>(&unescaped_status) {
+                                if let Ok(mut status_guard) = LAST_STATUS.lock() {
+                                    *status_guard = Some(status);
+                                }
+                            }
+                            
+                            return Ok(String::new());
+                        }
+                    } else if response.starts_with("\0ERROR\0") {
                         // Error response: \0ERROR\0{message}\0END\0
                         let error_start = 7; // Length of "\0ERROR\0"
                         if let Some(end_pos) = response.find("\0END\0") {
@@ -565,6 +673,8 @@ fn send_command(cmd: &CxCommand, debug: bool, _config: &CxConfig) -> Result<Stri
                             // If we already printed the content during streaming, return empty string
                             // to avoid duplicate output
                             if has_printed_streaming {
+                                // Ensure a newline is printed after streaming content
+                                println!();
                                 return Ok(String::new());
                             } else {
                                 return Ok(unescaped_content);
@@ -622,6 +732,9 @@ fn interactive_mode(debug: bool, config: &CxConfig) {
     }
     
     loop {
+        // Show status before each prompt
+        show_status_before_prompt(debug, config);
+        
         let readline = rl.readline("> ");
         match readline {
             Ok(line) => {
@@ -703,7 +816,7 @@ fn send_to_server(input: &str, debug: bool, config: &CxConfig) {
     // With delimiter protocol, send raw command/prompt text
     let data = input.to_string();
 
-    let cmd = create_command(data, &message_type, None);
+    let cmd = create_command(data, &message_type, None, Some(true));
 
     match send_command(&cmd, debug, &config) {
         Ok(response) => {
