@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Changelog
 
+## [1.12.0.dev] - 2025-07-18
+
+### Fixed
+- **Status Updates**: Fixed status not updating after commands in interactive mode
+  - Commands now trigger status updates immediately after execution
+  - Status display updates for all command types (chat switching, model changes, etc.)
+  - Maintains existing command functionality while ensuring real-time status refresh
+
+### Enhanced
+- **Rust Client**: Improved status display formatting and code organization
+  - Added protocol constants for cleaner code maintenance
+  - Enhanced error handling for I/O operations
+  - Status display now uses white labels with bold blue data values
+  - History status shows as bold green "on" or bold red "off" for better visibility
+  - Removed unused dependencies and cleaned up dead code
+
 ## [1.11.0] - 2025-07-18
 
 ### Added

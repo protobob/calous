@@ -15,6 +15,14 @@ use rustyline::hint::Hinter;
 use rustyline::validate::Validator;
 use rustyline::Editor;
 
+// Protocol constants
+const DELIMITER_END: &str = "\0END\0";
+const DELIMITER_STATUS: &str = "\0STATUS\0";
+const DELIMITER_ERROR: &str = "\0ERROR\0";
+const DELIMITER_CONFIRM: &str = "\0CONFIRM\0";
+const DELIMITER_CONFIRM_RESPONSE: &str = "\0CONFIRM_RESPONSE\0";
+const NULL_ESCAPE: &str = "\0\0";
+
 // Global status storage for REPL mode
 static LAST_STATUS: Mutex<Option<serde_json::Value>> = Mutex::new(None);
 
@@ -246,13 +254,17 @@ fn display_status(status: &serde_json::Value) {
     let chat = status.get("chat").and_then(|v| v.as_u64()).unwrap_or(1);
     let history = status.get("history").and_then(|v| v.as_bool()).unwrap_or(true);
     
-    let history_str = if history { "on" } else { "off" };
+    let history_str = if history { 
+        "\x1b[1;92mon\x1b[0m"  // Bold green for "on"
+    } else { 
+        "\x1b[1;91moff\x1b[0m"  // Bold red for "off"
+    };
     
-    // Use light blue color (96) for the status line
-    print!("\x1b[96m[{} | {} | chat:{} | hist:{}]\x1b[0m\n", provider, model, chat, history_str);
+    // Use white for variable names, bold blue for data, and colored history status
+    print!("\x1b[37m[\x1b[1;94m{}\x1b[0;37m | \x1b[1;94m{}\x1b[0;37m | chat:\x1b[1;94m{}\x1b[0;37m | hist:{}]\x1b[0m\n", provider, model, chat, history_str);
 }
 
-fn show_status_before_prompt(_debug: bool, _config: &CxConfig) {
+fn show_status_before_prompt() {
     // Display the last received status if we have one
     if let Ok(status_guard) = LAST_STATUS.lock() {
         if let Some(status) = status_guard.as_ref() {
@@ -502,20 +514,26 @@ fn main() {
 }
 
 fn send_command(cmd: &CxCommand, debug: bool, _config: &CxConfig) -> Result<String, String> {
-    let is_repl_mode = cmd.repl_mode.unwrap_or(false);
     let socket_path = "/tmp/calous.sock";
     let mut stream = UnixStream::connect(socket_path)
         .map_err(|e| format!("Failed to connect to socket: {}", e))?;
     
-    // Create delimiter-based request instead of JSON
-    let request_type = if cmd.r#type == "cmd" { "CMD" } else { "PROMPT" };
-    let escaped_data = cmd.data.replace('\0', "\0\0"); // Escape null bytes
+    let request = build_request(cmd, debug)?;
     
-    // Add REPL mode flag to request format if present
+    stream.write_all(request.as_bytes())
+        .map_err(|e| format!("Failed to write to socket: {}", e))?;
+
+    handle_response(&mut stream, debug)
+}
+
+fn build_request(cmd: &CxCommand, debug: bool) -> Result<String, String> {
+    let request_type = if cmd.r#type == "cmd" { "CMD" } else { "PROMPT" };
+    let escaped_data = cmd.data.replace('\0', NULL_ESCAPE);
+    
     let request = if cmd.repl_mode.unwrap_or(false) {
-        format!("{}\0{}\0REPL\0END\0", request_type, escaped_data)
+        format!("{}\0{}\0REPL{}", request_type, escaped_data, DELIMITER_END)
     } else {
-        format!("{}\0{}\0END\0", request_type, escaped_data)
+        format!("{}\0{}{}", request_type, escaped_data, DELIMITER_END)
     };
     
     if debug {
@@ -523,10 +541,10 @@ fn send_command(cmd: &CxCommand, debug: bool, _config: &CxConfig) -> Result<Stri
                   request.replace('\0', "\\0"), request.len());
     }
     
-    stream.write_all(request.as_bytes())
-        .map_err(|e| format!("Failed to write to socket: {}", e))?;
+    Ok(request)
+}
 
-    // Read response using delimiter protocol
+fn handle_response(stream: &mut UnixStream, debug: bool) -> Result<String, String> {
     let mut response = String::new();
     let mut buffer = [0; 4096];
     let mut has_printed_streaming = false;
@@ -538,157 +556,183 @@ fn send_command(cmd: &CxCommand, debug: bool, _config: &CxConfig) -> Result<Stri
                 let chunk = String::from_utf8_lossy(&buffer[..n]);
                 response.push_str(&chunk);
                 
-                // Print content immediately for streaming (simple approach)
                 if !chunk.contains('\0') {
-                    // No delimiters, just print the content immediately
-                    if debug {
-                        eprintln!("[Debug] Streaming chunk: {:?}", chunk);
-                    }
-                    print!("{}", chunk);
-                    io::stdout().flush().unwrap();
+                    handle_streaming_chunk(&chunk, debug);
                     has_printed_streaming = true;
-                    continue; // Keep reading more
+                    continue;
                 }
                 
-                // Check for end delimiter
-                if response.contains("\0END\0") {
-                    // We have a complete response
-                    if debug {
-                        eprintln!("[Debug] Full response received: {:?}", response);
-                    }
-                    // Check if response contains status information
-                    if response.contains("\0STATUS\0") {
-                        // Status response: content\0STATUS\0{json}\0END\0
-                        if debug {
-                            eprintln!("[Debug] Received STATUS response");
-                        }
-                        if let Some(status_start) = response.find("\0STATUS\0") {
-                            let status_json_start = status_start + 8; // Length of "\0STATUS\0"
-                            if let Some(end_pos) = response.find("\0END\0") {
-                                let status_json = &response[status_json_start..end_pos];
-                                let unescaped_status = status_json.replace("\0\0", "\0");
-                                
-                                if debug {
-                                    eprintln!("[Debug] Status JSON: {}", unescaped_status);
-                                }
-                                
-                                // Parse and store status for display before next prompt
-                                if let Ok(status) = serde_json::from_str::<serde_json::Value>(&unescaped_status) {
-                                    // Store status for display before next prompt
-                                    if let Ok(mut status_guard) = LAST_STATUS.lock() {
-                                        *status_guard = Some(status);
-                                    }
-                                } else if debug {
-                                    eprintln!("[Debug] Failed to parse status JSON");
-                                }
-                                
-                                // If we already printed the content during streaming, return empty string
-                                if has_printed_streaming {
-                                    // Ensure a newline is printed after streaming content
-                                    println!();
-                                    return Ok(String::new());
-                                } else {
-                                    return Ok(String::new());
-                                }
-                            }
-                        }
-                    } else if response.starts_with("\0STATUS\0") {
-                        // Pure status response: \0STATUS\0{json}\0END\0 (fallback)
-                        if debug {
-                            eprintln!("[Debug] Received pure STATUS response");
-                        }
-                        let status_start = 8; // Length of "\0STATUS\0"
-                        if let Some(end_pos) = response.find("\0END\0") {
-                            let status_json = &response[status_start..end_pos];
-                            let unescaped_status = status_json.replace("\0\0", "\0");
-                            
-                            // Parse and store status for display before next prompt
-                            if let Ok(status) = serde_json::from_str::<serde_json::Value>(&unescaped_status) {
-                                if let Ok(mut status_guard) = LAST_STATUS.lock() {
-                                    *status_guard = Some(status);
-                                }
-                            }
-                            
-                            return Ok(String::new());
-                        }
-                    } else if response.starts_with("\0ERROR\0") {
-                        // Error response: \0ERROR\0{message}\0END\0
-                        let error_start = 7; // Length of "\0ERROR\0"
-                        if let Some(end_pos) = response.find("\0END\0") {
-                            let error_msg = &response[error_start..end_pos];
-                            let unescaped_msg = error_msg.replace("\0\0", "\0");
-                            return Err(format!("Error: {}", unescaped_msg));
-                        }
-                    } else if response.starts_with("\0CONFIRM\0") {
-                        // Confirmation request: \0CONFIRM\0{message}\0{default}\0{id}\0END\0
-                        let parts: Vec<&str> = response.split('\0').collect();
-                        if parts.len() >= 6 && parts[1] == "CONFIRM" && parts[5] == "END" {
-                            let message = parts[2].replace("\0\0", "\0");
-                            let default = parts[3].replace("\0\0", "\0");
-                            let confirmation_id = parts[4];
-                            
-                            if debug {
-                                eprintln!("[Debug] Received confirmation request: {}", message);
-                            }
-                            
-                            // Prompt user for confirmation
-                            print!("{} [{}]: ", message, default);
-                            io::stdout().flush().unwrap();
-                            
-                            let mut user_input = String::new();
-                            io::stdin().read_line(&mut user_input).unwrap();
-                            let user_input = user_input.trim();
-                            
-                            // Use default if empty, otherwise use user input
-                            let response_value = if user_input.is_empty() {
-                                default
-                            } else {
-                                user_input.to_string()
-                            };
-                            
-                            // Send confirmation response back on the same socket
-                            let confirmation_response = format!(
-                                "\0CONFIRM_RESPONSE\0{}\0{}\0END\0", 
-                                confirmation_id, response_value
-                            );
-                            
-                            if debug {
-                                eprintln!("[Debug] Sending confirmation: {}", 
-                                         confirmation_response.replace('\0', "\\0"));
-                            }
-                            
-                            stream.write_all(confirmation_response.as_bytes())
-                                .map_err(|e| format!("Failed to write confirmation: {}", e))?;
-                            
-                            // Clear response buffer and continue reading final response
-                            response.clear();
-                            continue;
-                        }
-                    } else {
-                        // Normal response: {content}\0END\0
-                        if let Some(end_pos) = response.find("\0END\0") {
-                            let content = &response[..end_pos];
-                            let unescaped_content = content.replace("\0\0", "\0");
-                            
-                            // If we already printed the content during streaming, return empty string
-                            // to avoid duplicate output
-                            if has_printed_streaming {
-                                // Ensure a newline is printed after streaming content
-                                println!();
-                                return Ok(String::new());
-                            } else {
-                                return Ok(unescaped_content);
-                            }
-                        }
-                    }
-                    break;
+                if response.contains(DELIMITER_END) {
+                    return process_complete_response(response, has_printed_streaming, debug, stream);
                 }
             }
             Err(e) => return Err(format!("Failed to read from socket: {}", e)),
         }
     }
     
-    // If we get here, we didn't receive a complete response
+    handle_incomplete_response(response, debug)
+}
+
+fn handle_streaming_chunk(chunk: &str, debug: bool) {
+    if debug {
+        eprintln!("[Debug] Streaming chunk: {:?}", chunk);
+    }
+    print!("{}", chunk);
+    if let Err(e) = io::stdout().flush() {
+        eprintln!("[Warning] Failed to flush stdout: {}", e);
+    }
+}
+
+fn process_complete_response(
+    response: String, 
+    has_printed_streaming: bool, 
+    debug: bool, 
+    stream: &mut UnixStream
+) -> Result<String, String> {
+    if debug {
+        eprintln!("[Debug] Full response received: {:?}", response);
+    }
+    
+    if response.contains(DELIMITER_STATUS) {
+        handle_status_response(&response, has_printed_streaming, debug)
+    } else if response.starts_with(DELIMITER_STATUS) {
+        handle_pure_status_response(&response, debug)
+    } else if response.starts_with(DELIMITER_ERROR) {
+        handle_error_response(&response)
+    } else if response.starts_with(DELIMITER_CONFIRM) {
+        handle_confirmation_response(&response, debug, stream)
+    } else {
+        handle_normal_response(&response, has_printed_streaming)
+    }
+}
+
+fn handle_status_response(response: &str, has_printed_streaming: bool, debug: bool) -> Result<String, String> {
+    if debug {
+        eprintln!("[Debug] Received STATUS response");
+    }
+    
+    if let Some(status_start) = response.find(DELIMITER_STATUS) {
+        let status_json_start = status_start + DELIMITER_STATUS.len();
+        if let Some(end_pos) = response.find(DELIMITER_END) {
+            let status_json = &response[status_json_start..end_pos];
+            let unescaped_status = status_json.replace(NULL_ESCAPE, "\0");
+            
+            if debug {
+                eprintln!("[Debug] Status JSON: {}", unescaped_status);
+            }
+            
+            if let Ok(status) = serde_json::from_str::<serde_json::Value>(&unescaped_status) {
+                if let Ok(mut status_guard) = LAST_STATUS.lock() {
+                    *status_guard = Some(status);
+                }
+            } else if debug {
+                eprintln!("[Debug] Failed to parse status JSON");
+            }
+            
+            if has_printed_streaming {
+                println!();
+            }
+            return Ok(String::new());
+        }
+    }
+    
+    Ok(String::new())
+}
+
+fn handle_pure_status_response(response: &str, debug: bool) -> Result<String, String> {
+    if debug {
+        eprintln!("[Debug] Received pure STATUS response");
+    }
+    
+    let status_start = DELIMITER_STATUS.len();
+    if let Some(end_pos) = response.find(DELIMITER_END) {
+        let status_json = &response[status_start..end_pos];
+        let unescaped_status = status_json.replace(NULL_ESCAPE, "\0");
+        
+        if let Ok(status) = serde_json::from_str::<serde_json::Value>(&unescaped_status) {
+            if let Ok(mut status_guard) = LAST_STATUS.lock() {
+                *status_guard = Some(status);
+            }
+        }
+    }
+    
+    Ok(String::new())
+}
+
+fn handle_error_response(response: &str) -> Result<String, String> {
+    let error_start = DELIMITER_ERROR.len();
+    if let Some(end_pos) = response.find(DELIMITER_END) {
+        let error_msg = &response[error_start..end_pos];
+        let unescaped_msg = error_msg.replace(NULL_ESCAPE, "\0");
+        return Err(format!("Error: {}", unescaped_msg));
+    }
+    
+    Err("Invalid error response format".to_string())
+}
+
+fn handle_confirmation_response(response: &str, debug: bool, stream: &mut UnixStream) -> Result<String, String> {
+    let parts: Vec<&str> = response.split('\0').collect();
+    if parts.len() >= 6 && parts[1] == "CONFIRM" && parts[5] == "END" {
+        let message = parts[2].replace(NULL_ESCAPE, "\0");
+        let default = parts[3].replace(NULL_ESCAPE, "\0");
+        let confirmation_id = parts[4];
+        
+        if debug {
+            eprintln!("[Debug] Received confirmation request: {}", message);
+        }
+        
+        print!("{} [{}]: ", message, default);
+        if let Err(e) = io::stdout().flush() {
+            eprintln!("[Warning] Failed to flush stdout: {}", e);
+        }
+        
+        let mut user_input = String::new();
+        io::stdin().read_line(&mut user_input).unwrap();
+        let user_input = user_input.trim();
+        
+        let response_value = if user_input.is_empty() {
+            default
+        } else {
+            user_input.to_string()
+        };
+        
+        let confirmation_response = format!(
+            "{}{}\0{}{}", 
+            DELIMITER_CONFIRM_RESPONSE, confirmation_id, response_value, DELIMITER_END
+        );
+        
+        if debug {
+            eprintln!("[Debug] Sending confirmation: {}", 
+                     confirmation_response.replace('\0', "\\0"));
+        }
+        
+        stream.write_all(confirmation_response.as_bytes())
+            .map_err(|e| format!("Failed to write confirmation: {}", e))?;
+        
+        // Continue reading for final response
+        return handle_response(stream, debug);
+    }
+    
+    Err("Invalid confirmation response format".to_string())
+}
+
+fn handle_normal_response(response: &str, has_printed_streaming: bool) -> Result<String, String> {
+    if let Some(end_pos) = response.find(DELIMITER_END) {
+        let content = &response[..end_pos];
+        let unescaped_content = content.replace(NULL_ESCAPE, "\0");
+        
+        if has_printed_streaming {
+            println!();
+            return Ok(String::new());
+        } else {
+            return Ok(unescaped_content);
+        }
+    }
+    
+    Ok(String::new())
+}
+
+fn handle_incomplete_response(response: String, debug: bool) -> Result<String, String> {
     if response.is_empty() {
         Err("No response from server".to_string())
     } else {
@@ -733,7 +777,7 @@ fn interactive_mode(debug: bool, config: &CxConfig) {
     
     loop {
         // Show status before each prompt
-        show_status_before_prompt(debug, config);
+        show_status_before_prompt();
         
         let readline = rl.readline("> ");
         match readline {
@@ -782,7 +826,9 @@ fn interactive_mode(debug: bool, config: &CxConfig) {
 fn interactive_mode_basic(debug: bool, config: &CxConfig) {
     loop {
         print!("> ");
-        io::stdout().flush().unwrap();
+        if let Err(e) = io::stdout().flush() {
+            eprintln!("[Warning] Failed to flush stdout: {}", e);
+        }
         
         let mut input = String::new();
         match io::stdin().read_line(&mut input) {

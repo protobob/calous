@@ -689,12 +689,11 @@ class ChatSessionManager:
                                             # Escape any \x00 bytes and send with delimiter
                                             escaped_output = combined_output.replace('\x00', '\x00\x00')
                                             conn.sendall(escaped_output.encode())
-                                            conn.sendall(b'\x00END\x00')
-                                        else:
-                                            # No output to send, just send the end delimiter
-                                            if debug:
-                                                unified_logger.debug_socket("No buffered output, sending end delimiter only")
-                                            conn.sendall(b'\x00END\x00')
+                                            
+                                        # Always send status update after command processing
+                                        if debug:
+                                            unified_logger.debug_socket("Sending status update after command")
+                                        self.send_to_client("", "end_response", conn)
                                         response = None  # Prevent the main handler from sending another response
                                         
                                         # Clean up buffer
